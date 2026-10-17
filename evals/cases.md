@@ -38,7 +38,6 @@ A test suite of 36 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** Docs only support this in development on version 4.x; production has known concurrency issues.
 - **Expected Behavior:** Assumption audit detects unverified production equivalence → Classifies as `PASS_WITH_LIMITATIONS`.
 - **Expected Status:** `PASS_WITH_LIMITATIONS`.
-- **Expected Status:** `PASS_WITH_LIMITATIONS` / `BLOCKED`.
 
 ### CASE-006 - Counterexample Breaks Unconditional Generalization
 - **Task:** Synthesize data scaling behavior.
@@ -161,7 +160,7 @@ A test suite of 36 evaluation cases designed to test whether an agent running `a
 - **Revision:** "Tool X is cheap and therefore always the best choice."
 - **Planted Flaw:** Revision introduces a fresh logical entailment failure.
 - **Expected Behavior:** Re-test catches the new flaw in the revised output.
-- **Expected Status:** `REVISE` → `PASS` (multi-turn loop).
+- **Expected Status:** `PASS` (after revision, multi-turn loop).
 
 ### CASE-024 - Inaccessible Production Environment
 - **Task:** "Verify whether encryption at rest is enabled on user's database."

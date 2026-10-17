@@ -17,7 +17,7 @@ TASK → ACTIVATION → SELECT DEPTH → EXECUTE VERIFICATION LIFECYCLE
 - **Required Steps:**
   1. Build minimal Contract (Constraints only).
   2. Run Constraint & Format Checks.
-  3. Final Decision (`PASS` / `FAIL`).
+  3. Final Decision (`PASS` / `FAIL`; `BLOCKED` if a required check cannot run, `PASS_WITH_LIMITATIONS` if a non-critical gap must be disclosed — per `INV-010`, never downgrade an unrunnable check to `PASS`).
 
 ### STANDARD
 - **Trigger:** Default for correctness-sensitive factual, analytical, or structural tasks.
@@ -26,7 +26,7 @@ TASK → ACTIVATION → SELECT DEPTH → EXECUTE VERIFICATION LIFECYCLE
   1. Build Contract & Acceptance Conditions.
   2. Extract Critical Claims.
   3. Generate and Execute Task-Specific Tests.
-  4. Logical Consistency Check.
+  4. Logical Consistency Check (includes a lightweight proportional ATTACK + TEST-AUDIT sanity pass per SKILL §5-§7; full audit at ADVERSARIAL+).
   5. Final Decision.
 
 ### ADVERSARIAL
@@ -59,6 +59,7 @@ Depth MUST escalate when:
 - A test fails and reveals a deeper underlying inconsistency (`STANDARD` → `ADVERSARIAL`).
 - Reliable sources conflict or unexpected environmental variance is discovered (`ADVERSARIAL` → `CRITICAL`).
 - The user explicitly requests rigorous or adversarial verification.
+- Log every escalation in the contract (`risk_level` before → after, trigger, new mandatory checks added); re-run the gate against the higher depth's required steps before deciding.
 
 ### De-escalation Prohibition
 - Depth must **never** be downgraded mid-verification simply because early checks passed.
@@ -76,3 +77,6 @@ When constrained by execution time, token limits, or tool calls:
 5. Defer cosmetic, stylistic, or secondary checks.
 
 *Never exhaust the verification budget checking trivial formatting while critical claims remain unverified.*
+
+Budget cuts never waive external validation for CRITICAL tasks: if the mandatory independent check cannot run, verdict is `BLOCKED`, never a downgraded `PASS`.
+Conflict rule: when budget pressure collides with a mandatory check, the mandatory check wins; record the deferred cosmetic items in `final_verdict.disclosed_limitations[]` instead of silently dropping them.

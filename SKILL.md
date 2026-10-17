@@ -1,6 +1,6 @@
 ---
 name: agent-verification
-description: ALWAYS invoke this skill when producing a correctness-sensitive answer, decision, comparison, research result, classification, filtering result, transformation, recommendation, plan, analysis, code, or factual claim. Also invoke when the user explicitly asks to verify, validate, check, audit, critique, or test an output. Select verification depth according to risk, uncertainty, external dependencies, and task type.
+description: Invoke this skill when producing a correctness-sensitive answer, decision, comparison, research result, classification, filtering result, transformation, recommendation, plan, analysis, code, or factual claim. Also invoke when the user explicitly asks to verify, validate, check, audit, critique, or test an output. Skip trivial banter, greetings, and low-stakes creative copy with no factual claims. Select verification depth according to risk, uncertainty, external dependencies, and task type.
 ---
 
 # Agent Verification
@@ -11,8 +11,9 @@ Treat verification as an adversarial test lifecycle:
 
 ```text
 TASK
-→ CONTRACT
+→ CONTRACT (draft from task)
 → OUTPUT
+→ CONTRACT (bind to output)
 → CLAIMS
 → TESTS
 → TEST
@@ -56,7 +57,9 @@ Consult `references/verification-depth.md` to classify task risk into one of fou
 
 ## 3. Build the Verification Contract
 
-Before or immediately after generating the candidate output, build an internal Contract per `references/verification-contract.md`:
+Draft the Contract from the TASK before generating, then bind it to the OUTPUT
+immediately after generating (per `references/verification-contract.md` and
+`references/state-machine.md`):
 - Restate the core task objective and explicit constraints.
 - Define what MUST be true for the output to be acceptable (`AC-001`, `AC-002`, ...).
 - Identify critical assumptions that the conclusion depends on.
@@ -83,13 +86,21 @@ Select appropriate test families from `references/verification-patterns.md`:
 - **Filtering / Classification**: Check both False Positives and False Negatives.
 - **External Reality Check**: Prefer compilers, linters, APIs, or primary sources over model self-belief.
 
+Apply only the depth-appropriate subset (see §2 and `references/verification-depth.md`):
+MINIMAL runs constraint checks only; STANDARD adds claims + consistency;
+ATTACK (§6) and TEST-AUDIT (§7) run in full at ADVERSARIAL and above.
+At lower depths run them as a proportional lightweight pass, never skip the
+reasoning entirely.
+
 *Observe rule: `INCONCLUSIVE` is never `PASS`.*
 
 ---
 
 ## 6. Attack the Output (Adversarial Pass)
 
-Stop confirming the answer; actively attempt to falsify it:
+Stop confirming the answer; actively attempt to falsify it (full pass at
+ADVERSARIAL and CRITICAL; lightweight proportional pass at STANDARD;
+skip at MINIMAL unless a STANDARD check already failed and escalated depth):
 - What is the simplest realistic scenario in which this conclusion is wrong?
 - Can I construct a concrete counterexample?
 - Is my conclusion stronger than the actual evidence supports?
@@ -99,7 +110,8 @@ Stop confirming the answer; actively attempt to falsify it:
 
 ## 7. Audit the Verification Suite (Test the Tests)
 
-Ask:
+Ask (full audit at ADVERSARIAL and above; lightweight mutation sanity-check
+at STANDARD; skip at MINIMAL unless escalated):
 > Could an incorrect answer pass my current tests?
 - Audit for circular reasoning (checking if the answer agrees with itself).
 - Perform a mental mutation test: Deliberately break the answer and confirm the suite catches it.
@@ -114,16 +126,17 @@ When a check fails:
 2. Perform a targeted revision to fix the root defect (narrow the scope, qualify the claim, add missing dimensions).
 3. **MANDATORY RE-TEST**: Invalidate prior test passes on affected claims. Re-run tests on the revised output.
 *Never declare "I revised it, therefore it is verified."*
+*Revision cap: after 2 consecutive failed re-tests on the same critical claim, stop patching and return `FAIL` (or `BLOCKED` if the blocker is missing access/evidence, per `INV-010`). Endless revision loops are themselves a verification failure (`VF-06`).*
 
 ---
 
 ## 9. Final Decision Gate
 
 Enforce the lifecycle invariants in `references/state-machine.md`:
-- **`PASS`**: All critical conditions met; critical claims supported; re-tests complete; no unresolved blind spots.
-- **`PASS_WITH_LIMITATIONS`**: Usable core, but bounded uncertainties or assumptions exist and are explicitly reported.
-- **`BLOCKED`**: Essential external evidence, runtime access, or tooling is missing. State what was checked and what is blocked.
-- **`FAIL`**: Critical constraints violated or repeated revisions failed.
+- **`PASS`**: All critical conditions met; critical claims supported; re-tests complete; no unresolved blind spots. Requires every critical test in `PASS` and every critical claim `VERIFIED` (or `SUPPORTED` only for explicitly non-critical refinements with disclosed limits — otherwise use `PASS_WITH_LIMITATIONS`).
+- **`PASS_WITH_LIMITATIONS`**: Usable core, but bounded uncertainties or assumptions exist and are explicitly reported. Every limitation MUST appear in the contract `final_verdict.disclosed_limitations[]` and in the user-facing output; an undisclosed limitation is `VF-04`/`VF-06` and fails the gate.
+- **`BLOCKED`**: Essential external evidence, runtime access, or tooling is missing. State what was checked and what is blocked. Never hallucinate verification (per `INV-010`). Every entry MUST appear in the contract `final_verdict.blocked_reasons[]` with the inaccessible claim/tool named.
+- **`FAIL`**: Critical constraints violated or repeated revisions failed. Name the violated `AC-XXX` / failed `CL-XXX` and the `F-XXX` failure code in the output; a bare `FAIL` without a cited failure is `VF-06`.
 
 ---
 
@@ -131,3 +144,4 @@ Enforce the lifecycle invariants in `references/state-machine.md`:
 
 Deliver the verified answer cleanly. Do not drown the user in internal audit logs unless requested.
 Disclose material limitations, external assumptions, or boundary conditions when they affect trust.
+For CRITICAL verdicts, append a compact audit trail: depth used, external check result, mutation result, re-test status, and open limitations.

@@ -9,7 +9,7 @@ Evaluates whether `agent-verification` correctly triggers when appropriate, avoi
 | `ACT-01` | "Hello! How are you today?" | NO | None | Pure conversational greeting. Zero factual/structural claims. |
 | `ACT-02` | "Sort this list of 5 names alphabetically." | YES | `MINIMAL` | Deterministic, constraint-driven task. Low risk. |
 | `ACT-03` | "Format this markdown table into valid JSON." | YES | `MINIMAL` | Schema and format preservation. |
-| `ACT-04` | "Summarize this 10-page legal contract in 3 bullet points." | YES | `STANDARD` | Semantic transformation where omissions alter legal meaning. |
+| `ACT-04` | "Summarize this 10-page legal contract in 3 bullet points." | YES | `ADVERSARIAL` | Semantic transformation where omissions alter legal meaning; lossy compression with legal consequence requires counterexample and assumption audit. |
 | `ACT-05` | "Compare React vs Svelte for a greenfield enterprise dashboard." | YES | `STANDARD` | Multi-dimensional comparison with architectural impact. |
 | `ACT-06` | "Write a Python script to parse access logs." | YES | `STANDARD` | Code generation requiring syntax & edge-case checks. |
 | `ACT-07` | "Which cloud provider should we migrate our core database to?" | YES | `ADVERSARIAL` | High impact, complex trade-offs, multiple competing assumptions. |
@@ -18,7 +18,7 @@ Evaluates whether `agent-verification` correctly triggers when appropriate, avoi
 | `ACT-10` | "Generate a zero-downtime database migration script for production." | YES | `CRITICAL` | High-risk, irreversible action with severe failure consequences. |
 | `ACT-11` | "Can you audit and verify this architecture proposal?" | YES | `ADVERSARIAL` | Explicit user demand for audit/verification. |
 | `ACT-12` | "What is the capital of France?" | YES | `MINIMAL` | Simple single-fact lookup. |
-| `ACT-13` | "Is this smart contract vulnerable to reentrancy attacks?" | YES | `CRITICAL` | Security-critical code verification. |
+| `ACT-13` | "Is this smart contract vulnerable to reentrancy attacks?" | YES | `CRITICAL` | Security-critical code verification; requires external validation plus mutation testing. |
 | `ACT-14` | "Explain quantum computing to a 10-year-old." | YES | `STANDARD` | Pedagogical simplification; requires checking that core physics isn't misrepresented. |
 | `ACT-15` | "Draft a cold sales outreach email." | NO | None | Subjective, creative copywriting. |
 | `ACT-16` | "Audit our IAM policies for privilege escalation risks." | YES | `CRITICAL` | Security compliance and authorization boundary. |

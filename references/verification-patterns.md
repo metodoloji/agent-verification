@@ -1,6 +1,6 @@
 # Verification Patterns
 
-Use this document when Step 3/Step 6 of `agent-verification` requires a concrete verification strategy.
+Use this document when Step 5 (§5 Generate and Run Tests) or Step 6 (§6 Attack the Output) of `agent-verification` requires a concrete verification strategy.
 The goal is not to use every pattern. Choose the smallest set of tests that can expose a meaningful failure.
 
 ---
@@ -56,11 +56,11 @@ For each important factual claim:
 CLAIM → SOURCE → DOES SOURCE ACTUALLY SUPPORT CLAIM?
 ```
 
-Distinguish:
-- `FULL SUPPORT`
-- `PARTIAL SUPPORT`
-- `NO SUPPORT`
-- `CONTRADICTION`
+Distinguish (mapped to contract claim `status`):
+- `VERIFIED` (= `FULL SUPPORT`)
+- `SUPPORTED` (= `PARTIAL SUPPORT`, usable core with disclosed gap)
+- `UNVERIFIED` (= `NO SUPPORT`, never PASS on critical claims)
+- `CONTRADICTED` (= `CONTRADICTION`, never PASS without re-test)
 
 Check scope: A source supporting *"X performed better in benchmark Y"* does not automatically support *"X is generally faster."*
 

@@ -1,6 +1,7 @@
 # State Machine & Hard Invariants
 
 This document formalizes the operational lifecycle and non-negotiable invariants of the `agent-verification` skill.
+Box-drawing characters below are decorative only: if a renderer or tool cannot parse them, follow the SKILL.md `TASK → CONTRACT → … → DECISION` sequence, which is authoritative.
 
 ---
 
@@ -8,11 +9,11 @@ This document formalizes the operational lifecycle and non-negotiable invariants
 
 ```text
                  ┌──────────────┐
-                 │    OUTPUT    │  (Unverified candidate artifact)
+                 │  TASK → OUTPUT │  (Unverified candidate + originating task)
                  └──────┬───────┘
                         ↓
               ┌───────────────────┐
-              │ DEFINE CONTRACT   │  (Objective, constraints, acceptance conditions)
+              │ DEFINE CONTRACT   │  (Draft from TASK, bind to OUTPUT)
               └─────────┬─────────┘
                         ↓
               ┌───────────────────┐
@@ -24,7 +25,7 @@ This document formalizes the operational lifecycle and non-negotiable invariants
               └─────────┬─────────┘
                         ↓
               ┌───────────────────┐
-              │   RUN TESTS       │  (Execute against evidence / reality)
+               │ RUN TESTS (TEST)  │  (Execute against evidence / reality)
               └─────────┬─────────┘
                         ↓
                 ┌───────────────┐
@@ -47,18 +48,18 @@ This document formalizes the operational lifecycle and non-negotiable invariants
                     └───┬───┘
                         ↓
               ┌───────────────────┐
-              │ ATTACK RESULT     │  (Counterexamples, boundary cases)
+               │ ATTACK (ATTACK)   │  (Counterexamples, boundary cases)
               └─────────┬─────────┘
                         ↓
               ┌───────────────────┐
-              │ TEST THE TESTS    │  (Audit verification blind spots / mutations)
+               │ TEST-AUDIT (AUDIT)│  (Blind spots / mutations)
               └─────────┬─────────┘
                         ↓
               ┌───────────────────┐
-              │   FINAL GATE      │
+               │ FINAL (DECISION)  │
               └───────┬───┬───┬───┘
                       ↓   ↓   ↓
-                    PASS  LIM BLOCKED / FAIL
+                    PASS  PASS_WITH_LIMITATIONS  BLOCKED / FAIL
 ```
 
 ---
@@ -69,6 +70,7 @@ This document formalizes the operational lifecycle and non-negotiable invariants
 - **`PASS_WITH_LIMITATIONS`**: Core requirements pass, but non-critical uncertainties or bounded assumptions remain and are explicitly disclosed to the user.
 - **`BLOCKED`**: Critical verification is impossible due to missing access, unavailable tools, or private external reality. The agent states what was checked, what was not checked, and what evidence is required.
 - **`FAIL`**: A critical constraint or acceptance condition fails, or repeated revisions fail to resolve the core contradiction. Output is rejected.
+- **Termination rule:** After 2 consecutive failed re-tests on the same critical claim, stop revising and return `FAIL` (or `BLOCKED` if the blocker is missing evidence/access). Log each revision attempt in the contract `revisions[]` array.
 
 ---
 
@@ -86,3 +88,7 @@ This document formalizes the operational lifecycle and non-negotiable invariants
 | **INV-008** | `TEST MUST BE FAILURE-CAPABLE`| A test that cannot theoretically fail given a wrong answer is not a verification test. |
 | **INV-009** | `CRITICAL CLAIMS REQUIRE TESTS`| Any assertion capable of changing the user's action or conclusion must be covered by a test. |
 | **INV-010** | `NEVER INVENT EVIDENCE` | If external tools, sources, or access are missing, report `BLOCKED`; never hallucinate verification. |
+| **INV-011** | `NO OPEN REVISION LOOPS` | A contract with `retest_required: true` and `retest_completed: false` can never close as `PASS` or `PASS_WITH_LIMITATIONS`. Enforce `revision_policy` exhaustion. |
+| **INV-012** | `MIXED CLAIMS GATE AS WEAK LINK` | In a mixed `VERIFIED` + `SUPPORTED`/`PARTIALLY_SUPPORTED` contract, the final verdict follows the weakest critical claim: any undisclosed or non-minor critical gap forces `PASS_WITH_LIMITATIONS` at best. |
+| **INV-013** | `DISCLOSE-AND-DOWNGRADE SCOPE` | `PASS_WITH_LIMITATIONS` covers bounded `SUPPORTED`/`PARTIALLY_SUPPORTED` gaps only; `UNVERIFIED`/`CONTRADICTED` criticals and `INCONCLUSIVE` critical tests can never be disclosed away — they force `FAIL`/`BLOCKED`/re-test. |
+| **INV-014** | `CRITICALITY IS EXPLICIT` | Gate-critical means `critical == true` on the contract object, never a bare `importance` label; dangling cross-ids are `VF-01`. |
