@@ -9,8 +9,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
-  "contract_version": "1.7",
-  "version_rule": "Bump minor on new optional fields, major on new gate invariants or required fields. Current 1.7 covers INV-001..INV-026, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity.",
+  "contract_version": "1.10",
+  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.10 covers INV-001..INV-036, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility.",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "depth_executed": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
@@ -22,7 +22,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "description": "Specific condition that must hold for acceptance",
       "critical": true,
       "test_family": "constraint | completeness | evidence | entailment | filtering | symmetry | external | assumption | scope | classification | transformation | recommendation | research | consistency | mutation | counterexample",
-      "gate_binding": "A critical AC MUST have >= 1 linked critical test; PASS requires that test in PASS."
+      "gate_binding": "A critical AC MUST have >= 1 linked critical test; PASS requires that test in PASS. The linked test's type MUST match this test_family (or a documented family mapping); a family mismatch is a blind spot (INV-034)."
     }
   ],
 
@@ -106,11 +106,23 @@ The Verification Contract is the formal, machine-readable data model that binds 
   ],
   "revision_policy": {
     "max_consecutive_failed_retests_per_claim": 2,
-    "on_exhaustion": "Return FAIL, or BLOCKED when the blocker is missing evidence/access (per INV-010)."
+    "on_exhaustion": "Return FAIL, or BLOCKED when the blocker is missing evidence/access (per INV-010).",
+    "attempt_cap_rule": "PASS/PASS_WITH_LIMITATIONS require every revisions[].attempt_number_for_claim to stay below the exhaustion point of this policy; reaching the cap without a resolving re-test forces the on_exhaustion verdict (INV-033)."
   },
 
   "final_verdict": {
     "status": "PASS | PASS_WITH_LIMITATIONS | BLOCKED | FAIL",
+    "status_rule": "Every PASS/PASS_WITH_LIMITATIONS MUST cite the decisive evidence_ids[] that carry the critical conclusion (INV-029) and set checklist_closure to true (INV-028); a verdict with no decisive evidence citation or with an open checklist box is ungrounded and blocks PASS.",
+    "checklist_closure": true,
+    "checklist_closure_rule": "checklist_closure MUST be true before any PASS/PASS_WITH_LIMITATIONS; every checklist box in contract §4 is bound to the gates it references (INV-028); inapplicable boxes are N/A with a reason (INV-032).",
+    "audit_trail": {
+      "depth_executed": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
+      "external_check_result": "string summarizing external-validation outcome (CRITICAL depth)",
+      "mutation_result": "string summarizing mutation-testing outcome (CRITICAL depth)",
+      "retest_status": "NOT_REQUIRED | REQUIRED | COMPLETED | FAILED",
+      "open_limitations": []
+    },
+    "audit_trail_rule": "The audit trail MUST be drawn from this contract and agree with it (INV-030): a trail citing depth_executed/verified_at_depth, critical observations, or revision counts that contradict the contract is VF-06 and blocks PASS.",
     "verified_at_depth": "depth actually executed (must match depth_executed)",
     "escalation_log": [
       {"from": "STANDARD", "to": "ADVERSARIAL", "trigger": "counterexample found", "added_checks": ["TEST-004"]}
@@ -160,10 +172,21 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Revision-link rule: every `revisions[]` entry MUST reference an existing `failures[].id` in `triggered_by_failure_id` and list the exact `changed_claim_ids[]`/`invalidated_test_ids[]`; a revision with a dangling failure id or empty change set is `VF-06`.
    - Monotonicity rule (`INV-026` enforcement): after a failure, the revision MUST narrow scope, add missing dimensions, or qualify the claim — never widen scope, drop a critical AC, or downgrade severity to manufacture a `PASS`.
    - Freshness rule (`INV-027` enforcement): a `VERIFIED` critical claim MUST rest on evidence/observations from the current contract run (same `contract_id`); pre-run cached evidence may inform but never alone verify — re-observe or downgrade to `SUPPORTED` with disclosure.
+   - Verdict-justification rule (`INV-029` enforcement): a `PASS`/`PASS_WITH_LIMITATIONS` verdict MUST name the decisive `evidence_ids[]` that carry each critical claim; a verdict with no decisive evidence citation (or citing evidence outside its scope) is `VF-07` and fails the gate.
+   - Audit-trail rule (`INV-030` enforcement): the `final_verdict.audit_trail` MUST be drawn from this contract and agree with it — `depth_executed`, `verified_at_depth`, critical-test `observation`s, `revisions[]` counts, `retest_status`, and `open_limitations` must match the contract (with `audit_trail.open_limitations` mirroring `final_verdict.disclosed_limitations[]`); a trail contradicting the contract is `VF-06` and blocks `PASS`.
+   - Depth-shortfall rule (`INV-031` enforcement): the depth actually executed MUST satisfy every required step of the claimed `depth_executed` (per verification-depth.md); executing fewer required steps is `VF-06` and forces a re-run at the claimed depth or a downgrade with disclosure.
+   - Failover re-test rule: if a `BLOCKED` reason is later cleared (access/tool restored), every claim that depended on it MUST be re-extracted and re-tested before any `PASS`; a verdict issued on a cleared blocker without re-test is `VF-06` (extends INV-003/INV-011).
+   - Checklist-applicability rule (`INV-032` enforcement): a checklist box (contract §4) MUST be marked `N/A` with a stated reason when its invariant does not apply at the claimed depth; leaving it unchecked without an `N/A` reason blocks `PASS` (`checklist_closure: false`).
+   - Attempt-cap rule (`INV-033` enforcement): a `PASS`/`PASS_WITH_LIMITATIONS` with any `revisions[].attempt_number_for_claim` at or beyond `revision_policy.max_consecutive_failed_retests_per_claim` without a resolving re-test is `VF-06` and forces the `on_exhaustion` verdict (`FAIL`/`BLOCKED`).
+   - Test-family rule (`INV-034` enforcement): every critical AC MUST have a linked critical test whose `type` matches the AC's declared `test_family` (or a mapping documented in the contract); a critical AC "covered" only by a mismatched test family is `VF-04` and blocks `PASS`.
+   - Open-blocker rule (`INV-035` enforcement): `PASS`/`PASS_WITH_LIMITATIONS` require an empty `final_verdict.blocked_reasons[]` and no unresolved critical `failures[]` (or blockers cleared via the failover `RE-EXTRACT → RE-TEST` loop); a non-empty blocker list or open critical failure at verdict time is `VF-06` and forces `BLOCKED`/`FAIL`.
+   - Version-compatibility rule (`INV-036` enforcement): the contract MUST declare the current `contract_version` (schema §1); a contract carrying an obsolete or unknown version MUST be migrated to the current version (fields added, rules re-read) before the gate runs — gating an obsolete contract is `VF-06`.
 
 ## 4. Pre-Decision Checklist (machine-checkable)
 
-Run this list before emitting `PASS` / `PASS_WITH_LIMITATIONS` — any NO blocks the verdict:
+Run this list before emitting `PASS` / `PASS_WITH_LIMITATIONS` — any NO blocks the verdict.
+Checklist-binding rule (`INV-028`): each box below is bound to the gate invariant(s) cited in its parens; an unchecked box means its invariant is unproven and MUST block `PASS`/`PASS_WITH_LIMITATIONS` (record as `checklist_closure: false` in `final_verdict`).
+Applicability rule (`INV-032`): a box whose invariant does not apply at the claimed depth MUST be marked `N/A` with a one-line reason; an `N/A` without a reason counts as unchecked and still blocks.
 ```text
 [ ] every critical claim has >= 1 linked critical test (INV-009/015)
 [ ] every critical test is in a terminal state, none RUNNING/PENDING (quiescence)
@@ -172,6 +195,10 @@ Run this list before emitting `PASS` / `PASS_WITH_LIMITATIONS` — any NO blocks
 [ ] evidence links bidirectional within scope (INV-017)
 [ ] no UNVERIFIED/CONTRADICTED criticals, no INCONCLUSIVE critical tests (INV-001/002/013)
 [ ] no open revision loops; cap respected; RE-EXTRACT preceded RE-TEST (INV-003/011/023)
+[ ] every attempt_number_for_claim below policy exhaustion point (INV-033)
+[ ] each critical AC has a linked test whose type matches its test_family (INV-034)
+[ ] blocked_reasons empty; no unresolved critical failures (INV-035)
+[ ] contract_version is current; obsolete version migrated before gating (INV-036)
 [ ] revisions link to failures; failures name catchers; revisions monotonic (INV-024/025/026)
 [ ] limitations disclosed + surfaced; BLOCKED entries named (INV-013 gate)
 [ ] depth_executed == verified_at_depth; escalations logged (INV-016/019)
