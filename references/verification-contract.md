@@ -9,8 +9,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
-  "contract_version": "1.14",
-  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.14 covers INV-001..INV-050, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log, non-vacuous criticality, escalation chain continuity, degraded-unit disclosure, complete revision invalidation, surfaced unchecked items, cited FAIL/BLOCKED verdicts.",
+  "contract_version": "1.15",
+  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.15 covers INV-001..INV-056, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log, non-vacuous criticality, escalation chain continuity, degraded-unit disclosure, complete revision invalidation, surfaced unchecked items, cited FAIL/BLOCKED verdicts, structured verdict citations, structured limitation/blocker entries, AC-test link reciprocity, traced revision re-tests, failure records for failing tests, artifact-bound CRITICAL attestation.",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "risk_level_rule": "risk_level MUST satisfy the depth triggers for the task class (verification-depth.md §1) and the tie-break rule (ambiguous → HIGHER); internal consistency with depth_executed (INV-016) never excuses under-selection — a task at/above an ACT-expected or §1-triggered depth gated at a lower risk_level is VF-04 (INV-037).",
@@ -23,7 +23,9 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "description": "Specific condition that must hold for acceptance",
       "critical": true,
       "test_family": "constraint | completeness | evidence | entailment | filtering | symmetry | external | assumption | scope | classification | transformation | recommendation | research | consistency | mutation | counterexample",
-      "gate_binding": "A critical AC MUST have >= 1 linked critical test; PASS requires that test in PASS. The linked test's type MUST match this test_family (or a documented family mapping); a family mismatch is a blind spot (INV-034)."
+      "gate_binding": "A critical AC MUST have >= 1 linked critical test; PASS requires that test in PASS. The linked test's type MUST match this test_family (or a documented family mapping); a family mismatch is a blind spot (INV-034).",
+      "test_ids": ["TEST-001"],
+      "link_rule": "test_ids MUST list every test covering this AC and each listed test MUST reciprocate via tests[].target_ac_ids (INV-053); a critical AC with no linked critical matching-family test is VF-01 and blocks PASS (INV-009/INV-034 at the AC level)."
     }
   ],
 
@@ -59,6 +61,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "id": "TEST-001",
       "type": "counterexample | constraint | evidence | mutation | consistency | symmetry | filtering | external | assumption | scope | completeness | entailment | classification | transformation",
       "target_claim_ids": ["CL-001"],
+      "target_ac_ids": ["AC-001"],
       "purpose": "What this test attempts to falsify",
       "status": "PENDING | RUNNING | PASS | FAIL | INCONCLUSIVE | INVALIDATED",
       "critical": true,
@@ -92,7 +95,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "detected_by_rule": "A failure MUST name the test that caught it; a failure with no detecting test is VF-01 (untested path) unless it IS the test-suite defect (VF-*) caught by audit.",
       "resolution": "Description of corrective revision required",
       "resolved": false,
-      "resolution_rule": "resolved may be set true only when a revision linked via triggered_by_failure_id has completed its re-test with a passing result on this failure's target_claim_ids; flipping resolved without that revision+re-test pair is VF-07 (INV-042)."
+      "resolution_rule": "resolved may be set true only when a revision linked via triggered_by_failure_id has completed its re-test with a passing result on this failure's target_claim_ids; flipping resolved without that revision+re-test pair is VF-07 (INV-042).",
+      "failure_record_rule": "Every critical test in FAIL or INCONCLUSIVE MUST appear here (via detected_by_test_id or target_claim_ids); an unrecorded failing test makes INV-035's no-unresolved-failures gate vacuously true and is VF-06 (INV-055)."
     }
   ],
 
@@ -104,6 +108,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "invalidated_test_ids": ["TEST-001"],
       "retest_required": true,
       "retest_completed": false,
+      "retest_test_ids": ["TEST-002"],
+      "retest_trace_rule": "retest_completed may be set true only when retest_test_ids resolves to >= 1 executed (terminal) test with a passing result whose target_claim_ids cover changed_claim_ids (INV-054); retest_completed without that trace is VF-07.",
       "attempt_number_for_claim": 1,
       "invalidation_rule": "invalidated_test_ids MUST include every test whose target_claim_ids intersect changed_claim_ids (INV-048, per §2 Claim Mutation); a revision leaving stale PASS tests attached to a changed claim is VF-06.",
       "monotonicity": "A revision MUST NOT widen claim scope, drop a critical AC, or downgrade a failure severity to reach PASS; scope-widening or severity-downgrading to pass is VF-07."
@@ -124,19 +130,28 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "depth_executed": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
       "external_check_result": "string summarizing external-validation outcome (CRITICAL depth)",
       "mutation_result": "string summarizing mutation-testing outcome (CRITICAL depth)",
+      "attestation_rule": "At CRITICAL depth, external_check_result and mutation_result MUST cite the ids of executed tests[] entries (external/mutation type, terminal) that produced them; prose-only attestation is VF-06 (INV-056).",
       "retest_status": "NOT_REQUIRED | REQUIRED | COMPLETED | FAILED",
       "retest_status_rule": "retest_status MUST be derived from revisions[]: NOT_REQUIRED only when no revision set retest_required; REQUIRED while any required re-test is outstanding; COMPLETED only when every retest_required revision has retest_completed true with a passing re-test; FAILED when a required re-test failed and the cap/exhaustion path applies (INV-041).",
       "open_limitations": []
     },
     "audit_trail_rule": "The audit trail MUST be drawn from this contract and agree with it (INV-030): a trail citing depth_executed/verified_at_depth, critical observations, or revision counts that contradict the contract is VF-06 and blocks PASS.",
     "verified_at_depth": "depth actually executed (must match depth_executed)",
+    "decisive_evidence_ids": ["EV-001"],
+    "decisive_evidence_rule": "PASS/PASS_WITH_LIMITATIONS MUST populate decisive_evidence_ids[] with the non-empty set of evidence[] ids carrying the critical conclusion (INV-029 citation, INV-051 enforcement); an empty array, a dangling id, or decisive evidence that appears only in prose leaves the verdict ungrounded (VF-07) and blocks PASS/PASS_WITH_LIMITATIONS.",
     "escalation_log": [
       {"from": "STANDARD", "to": "ADVERSARIAL", "trigger": "counterexample found", "added_checks": ["TEST-004"]}
     ],
     "escalation_log_rule": "Every escalation MUST be logged (INV-019), every escalation_log[].added_checks id MUST exist in tests[] and reference a test actually executed at/after the escalation (not PENDING/RUNNING), and any executed-depth downgrade below risk_level or below the task-class floor MUST be logged with its disclosure in disclosed_limitations[] (INV-043/044). Log entries MUST form an ordered chain (each entry's from equals the previous entry's to, depths ordered MINIMAL < STANDARD < ADVERSARIAL < CRITICAL, and the final entry's to equals depth_executed unless a disclosed downgrade intervened); a broken or self-contradicting chain is VF-06 (INV-046).",
-    "disclosed_limitations": [],
+    "disclosed_limitations": [
+      { "ref": "CL-002 | AC-003 | TEST-004 | NOT_CHECKED:<item>", "kind": "LIMITATION | NOT_CHECKED | BUDGET_DEFERRED | DOWNGRADE | NON_VERIFIED_CRITICAL", "detail": "What is unverified/unchecked and why it bounds the conclusion" }
+    ],
+    "limitation_entry_rule": "Every disclosed_limitations[] entry MUST be a structured object with a resolvable ref (CL-XXX/AC-XXX/TEST-XXX or an explicit NOT_CHECKED/BUDGET_DEFERRED item name) plus kind and detail (INV-047/049/052 enforcement); a bare string, an unresolvable ref, or an entry that names no checkable unit counts as undisclosed and blocks PASS/PASS_WITH_LIMITATIONS (VF-04).",
     "degradation_rule": "PASS_WITH_LIMITATIONS requires every non-VERIFIED critical claim (SUPPORTED/PARTIALLY_SUPPORTED) and every failing or untested non-critical AC/test to be enumerated in disclosed_limitations[] — bounded means listed, not merely asserted; a degradation the trail/verdict does not name is VF-04 and blocks PSS_LIM (INV-047).",
-    "blocked_reasons": []
+    "blocked_reasons": [
+      { "ref": "CL-XXX | AC-XXX | tool:<name>", "blocked_on": "Inaccessible claim/tool that could not be checked", "evidence_required": "What evidence or access would clear the blocker" }
+    ],
+    "blocked_entry_rule": "Every blocked_reasons[] entry MUST be a structured object naming the inaccessible claim/tool (resolvable ref) plus what evidence would clear it (INV-050/052 enforcement); an empty blocked_reasons[] on a BLOCKED verdict, an unresolvable ref, or a free-text-only entry is VF-06 and blocks the verdict.",
   }
 }
 ```
@@ -204,6 +219,12 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Evidence-scope rule (`INV-004` enforcement): every `evidence[]` item cited for a critical claim MUST record a `scope` covering that claim's `scope`; evidence narrower than the claim it supports caps the claim at `SUPPORTED` with the boundary restated (or the claim must be narrowed) — gating `VERIFIED` over over-broad scope is `EF-04`/`VF-07` and blocks `PASS` (the bidirectional-link check proves reciprocity, not scope coverage — check both).
    - Unchecked-surfacing rule (`INV-049` enforcement): every `NOT CHECKED` item from verification-patterns §17 (and every item deferred by the verification budget) that could change the conclusion MUST appear in `final_verdict.disclosed_limitations[]` or force a conditional/`BLOCKED` verdict; a clean-looking `PASS`/`PASS_WITH_LIMITATIONS` that silently drops such an item is `VF-04` and blocks the verdict.
    - Rejection-citation rule (`INV-050` enforcement): a `FAIL` verdict MUST cite the violated `AC-XXX`/failed `CL-XXX` with its `F-XXX` taxonomy code, and a `BLOCKED` verdict MUST name the inaccessible claim/tool in each `blocked_reasons[]` entry (what was checked, what was not, what evidence is required); a bare `FAIL` or a `BLOCKED` with no named reason is `VF-06` — justification gates every verdict, not only `PASS`.
+   - Verdict-citation rule (`INV-051` enforcement): `PASS`/`PASS_WITH_LIMITATIONS` MUST record the decisive evidence in `final_verdict.decisive_evidence_ids[]` — non-empty, each id resolvable in `evidence[]`, each item actually supporting a critical claim of this contract; an empty or dangling array, or decisive evidence stated only in prose, is an ungrounded verdict (`VF-07`) and blocks `PASS`/`PASS_WITH_LIMITATIONS` (closes INV-029: the citation is a field, not a sentence).
+   - Structured-entry rule (`INV-052` enforcement): every `disclosed_limitations[]` and `blocked_reasons[]` entry MUST be an object with a resolvable `ref` (CL-XXX/AC-XXX/TEST-XXX/tool) plus `kind`/`detail` (or `blocked_on`/`evidence_required`); a bare string, an unresolvable ref, or an entry naming no checkable unit counts as undisclosed/unstated and fails the corresponding gate (`VF-04` for limitations, `VF-06` for blockers) — INV-047/049/050/052 all inspect entries, not prose.
+   - AC-test-link rule (`INV-053` enforcement): `acceptance_conditions[].test_ids[]` and `tests[].target_ac_ids[]` MUST agree in both directions (each listed test reciprocates, each reciprocated id is listed); a critical AC with zero linked critical tests, a one-sided link, or a critical AC whose only linked tests fail its `test_family` match is `VF-01`/`VF-04` and blocks `PASS` (the AC-level mirror of INV-034/INV-038).
+   - Revision-retest-trace rule (`INV-054` enforcement): `revisions[].retest_completed: true` MUST be traceable through `retest_test_ids[]` to executed tests that (a) target the revision's `changed_claim_ids[]` and (b) ended in a passing terminal state; `retest_completed` without that trace, or with ids that resolve to tests on other claims, is an unproven resolution (`VF-07`) and cannot satisfy INV-041/INV-042.
+   - Failure-record rule (`INV-055` enforcement): every critical test in `FAIL` or `INCONCLUSIVE` MUST have a matching `failures[]` entry (via `detected_by_test_id` or `target_claim_ids[]` overlap) with a taxonomy `F-XXX` code; an unrecorded failing critical test makes INV-035's unresolved-failure gate vacuously true — the empty `failures[]` list is not evidence of health, and a `PASS`/`FAIL` decision over an unrecorded critical failure is `VF-06`.
+   - Critical-attestation rule (`INV-056` enforcement): at `CRITICAL` depth, `audit_trail.external_check_result` and `mutation_result` MUST cite the ids of executed tests[] (external / mutation type, terminal state) plus their observations; a prose-only attestation ("checked externally, looks fine") with no linked executed test is `VF-06` and blocks `PASS` — INV-031 proves steps were claimed, this rule binds them to artifacts.
 
 ## 4. Pre-Decision Checklist (machine-checkable)
 
@@ -244,4 +265,10 @@ Applicability rule (`INV-032`): a box whose invariant does not apply at the clai
 [ ] revisions link to failures; failures name catchers; revisions monotonic (INV-024/025/026)
 [ ] limitations disclosed + surfaced; BLOCKED entries named (INV-013 gate)
 [ ] depth_executed == verified_at_depth; escalations logged (INV-016/019)
+[ ] final_verdict.decisive_evidence_ids non-empty and resolvable for PASS/PWL (INV-051)
+[ ] disclosed_limitations/blocked_reasons entries structured with resolvable refs (INV-052)
+[ ] AC test_ids and tests.target_ac_ids agree both ways; critical AC linked (INV-053)
+[ ] every retest_completed revision traceable via retest_test_ids to passing tests on changed claims (INV-054)
+[ ] every critical FAIL/INCONCLUSIVE test has a matching coded failures[] entry (INV-055)
+[ ] CRITICAL external/mutation results cite executed test ids, not prose (INV-056)
 ```

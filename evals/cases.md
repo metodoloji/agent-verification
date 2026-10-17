@@ -1,6 +1,6 @@
 # Evaluation Cases: Agent Verification
 
-A test suite of 40 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
+A test suite of 44 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
 
 ---
 
@@ -275,3 +275,31 @@ A test suite of 40 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** Evidence `scope` covers one deployment; claim scope is universal — bidirectional links are still perfectly reciprocal (`INV-004`).
 - **Expected Behavior:** Evidence-scope rule checks scope coverage (not just link reciprocity): claim capped at `SUPPORTED` with the boundary restated, or narrowed; `VERIFIED` blocked as `EF-04`/`VF-07`.
 - **Expected Status:** `PASS_WITH_LIMITATIONS`.
+
+### CASE-041 - Prose-Grounded Verdict With Empty Citation Field
+- **Task:** Recommend a migration toolchain; verification completes cleanly.
+- **Candidate Output:** `PASS` whose decisive support is narrated in the answer ("as shown by the benchmark evidence…") while `final_verdict.decisive_evidence_ids[]` is empty or holds dangling ids.
+- **Planted Flaw:** INV-029 is satisfied only as prose — no resolvable field carries the critical conclusion (`INV-051`).
+- **Expected Behavior:** Verdict-citation rule requires a non-empty `decisive_evidence_ids[]` whose ids resolve to `evidence[]` supporting the critical claims; prose-only grounding is `VF-07` and blocks PASS/PSS.
+- **Expected Status:** `FAIL` (until citation field is populated and resolves).
+
+### CASE-042 - Free-Text Limitation List, Empty Blocker Object
+- **Task:** Audit a deployment where one source host is unreachable.
+- **Candidate Output:** `BLOCKED` whose `blocked_reasons[]` holds the sentence "could not reach the host"; PSS case where `disclosed_limitations[]` holds bare strings with no CL/AC/TEST refs.
+- **Planted Flaw:** Entries name no checkable unit — INV-047/049/050 "listing" cannot be machine-inspected (`INV-052`).
+- **Expected Behavior:** Structured-entry rule requires objects with resolvable `ref` + `kind`/`detail` (or `blocked_on`/`evidence_required`); bare strings count as undisclosed/unstated → `VF-04`/`VF-06`.
+- **Expected Status:** `BLOCKED` (structured entry) / `PASS_WITH_LIMITATIONS` (structured entries).
+
+### CASE-043 - Critical AC With No Linked Test and Untraced Re-test
+- **Task:** Verify a feature change; three critical ACs declared, one revision applied.
+- **Candidate Output:** All critical ACs marked covered while `acceptance_conditions[].test_ids[]` is empty (tests never reciprocate via `target_ac_ids[]`); `revisions[0].retest_completed: true` with empty `retest_test_ids[]`.
+- **Planted Flaw:** AC coverage and re-test completion are assertions without artifacts (`INV-053`/`INV-054`).
+- **Expected Behavior:** AC-test-link rule flags the unlinked critical AC (`VF-01`/`VF-04`); revision-retest-trace rule rejects the untraced completion (`VF-07`) — INV-041/INV-042 cannot be satisfied by a flag alone.
+- **Expected Status:** `FAIL`.
+
+### CASE-044 - Unrecorded Critical Failure and Prose-Only CRITICAL Attestation
+- **Task:** Security-critical release gate at `CRITICAL` depth.
+- **Candidate Output:** Critical test TEST-007 in `FAIL` with no matching `failures[]` entry (so `blocked_reasons[]` is empty and INV-035 "passes"); `audit_trail.external_check_result: "validated against staging"` and `mutation_result: "suite survived"` citing no test ids.
+- **Planted Flaw:** The empty `failures[]` list masks an unrecorded critical failure (vacuous INV-035), and both CRITICAL attestations are prose without artifacts (`INV-055`/`INV-056`).
+- **Expected Behavior:** Failure-record rule demands a coded `failures[]` entry (`VF-06`); critical-attestation rule demands executed test ids + observations (`VF-06`); both block PASS before any deeper analysis.
+- **Expected Status:** `FAIL`.

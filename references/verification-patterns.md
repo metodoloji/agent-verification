@@ -221,6 +221,8 @@ Priority:
 3. Structured database / API response
 4. Model reasoning (lowest priority; never proof)
 
+Attestation rule (`INV-056`): at CRITICAL depth the contract's `audit_trail.external_check_result` MUST cite the ids of the executed external-check tests (plus observations) — "checked externally, trust me" is an assertion, not an observation, and cannot carry the depth claim.
+
 ---
 
 ## 15. Mutation Testing

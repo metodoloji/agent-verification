@@ -51,6 +51,7 @@ TASK → ACTIVATION → SELECT DEPTH → EXECUTE VERIFICATION LIFECYCLE
   3. Mutation Testing (deliberately break output to test detector strength).
   4. Mandatory Re-test of any revised claims.
   5. Final Decision.
+- **Attestation rule (`INV-056`)**: the Final Decision's `external_check_result` and `mutation_result` MUST cite the ids of the executed external/mutation tests plus their observations; prose-only attestation ("validated, looks fine") is `VF-06` and blocks `PASS` — steps 2 and 3 are proven by artifacts, not by their mention.
 
 ---
 
