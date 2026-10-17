@@ -144,4 +144,5 @@ Enforce the lifecycle invariants in `references/state-machine.md`:
 
 Deliver the verified answer cleanly. Do not drown the user in internal audit logs unless requested.
 Disclose material limitations, external assumptions, or boundary conditions when they affect trust.
+Every `NOT CHECKED` item from patterns §17 that could change the conclusion MUST surface here as a limitation (or force `BLOCKED`); a clean-looking answer that silently drops its unchecked items is `VF-04`/`VF-06`.
 For CRITICAL verdicts, append a compact audit trail: depth used, external check result, mutation result, re-test status, and open limitations.

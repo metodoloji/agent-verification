@@ -82,3 +82,5 @@ Resolve ambiguity between neighboring codes before assigning:
 4. **False accept vs weak test?** If the suite signed off a wrong output → `VF-07`; if the defect is the test's insensitivity itself (mutation survives) → `VF-02`.
 5. **Premature pass vs blind spot?** If required tests/re-tests were skipped → `VF-06`; if the suite ran but a plausible mode was never modeled → `VF-04`.
 6. **Mismatch vs stale vs insufficient?** If the source never said it → `EF-02`; if it said it once but context changed → `EF-03`; if it said it narrowly and was stretched → `EF-04`.
+7. **Missing test vs blind spot?** If a known critical claim/AC has zero linked tests → `VF-01`; if tests exist but a plausible failure mode was never modeled → `VF-04`.
+8. **One-sided vs mismatched evidence?** If the claim and the evidence each point at the other within the same scope → linked (`INV-017` satisfied); if only one side lists the link → `EF-02`; if both link but scopes differ → `EF-04`.

@@ -92,3 +92,7 @@ Box-drawing characters below are decorative only: if a renderer or tool cannot p
 | **INV-012** | `MIXED CLAIMS GATE AS WEAK LINK` | In a mixed `VERIFIED` + `SUPPORTED`/`PARTIALLY_SUPPORTED` contract, the final verdict follows the weakest critical claim: any undisclosed or non-minor critical gap forces `PASS_WITH_LIMITATIONS` at best. |
 | **INV-013** | `DISCLOSE-AND-DOWNGRADE SCOPE` | `PASS_WITH_LIMITATIONS` covers bounded `SUPPORTED`/`PARTIALLY_SUPPORTED` gaps only; `UNVERIFIED`/`CONTRADICTED` criticals and `INCONCLUSIVE` critical tests can never be disclosed away — they force `FAIL`/`BLOCKED`/re-test. |
 | **INV-014** | `CRITICALITY IS EXPLICIT` | Gate-critical means `critical == true` on the contract object, never a bare `importance` label; dangling cross-ids are `VF-01`. |
+| **INV-015** | `CRITICAL AC NEEDS A TEST` | A critical acceptance condition with zero linked critical tests is `VF-01` and blocks `PASS`. |
+| **INV-016** | `DEPTH EQUALS RISK CLAIM` | `risk_level` MUST equal the depth actually executed; claiming a higher level without its mandatory checks (or hiding an escalation) is `VF-06`. |
+| **INV-017** | `EVIDENCE LINKS ARE BIDIRECTIONAL` | `claims[].evidence_ids[]` and `evidence[].supports_claim_ids[]` MUST agree within the same scope; one-sided links are `EF-02`. |
+| **INV-018** | `NO BARE PASS` | A critical `PASS` without a recorded `observation` is `VF-06`. |

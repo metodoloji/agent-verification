@@ -18,6 +18,8 @@ TASK → ACTIVATION → SELECT DEPTH → EXECUTE VERIFICATION LIFECYCLE
   1. Build minimal Contract (Constraints only).
   2. Run Constraint & Format Checks.
   3. Final Decision (`PASS` / `FAIL`; `BLOCKED` if a required check cannot run, `PASS_WITH_LIMITATIONS` if a non-critical gap must be disclosed — per `INV-010`, never downgrade an unrunnable check to `PASS`).
+- **Depth floor:** a task selected (or escalated) to a higher depth MUST execute all of that depth's required steps; running fewer steps while keeping the higher `risk_level` label violates `INV-016`. Conversely, executing higher-depth checks without logging the escalation violates `INV-016`.
+- **MINIMAL floor:** even at MINIMAL, a `PASS` on a critical test requires a one-line `observation` (per `INV-018`); constraint-only never means evidence-free on criticals.
 
 ### STANDARD
 - **Trigger:** Default for correctness-sensitive factual, analytical, or structural tasks.
