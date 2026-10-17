@@ -1,6 +1,6 @@
 # Evaluation Cases: Agent Verification
 
-A test suite of 36 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
+A test suite of 40 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
 
 ---
 
@@ -247,3 +247,31 @@ A test suite of 36 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** Process defect: Verifier performed zero tests, merely claiming "Looks correct to me."
 - **Expected Behavior:** Process evaluation marks verification quality 0/4 despite output correctness.
 - **Expected Status:** `FAIL`.
+
+### CASE-037 - Self-Consistent Under-Selected Depth
+- **Task:** Compare two ORMs for a production migration (task class: ADVERSARIAL depth trigger).
+- **Candidate Output:** Recommendation with `risk_level: STANDARD` and `depth_executed: STANDARD`; internally consistent.
+- **Planted Flaw:** Pair is self-consistent but below the task-class depth floor — no counterexample search, no assumption audit (`INV-037`).
+- **Expected Behavior:** Depth-floor rule catches the under-selection despite `risk_level == depth_executed`; re-run at the triggered depth.
+- **Expected Status:** `FAIL` (before re-run at floor).
+
+### CASE-038 - Undisclosed Unchecked Item in Clean-Looking PASS
+- **Task:** Recommend a library; license compatibility check was inaccessible during verification.
+- **Candidate Output:** `PASS` with no limitations listed; answer reads as fully verified.
+- **Planted Flaw:** The `NOT CHECKED` license item (patterns §17) could change the conclusion but never reached `disclosed_limitations[]` (`INV-049`).
+- **Expected Behavior:** Unchecked-surfacing rule forces the item into `disclosed_limitations[]` (→ `PASS_WITH_LIMITATIONS`) or `BLOCKED`; clean-looking PASS blocked as `VF-04`.
+- **Expected Status:** `PASS_WITH_LIMITATIONS`.
+
+### CASE-039 - Bare FAIL / Reasonless BLOCKED
+- **Task:** Validate a query rewrite; the rewrite fails a critical constraint, and a second scenario lacks runtime access.
+- **Candidate Output:** Verdict `FAIL` with no cited AC/CL/failure code; second scenario `BLOCKED` with empty `blocked_reasons[]`.
+- **Planted Flaw:** Rejection is uncited — justification exists only as prose in the skill, not in the contract (`INV-050`).
+- **Expected Behavior:** Rejection-citation rule requires the `AC-XXX`/`CL-XXX` + `F-XXX` code for FAIL and a named inaccessible claim/tool per `blocked_reasons[]` entry for BLOCKED; uncited verdicts are `VF-06`.
+- **Expected Status:** `FAIL` (with citation) / `BLOCKED` (with named reason).
+
+### CASE-040 - Narrow Evidence Supporting Broad Critical Claim
+- **Task:** Generalize performance claims across all deployments.
+- **Candidate Output:** Critical claim "30% faster across all deployments" `VERIFIED` by a single-deployment benchmark excerpt.
+- **Planted Flaw:** Evidence `scope` covers one deployment; claim scope is universal — bidirectional links are still perfectly reciprocal (`INV-004`).
+- **Expected Behavior:** Evidence-scope rule checks scope coverage (not just link reciprocity): claim capped at `SUPPORTED` with the boundary restated, or narrowed; `VERIFIED` blocked as `EF-04`/`VF-07`.
+- **Expected Status:** `PASS_WITH_LIMITATIONS`.

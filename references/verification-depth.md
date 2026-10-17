@@ -83,4 +83,4 @@ When constrained by execution time, token limits, or tool calls:
 *Never exhaust the verification budget checking trivial formatting while critical claims remain unverified.*
 
 Budget cuts never waive external validation for CRITICAL tasks: if the mandatory independent check cannot run, verdict is `BLOCKED`, never a downgraded `PASS`.
-Conflict rule: when budget pressure collides with a mandatory check, the mandatory check wins; record the deferred cosmetic items in `final_verdict.disclosed_limitations[]` instead of silently dropping them.
+Conflict rule: when budget pressure collides with a mandatory check, the mandatory check wins; record the deferred cosmetic items in `final_verdict.disclosed_limitations[]` instead of silently dropping them. Deferred-check rule (`INV-049` enforcement): any budget-deferred item that could change the conclusion MUST appear in `disclosed_limitations[]` or force conditional/`BLOCKED` — silently dropped deferrals are `VF-04` and block `PASS`/`PASS_WITH_LIMITATIONS`.

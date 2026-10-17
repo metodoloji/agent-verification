@@ -154,11 +154,13 @@ Run the machine-checkable Pre-Decision Checklist in `references/verification-con
 - **Escalation chain (`INV-046`)**: `escalation_log[]` must chain (`from` = previous `to`, depth order, final `to` = `depth_executed` unless disclosed downgrade) — a broken or self-contradicting chain is `VF-06`.
 - **Enumerated degradations (`INV-047`)**: PSS_LIM requires every non-`VERIFIED` critical claim and every failing/untested non-critical AC/test listed in `disclosed_limitations[]` — "bounded" means listed, not asserted; unnamed degradation is `VF-04`.
 - **Complete invalidation (`INV-048`)**: `revisions[].invalidated_test_ids[]` MUST cover every test targeting `changed_claim_ids[]` — a stale `PASS` test on a changed claim is `VF-06` and cannot support the verdict.
+- **Surfaced unchecked items (`INV-049`)**: every `NOT CHECKED` item (patterns §17) or budget-deferred check that could change the conclusion MUST land in `final_verdict.disclosed_limitations[]` or force a conditional/`BLOCKED` verdict — an unchecked item silently dropped from a clean-looking PASS is `VF-04`.
+- **Cited rejection (`INV-050`)**: a `FAIL` MUST cite the violated `AC-XXX`/failed `CL-XXX` + its `F-XXX` code, and a `BLOCKED` MUST name the inaccessible claim/tool in every `blocked_reasons[]` entry — justification is required of every verdict, not only PASS.
 Enforce the lifecycle invariants in `references/state-machine.md`:
 - **`PASS`**: All critical conditions met; critical claims supported; re-tests complete; no unresolved blind spots. Requires every critical test in `PASS` and every critical claim `VERIFIED` (or `SUPPORTED` only for explicitly non-critical refinements with disclosed limits — otherwise use `PASS_WITH_LIMITATIONS`).
 - **`PASS_WITH_LIMITATIONS`**: Usable core, but bounded uncertainties or assumptions exist and are explicitly reported. Every limitation MUST appear in the contract `final_verdict.disclosed_limitations[]` and in the user-facing output; an undisclosed limitation is `VF-04`/`VF-06` and fails the gate.
-- **`BLOCKED`**: Essential external evidence, runtime access, or tooling is missing. State what was checked and what is blocked. Never hallucinate verification (per `INV-010`). Every entry MUST appear in the contract `final_verdict.blocked_reasons[]` with the inaccessible claim/tool named.
-- **`FAIL`**: Critical constraints violated or repeated revisions failed. Name the violated `AC-XXX` / failed `CL-XXX` and the `F-XXX` failure code in the output; a bare `FAIL` without a cited failure is `VF-06`.
+- **`BLOCKED`**: Essential external evidence, runtime access, or tooling is missing. State what was checked and what is blocked. Never hallucinate verification (per `INV-010`). Every entry MUST appear in the contract `final_verdict.blocked_reasons[]` with the inaccessible claim/tool named — a `BLOCKED` with no named reason is `VF-06` (`INV-050`).
+- **`FAIL`**: Critical constraints violated or repeated revisions failed. Name the violated `AC-XXX` / failed `CL-XXX` and the `F-XXX` failure code in the output; a bare `FAIL` without a cited failure is `VF-06` (`INV-050` — enforced in the contract `status_rule`, not merely requested here).
 
 ---
 
@@ -166,6 +168,6 @@ Enforce the lifecycle invariants in `references/state-machine.md`:
 
 Deliver the verified answer cleanly. Do not drown the user in internal audit logs unless requested.
 Disclose material limitations, external assumptions, or boundary conditions when they affect trust.
-Every `NOT CHECKED` item from patterns §17 that could change the conclusion MUST surface here as a limitation (or force `BLOCKED`); a clean-looking answer that silently drops its unchecked items is `VF-04`/`VF-06`.
+Every `NOT CHECKED` item from patterns §17 that could change the conclusion MUST surface here as a limitation (or force `BLOCKED`); a clean-looking answer that silently drops its unchecked items is `VF-04`/`VF-06` (`INV-049` — machine-checked against `disclosed_limitations[]`, not just asserted in prose).
 For CRITICAL verdicts, append a compact audit trail: depth used, external check result, mutation result, re-test status, and open limitations.
 Audit-trail fields MUST be drawn from the contract (`depth_executed`, `verified_at_depth`, `escalation_log[]`, critical test `observation`s, `revisions[]`); a trail that contradicts the contract is `VF-06`. For CRITICAL verdicts these fields are consolidated into `final_verdict.audit_trail[]` and MUST agree with the contract (`INV-030`); a `BLOCKED` reason cleared later forces `RE-EXTRACT → RE-TEST` on dependent claims before any PASS (failover rule).

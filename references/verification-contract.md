@@ -9,8 +9,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
-  "contract_version": "1.13",
-  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.13 covers INV-001..INV-048, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log, non-vacuous criticality, escalation chain continuity, degraded-unit disclosure, complete revision invalidation.",
+  "contract_version": "1.14",
+  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.14 covers INV-001..INV-050, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log, non-vacuous criticality, escalation chain continuity, degraded-unit disclosure, complete revision invalidation, surfaced unchecked items, cited FAIL/BLOCKED verdicts.",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "risk_level_rule": "risk_level MUST satisfy the depth triggers for the task class (verification-depth.md §1) and the tie-break rule (ambiguous → HIGHER); internal consistency with depth_executed (INV-016) never excuses under-selection — a task at/above an ACT-expected or §1-triggered depth gated at a lower risk_level is VF-04 (INV-037).",
@@ -117,7 +117,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
 
   "final_verdict": {
     "status": "PASS | PASS_WITH_LIMITATIONS | BLOCKED | FAIL",
-    "status_rule": "Every PASS/PASS_WITH_LIMITATIONS MUST cite the decisive evidence_ids[] that carry the critical conclusion (INV-029) and set checklist_closure to true (INV-028); a verdict with no decisive evidence citation or with an open checklist box is ungrounded and blocks PASS.",
+    "status_rule": "Every PASS/PASS_WITH_LIMITATIONS MUST cite the decisive evidence_ids[] that carry the critical conclusion (INV-029) and set checklist_closure to true (INV-028); a verdict with no decisive evidence citation or with an open checklist box is ungrounded and blocks PASS. Beyond PASS/PSS, verdict justification is still machine-checked: a FAIL MUST cite the violated AC-XXX / failed CL-XXX together with its F-XXX failure code, and a BLOCKED MUST name the inaccessible claim/tool per blocked_reasons[] entry — a bare FAIL or a reasonless BLOCKED is VF-06 (INV-050).",
     "checklist_closure": true,
     "checklist_closure_rule": "checklist_closure MUST be true before any PASS/PASS_WITH_LIMITATIONS; every checklist box in contract §4 is bound to the gates it references (INV-028); inapplicable boxes are N/A with a reason (INV-032).",
     "audit_trail": {
@@ -201,6 +201,9 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Escalation-chain rule (`INV-046` enforcement): `escalation_log[]` entries MUST form an ordered chain — each entry's `from` equals the previous entry's `to`, depths follow MINIMAL < STANDARD < ADVERSARIAL < CRITICAL, and the final entry's `to` equals `depth_executed` unless a disclosed downgrade (INV-043) intervened; a broken or self-contradicting chain is `VF-06`.
    - Degradation-disclosure rule (`INV-047` enforcement): `PASS_WITH_LIMITATIONS` requires every non-`VERIFIED` critical claim (`SUPPORTED`/`PARTIALLY_SUPPORTED`) and every failing or untested non-critical AC/test to be enumerated in `disclosed_limitations[]`; "bounded" means listed — an unnamed degradation is `VF-04` and blocks `PASS_WITH_LIMITATIONS` (reclassify: re-test, or `BLOCKED`/`FAIL`).
    - Revision-invalidation rule (`INV-048` enforcement): `revisions[].invalidated_test_ids[]` MUST include every test whose `target_claim_ids[]` intersect `changed_claim_ids[]` (§2 Claim Mutation); a revision leaving a stale `PASS` test attached to a changed claim is `VF-06` and its result cannot support the verdict.
+   - Evidence-scope rule (`INV-004` enforcement): every `evidence[]` item cited for a critical claim MUST record a `scope` covering that claim's `scope`; evidence narrower than the claim it supports caps the claim at `SUPPORTED` with the boundary restated (or the claim must be narrowed) — gating `VERIFIED` over over-broad scope is `EF-04`/`VF-07` and blocks `PASS` (the bidirectional-link check proves reciprocity, not scope coverage — check both).
+   - Unchecked-surfacing rule (`INV-049` enforcement): every `NOT CHECKED` item from verification-patterns §17 (and every item deferred by the verification budget) that could change the conclusion MUST appear in `final_verdict.disclosed_limitations[]` or force a conditional/`BLOCKED` verdict; a clean-looking `PASS`/`PASS_WITH_LIMITATIONS` that silently drops such an item is `VF-04` and blocks the verdict.
+   - Rejection-citation rule (`INV-050` enforcement): a `FAIL` verdict MUST cite the violated `AC-XXX`/failed `CL-XXX` with its `F-XXX` taxonomy code, and a `BLOCKED` verdict MUST name the inaccessible claim/tool in each `blocked_reasons[]` entry (what was checked, what was not, what evidence is required); a bare `FAIL` or a `BLOCKED` with no named reason is `VF-06` — justification gates every verdict, not only `PASS`.
 
 ## 4. Pre-Decision Checklist (machine-checkable)
 
@@ -231,6 +234,13 @@ Applicability rule (`INV-032`): a box whose invariant does not apply at the clai
 [ ] escalation_log forms an ordered chain ending at depth_executed (INV-046)
 [ ] every non-VERIFIED critical + failing/untested non-critical AC enumerated in disclosed_limitations (INV-047)
 [ ] invalidated_test_ids covers every test of changed claims (INV-048)
+[ ] evidence scope covers the claim scope it is cited for; over-broad claims capped (INV-004)
+[ ] every NOT CHECKED item able to change the conclusion surfaced in disclosed_limitations or forced conditional/BLOCKED (INV-049)
+[ ] FAIL cites AC/CL + F-code; BLOCKED names each inaccessible claim/tool (INV-050)
+[ ] supporting evidence fresh from this run, not a stale prior contract (INV-027)
+[ ] verdict cites decisive evidence_ids[] carrying the critical conclusion (INV-029)
+[ ] audit_trail agrees with the contract fields it reports (INV-030)
+[ ] every required step of depth_executed executed, none skipped (INV-031)
 [ ] revisions link to failures; failures name catchers; revisions monotonic (INV-024/025/026)
 [ ] limitations disclosed + surfaced; BLOCKED entries named (INV-013 gate)
 [ ] depth_executed == verified_at_depth; escalations logged (INV-016/019)

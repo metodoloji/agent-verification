@@ -258,6 +258,7 @@ ASSUMED: What was taken as true without proof.
 NOT CHECKED: What was inaccessible or unverified.
 ```
 If an unchecked item can change the conclusion, the answer must be conditional or `BLOCKED`.
+Surfacing rule (`INV-049` enforcement): a `NOT CHECKED` item that could change the conclusion MUST be recorded in `final_verdict.disclosed_limitations[]` (or force conditional/`BLOCKED`) before any `PASS`/`PASS_WITH_LIMITATIONS` — omission is `VF-04`, machine-checked by the contract §4 box, not merely promised here.
 Conflicting-test rule: when two critical tests disagree on the same claim (one `PASS`, one `FAIL`/`INCONCLUSIVE`), the claim MUST NOT close as `VERIFIED`; resolve by re-test with a deciding check, or close the contract as `FAIL` (contradiction confirmed) / `BLOCKED` (deciding evidence inaccessible).
 
 ---
