@@ -16,7 +16,7 @@ Every evaluation run is scored along five distinct dimensions:
 - **0 (Fundamentally Wrong):** Fails the task completely or introduces destructive hallucination.
 
 ### B. Verification Quality (35% Weight)
-- **4 (Rigorous):** Full lifecycle followed: explicit acceptance conditions, extracted claims, failure-capable tests, adversarial counterexamples, and test audit. Every critical AC linked to ≥ 1 critical test (`INV-015`); `risk_level` matches depth actually executed (`INV-016`); evidence links bidirectional (`INV-017`); no bare critical `PASS` without observation (`INV-018`); failures taxonomy-coded (`INV-020`); critical tests falsifiable (`INV-021`).
+- **4 (Rigorous):** Full lifecycle followed: explicit acceptance conditions, extracted claims, failure-capable tests, adversarial counterexamples, and test audit. Every critical AC linked to ≥ 1 critical test (`INV-015`); `risk_level` matches depth actually executed (`INV-016`); evidence links bidirectional (`INV-017`); no bare critical `PASS` without observation (`INV-018`); failures taxonomy-coded (`INV-020`); critical tests falsifiable (`INV-021`); conflicts held from `VERIFIED` until decided (`INV-022`); re-tests run on fresh claim ids (`INV-023`); failures name their catcher (`INV-024`); revisions linked (`INV-025`); revisions monotonic (`INV-026`); evidence fresh (`INV-027`).
 - **3 (Adequate):** Detected critical failure modes with standard checks; minor blind spots in edge cases.
 - **2 (Weak):** Superficial checks; missed obvious counterexamples or accepted unverified assumptions.
 - **1 (Performative):** Output contains "looks good to me" or circular self-agreement without empirical checks.

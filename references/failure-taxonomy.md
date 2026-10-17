@@ -84,3 +84,8 @@ Resolve ambiguity between neighboring codes before assigning:
 6. **Mismatch vs stale vs insufficient?** If the source never said it → `EF-02`; if it said it once but context changed → `EF-03`; if it said it narrowly and was stretched → `EF-04`.
 7. **Missing test vs blind spot?** If a known critical claim/AC has zero linked tests → `VF-01`; if tests exist but a plausible failure mode was never modeled → `VF-04`.
 8. **One-sided vs mismatched evidence?** If the claim and the evidence each point at the other within the same scope → linked (`INV-017` satisfied); if only one side lists the link → `EF-02`; if both link but scopes differ → `EF-04`.
+9. **Conflicting tests vs false rejection?** If two critical tests disagree on one claim → hold `VERIFIED` (`INV-022`), add a deciding check; if a single test rejects a correct output due to its own flaw → `VF-08`.
+10. **Stale re-test vs premature pass?** If the re-test ran on pre-mutation claim ids → stale, `VF-06` (`INV-023`); if required re-tests were skipped entirely → `VF-06` (`INV-011`).
+11. **Orphan failure vs suite defect?** If an output failure names no detecting test → `VF-01` (`INV-024`); if the defect IS the suite (weak/circular/blind) → `VF-02`/`VF-03`/`VF-04` caught by audit.
+12. **Fix vs cheat?** If the revision narrows scope, adds dimensions, or qualifies certainty → legitimate; if it widens scope, drops a critical AC, or downgrades severity to pass → `VF-07` (`INV-026`).
+13. **Fresh vs stale evidence?** If the supporting evidence/observation comes from the current run (`contract_id` matches) → fresh; if it is pre-run cache with no re-observation → downgrade to `SUPPORTED` or re-observe (`INV-027`).

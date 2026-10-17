@@ -26,3 +26,5 @@ Evaluates whether `agent-verification` correctly triggers when appropriate, avoi
 | `ACT-18` | "Should we issue a public recall for product batch #4402?" | YES | `CRITICAL` | Severe financial and liability impact. |
 | `ACT-19` | "Translate this error message to German." | YES | `MINIMAL` | Exact semantic meaning preservation. |
 | `ACT-20` | "Why is our checkout API failing under 500 RPS?" | YES | `ADVERSARIAL` | Root cause analysis with potential for false attribution. |
+| `ACT-21` | "Is this one-line typo fix correct?" | YES | `MINIMAL` | Single-constraint check with negligible blast radius; depth floor still requires one-line observation on criticals. |
+| `ACT-22` | "Migrate our auth service to a new provider this Friday." | YES | `CRITICAL` | Irreversible production change; tie-break rule forces higher depth when STANDARD scope meets CRITICAL impact. |

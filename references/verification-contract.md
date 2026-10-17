@@ -9,7 +9,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
-  "contract_version": "1.5",
+  "contract_version": "1.7",
+  "version_rule": "Bump minor on new optional fields, major on new gate invariants or required fields. Current 1.7 covers INV-001..INV-026, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity.",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "depth_executed": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
@@ -85,6 +86,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "severity_rule": "CRITICAL severity on a gate-critical claim/test forces FAIL or BLOCKED; MAJOR forces re-test + LIM at best; MINOR may pass with disclosure.",
       "target_claim_ids": ["CL-001"],
       "detected_by_test_id": "TEST-001",
+      "detected_by_rule": "A failure MUST name the test that caught it; a failure with no detecting test is VF-01 (untested path) unless it IS the test-suite defect (VF-*) caught by audit.",
       "resolution": "Description of corrective revision required",
       "resolved": false
     }
@@ -98,7 +100,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "invalidated_test_ids": ["TEST-001"],
       "retest_required": true,
       "retest_completed": false,
-      "attempt_number_for_claim": 1
+      "attempt_number_for_claim": 1,
+      "monotonicity": "A revision MUST NOT widen claim scope, drop a critical AC, or downgrade a failure severity to reach PASS; scope-widening or severity-downgrading to pass is VF-07."
     }
   ],
   "revision_policy": {
@@ -151,3 +154,25 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Failure-code rule: every failure MUST carry a `category` + taxonomy `type` label matching failure-taxonomy.md; an unclassifiable failure blocks `PASS`. `CRITICAL` severity on a gate-critical claim/test forces `FAIL` (or `BLOCKED` when the blocker is missing evidence/access); `MAJOR` forces re-test and `PASS_WITH_LIMITATIONS` at best.
    - Falsifiability rule (`INV-008` enforcement): a critical test MUST declare `falsifiability` (a concrete wrong-answer input it would catch); a test that cannot name one is `VF-02` and blocks `PASS`.
    - Assumption-evidence rule: a critical `UNVERIFIED` assumption with empty `evidence_ids[]` blocks `PASS`; if the external check is impossible → `BLOCKED` (`INV-010`), else verify/conditionalize + re-test.
+   - Conflicting-tests rule: contradictory critical test outcomes on the same claim (`PASS` vs `FAIL`/`INCONCLUSIVE`) block `VERIFIED`; resolve with a deciding re-test or close `FAIL`/`BLOCKED`.
+   - Revision-order rule: `RE-EXTRACT` MUST precede `RE-TEST` after any claim mutation (per state-machine `REVISE → RE-EXTRACT → RE-TEST`); a re-test executed on stale claim ids is `VF-06`.
+   - Detection rule: every non-audit failure MUST name its `detected_by_test_id`; a failure with no detecting test is `VF-01` unless it is itself a suite defect (`VF-*`) caught by `TEST-AUDIT`.
+   - Revision-link rule: every `revisions[]` entry MUST reference an existing `failures[].id` in `triggered_by_failure_id` and list the exact `changed_claim_ids[]`/`invalidated_test_ids[]`; a revision with a dangling failure id or empty change set is `VF-06`.
+   - Monotonicity rule (`INV-026` enforcement): after a failure, the revision MUST narrow scope, add missing dimensions, or qualify the claim — never widen scope, drop a critical AC, or downgrade severity to manufacture a `PASS`.
+   - Freshness rule (`INV-027` enforcement): a `VERIFIED` critical claim MUST rest on evidence/observations from the current contract run (same `contract_id`); pre-run cached evidence may inform but never alone verify — re-observe or downgrade to `SUPPORTED` with disclosure.
+
+## 4. Pre-Decision Checklist (machine-checkable)
+
+Run this list before emitting `PASS` / `PASS_WITH_LIMITATIONS` — any NO blocks the verdict:
+```text
+[ ] every critical claim has >= 1 linked critical test (INV-009/015)
+[ ] every critical test is in a terminal state, none RUNNING/PENDING (quiescence)
+[ ] every critical test in PASS has observation + falsifiability (INV-018/021)
+[ ] every critical claim VERIFIED has EXTERNAL_TOOL/PRIMARY_DOC evidence or executed observation (Evidence rule)
+[ ] evidence links bidirectional within scope (INV-017)
+[ ] no UNVERIFIED/CONTRADICTED criticals, no INCONCLUSIVE critical tests (INV-001/002/013)
+[ ] no open revision loops; cap respected; RE-EXTRACT preceded RE-TEST (INV-003/011/023)
+[ ] revisions link to failures; failures name catchers; revisions monotonic (INV-024/025/026)
+[ ] limitations disclosed + surfaced; BLOCKED entries named (INV-013 gate)
+[ ] depth_executed == verified_at_depth; escalations logged (INV-016/019)
+```

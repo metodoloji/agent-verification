@@ -68,9 +68,9 @@ immediately after generating (per `references/verification-contract.md` and
 
 ## 4. Extract Critical Claims
 
-Decompose the candidate output into independently testable claims:
+Decompose the candidate output into independently testable claims (one row per claim, matching the contract `claims[]` schema):
 ```text
-CLAIM | IMPORTANCE | SCOPE | REQUIRED EVIDENCE | FAILURE MODE
+ID | TEXT | CRITICAL (true IFF importance==CRITICAL) | SCOPE | EVIDENCE_IDS | ASSUMPTION_IDS | TEST_IDS | STATUS
 ```
 Prioritize claims that carry the central conclusion or could change the user's action.
 
@@ -132,6 +132,7 @@ When a check fails:
 
 ## 9. Final Decision Gate
 
+Run the machine-checkable Pre-Decision Checklist in `references/verification-contract.md` §4 before emitting any `PASS` verdict — any unchecked box blocks the verdict.
 Enforce the lifecycle invariants in `references/state-machine.md`:
 - **`PASS`**: All critical conditions met; critical claims supported; re-tests complete; no unresolved blind spots. Requires every critical test in `PASS` and every critical claim `VERIFIED` (or `SUPPORTED` only for explicitly non-critical refinements with disclosed limits — otherwise use `PASS_WITH_LIMITATIONS`).
 - **`PASS_WITH_LIMITATIONS`**: Usable core, but bounded uncertainties or assumptions exist and are explicitly reported. Every limitation MUST appear in the contract `final_verdict.disclosed_limitations[]` and in the user-facing output; an undisclosed limitation is `VF-04`/`VF-06` and fails the gate.

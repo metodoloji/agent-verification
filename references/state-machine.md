@@ -99,3 +99,9 @@ Box-drawing characters below are decorative only: if a renderer or tool cannot p
 | **INV-019** | `DEPTH IS ATTESTED` | `final_verdict.verified_at_depth` MUST equal `depth_executed`; every escalation MUST appear in `final_verdict.escalation_log[]` with from/to/trigger/added checks. A missing log entry is `VF-06`. |
 | **INV-020** | `FAILURES ARE CODED` | Every failure carries a taxonomy `category` + `type`; unclassifiable failures block `PASS`; `CRITICAL` severity on gate-criticals forces `FAIL`/`BLOCKED`. |
 | **INV-021** | `TESTS ARE FALSIFIABLE` | A critical test without a declared `falsifiability` input is `VF-02` and blocks `PASS`. |
+| **INV-022** | `CONFLICTS BLOCK VERIFIED` | Contradictory critical outcomes on one claim forbid `VERIFIED` until a deciding re-test resolves them. |
+| **INV-023** | `RE-EXTRACT BEFORE RE-TEST` | Post-mutation re-tests on stale claim ids are `VF-06`; follow `REVISE → RE-EXTRACT → RE-TEST`. |
+| **INV-024** | `FAILURES NAME THEIR CATCHER` | A non-audit failure without `detected_by_test_id` is `VF-01`; suite defects (`VF-*`) must be caught by `TEST-AUDIT`. |
+| **INV-025** | `REVISIONS LINK TO FAILURES` | A revision with a dangling `triggered_by_failure_id` or empty change set is `VF-06`. |
+| **INV-026** | `REVISIONS ARE MONOTONIC` | A revision MUST NOT widen scope, drop a critical AC, or downgrade severity to reach `PASS`; doing so is `VF-07`. |
+| **INV-027** | `EVIDENCE IS FRESH` | A critical `VERIFIED` needs current-run evidence/observations (same `contract_id`); stale cache alone verifies nothing — re-observe or downgrade to `SUPPORTED`. |
