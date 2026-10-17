@@ -2,6 +2,8 @@
 
 [![Organization](https://img.shields.io/badge/org-metodoloji-0b7285?style=flat-square)](https://github.com/metodoloji)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f?style=flat-square)](LICENSE)
+[![User Guide (EN)](https://img.shields.io/badge/manual-User%20Guide%20(EN)-blue?style=flat-square)](USER-GUIDE.md)
+[![Kullanım Kılavuzu (TR)](https://img.shields.io/badge/kılavuz-Kullanım%20Kılavuzu%20(TR)-red?style=flat-square)](KULLANIM-KILAVUZU.md)
 [![Contract Version](https://img.shields.io/badge/contract-v1.14-blueviolet?style=flat-square)](references/verification-contract.md)
 [![Invariants](https://img.shields.io/badge/invariants-INV--001..INV--056-orange?style=flat-square)](references/state-machine.md)
 [![Failure Taxonomy](https://img.shields.io/badge/failures-29%20codes-crimson?style=flat-square)](references/failure-taxonomy.md)
@@ -11,6 +13,10 @@
 
 > **Do not treat verification as "read the answer again".**  
 > Treat verification as an **adversarial test lifecycle** governed by binding contracts, explicit invariants, and multi-tier failure taxonomy.
+
+📖 **Comprehensive User Manuals:**
+* 🇬🇧 [**English User Guide (`USER-GUIDE.md`)**](USER-GUIDE.md) — Exhaustive scenarios, 18 pattern recipes, 4 depths, and prompt blueprints.
+* 🇹🇷 [**Türkçe Kullanım Kılavuzu (`KULLANIM-KILAVUZU.md`)**](KULLANIM-KILAVUZU.md) — Tüm senaryolar, pratik kullanım örnekleri, rol bazlı prompt şablonları.
 
 `agent-verification` is a contract-driven, adversarial self-audit protocol and agent skill for AI coding and reasoning systems. It replaces complacent model self-approval with a rigorous, machine-checkable audit pipeline: decomposing candidate outputs into atomic claims, attacking hypotheses with concrete counterexamples, auditing verification suites against mutations, and enforcing mechanical invariants (`INV-001` .. `INV-056`) before issuing a final verdict.
 
@@ -220,6 +226,8 @@ agent-verification/
 ├── .gitignore                          # Standard git hygiene (OS, Python, IDE caches)
 ├── LICENSE                             # MIT License (Yunus Güngör / metodoloji)
 ├── README.md                           # Master architectural specification
+├── USER-GUIDE.md                       # Comprehensive User Guide (English)
+├── KULLANIM-KILAVUZU.md                # Kapsamlı Kullanıcı Kılavuzu (Türkçe)
 ├── SKILL.md                            # Agent Skill definition (prompts & operational lifecycle)
 ├── references/                         # Detailed formal specifications
 │   ├── failure-taxonomy.md             # Standardized failure taxonomy (29 codes: OF, VF, EF, XF)
