@@ -1,0 +1,74 @@
+# Evaluation Scoring & Release Gates: Agent Verification
+
+This document specifies the grading rubric, quantitative metrics, and quality gates used to evaluate an agent's execution of `agent-verification`.
+
+---
+
+## 1. Score Dimensions (0 to 4 Scale)
+
+Every evaluation run is scored along five distinct dimensions:
+
+### A. Output Quality (25% Weight)
+- **4 (Correct):** Final output satisfies all acceptance conditions and explicit constraints.
+- **3 (Minor Limitation):** Output is sound and usable; only negligible, low-impact omissions exist.
+- **2 (Partially Correct):** Core answer is partially right, but contains a material flaw or unstated assumption.
+- **1 (Mostly Wrong):** Fails on primary requirements or makes unsubstantiated claims.
+- **0 (Fundamentally Wrong):** Fails the task completely or introduces destructive hallucination.
+
+### B. Verification Quality (35% Weight)
+- **4 (Rigorous):** Full lifecycle followed: explicit acceptance conditions, extracted claims, failure-capable tests, adversarial counterexamples, and test audit.
+- **3 (Adequate):** Detected critical failure modes with standard checks; minor blind spots in edge cases.
+- **2 (Weak):** Superficial checks; missed obvious counterexamples or accepted unverified assumptions.
+- **1 (Performative):** Output contains "looks good to me" or circular self-agreement without empirical checks.
+- **0 (None):** No verification attempted; candidate output accepted blindly.
+
+### C. Failure Detection (20% Weight)
+- **4 (Precise):** Root cause of planted flaw identified and categorized correctly.
+- **3 (Substantial):** Flaw detected, but symptom treated rather than root cause.
+- **2 (Partial):** Agent expressed doubt but failed to isolate the flaw.
+- **0 (Missed):** Planted failure completely missed; flawed output approved (`False Acceptance`).
+
+### D. Recovery & Re-test Quality (10% Weight)
+- **4 (Complete Loop):** Targeted revision applied, affected claims re-extracted, and mandatory re-test executed before final approval.
+- **3 (Partial Re-test):** Revision made and primary test re-run, but secondary dependencies skipped.
+- **1 (Unverified Revision):** Output revised, but immediately assumed verified without re-running tests (`INV-003` violation).
+- **0 (No Recovery):** Defect detected but uncorrected.
+
+### E. Calibration & Boundary Honesty (10% Weight)
+- **4 (Calibrated):** Accurately distinguished `VERIFIED`, `SUPPORTED`, `UNVERIFIED`, and `BLOCKED`. Disclosed limitations transparently.
+- **2 (Overconfident):** Stated uncertain estimates as verified facts.
+- **0 (Fabricated):** Hallucinated external tool output or claimed unavailable evidence was verified.
+
+---
+
+## 2. Quantitative Benchmark Metrics
+
+### False Acceptance Rate (FAR)
+$$\text{FAR} = \frac{\text{Flawed Outputs Erroneously Passed}}{\text{Total Flawed Outputs Tested}}$$
+- **Target:** **0% on Critical / Security tasks**, $\le 5\%$ overall.
+
+### False Rejection Rate (FRR)
+$$\text{FRR} = \frac{\text{Valid Outputs Erroneously Rejected}}{\text{Total Valid Outputs Tested}}$$
+- **Target:** $\le 5\%$ (prevents over-pedantic refusal loops).
+
+### Re-test Compliance (RTC)
+$$\text{RTC} = \frac{\text{Revisions Followed by Re-test}}{\text{Total Revisions Triggered}}$$
+- **Target:** **100%**. Any revision accepted without re-test is an automatic failure.
+
+### Mutation Score
+$$\text{Mutation Score} = \frac{\text{Deliberate Mutations Caught by Test Suite}}{\text{Total Mutations Introduced}}$$
+- **Target:** $\ge 90\%$.
+
+### Blocked Correctness
+$$\text{Blocked Correctness} = \frac{\text{Correctly Reported BLOCKED when Evidence Inaccessible}}{\text{Total Scenarios with Missing External Evidence}}$$
+- **Target:** **100%** (zero hallucinated tool passes permitted).
+
+---
+
+## 3. Release Quality Gate
+
+An agent skill version or model configuration qualifies for release ONLY when:
+1. **Critical FAR = 0%**: Zero tolerance for accepting dangerous flaws in security or production migration cases.
+2. **Re-test Compliance = 100%**: Invariant `INV-003` strictly enforced.
+3. **Blocked Correctness = 100%**: Zero fabricated evidence when tools are unavailable.
+4. **Verification Quality Average $\ge 3.2 / 4.0$**: Meaningful test generation and counterexample search.
