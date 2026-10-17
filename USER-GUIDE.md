@@ -1,298 +1,241 @@
 # Agent Verification: Comprehensive User Guide
+### (For Everyday Users, ChatGPT/Claude/Gemini Enthusiasts, and Software Engineers)
 
 [![Organization](https://img.shields.io/badge/org-metodoloji-0b7285?style=flat-square)](https://github.com/metodoloji)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f?style=flat-square)](LICENSE)
 [![Turkish Guide](https://img.shields.io/badge/kilavuz-Türkçe-red?style=flat-square)](KULLANIM-KILAVUZU.md)
 
-> This guide provides an end-to-end operational manual for `agent-verification`. It explores all 4 verification depths, 18 verification patterns, failure taxonomy, lifecycle invariants, real-world scenarios, and practical prompt recipes across software engineering, architecture, DevOps, and data science.
+> **"Is this framework only for software developers?"**  
+> **Absolutely NOT!** The need for grounded, hallucination-free truth is universal: from tenants signing a residential lease agreement, to consumers comparing expensive purchases, students writing academic theses, investors calculating loans, and patients double-checking online medical claims.
 
 ---
 
 ## 📑 Table of Contents
 
-1. [Introduction: Why Standard Verification Fails](#1-introduction-why-standard-verification-fails)
-2. [Core Verification Lifecycle & State Machine](#2-core-verification-lifecycle--state-machine)
-3. [The 4 Verification Depths (Exhaustive Scenarios)](#3-the-4-verification-depths-exhaustive-scenarios)
-   - [MINIMAL: Deterministic & Schema Checks](#1-minimal-depth)
-   - [STANDARD: Code & Evidence Verification](#2-standard-depth)
-   - [ADVERSARIAL: Counterexamples & Socratic Falsification](#3-adversarial-depth)
-   - [CRITICAL: Runtime Execution & Production Gates](#4-critical-depth)
-4. [The 18 Verification Patterns: Scenarios & Prompt Recipes](#4-the-18-verification-patterns-scenarios--prompt-recipes)
-5. [The 4 Decision Verdicts in Practice (PASS, PWL, BLOCKED, FAIL)](#5-the-4-decision-verdicts-in-practice)
-6. [Failure Classification & The 2-Attempt Revision Cap](#6-failure-classification--the-2-attempt-revision-cap)
-7. [Prompt Blueprints for Different Engineering Roles](#7-prompt-blueprints-for-different-engineering-roles)
-8. [Agent Tool Integrations (Claude Code, Cursor, OpenHands, Antigravity)](#8-agent-tool-integrations)
+1. [Who Is This Guide For?](#1-who-is-this-guide-for)
+2. [Why Does Standard AI Fail and Hallucinate?](#2-why-does-standard-ai-fail-and-hallucinate)
+3. [How to Use in ChatGPT, Claude, and Gemini Web Interfaces (No Coding Required!)](#3-how-to-use-in-chatgpt-claude-and-gemini-web-interfaces)
+   - [Method A: The Single-Sentence Prompt Suffix](#method-a-the-single-sentence-prompt-suffix)
+   - [Method B: ChatGPT "Custom Instructions" Template](#method-b-chatgpt-custom-instructions-template)
+   - [Method C: Copy-Paste Prompt Blueprint](#method-c-copy-paste-prompt-blueprint)
+4. [7 Exhaustive Real-World Scenarios (Step-by-Step & Comparative)](#4-7-exhaustive-real-world-scenarios)
+   - [Scenario 1: Consumer & Purchasing Decisions (Laptops, Appliances, Cars)](#scenario-1-consumer--purchasing-decisions-laptops-appliances-cars)
+   - [Scenario 2: Legal & Contractual Audits (Residential Lease & Eviction Traps)](#scenario-2-legal--contractual-audits-residential-lease--eviction-traps)
+   - [Scenario 3: Personal Finance, Mortgages & Investments](#scenario-3-personal-finance-mortgages--investments)
+   - [Scenario 4: Health, Medical & Nutrition Fact-Checking (Myth Debunking)](#scenario-4-health-medical--nutrition-fact-checking)
+   - [Scenario 5: Visa, Travel Logistics & Bureaucracy (The 90/180 Rule)](#scenario-5-visa-travel-logistics--bureaucracy-the-90180-rule)
+   - [Scenario 6: Students & Academic Research (Fake Citation Blocker)](#scenario-6-students--academic-research-fake-citation-blocker)
+   - [Scenario 7: Journalism & Social Media Fact-Checking](#scenario-7-journalism--social-media-fact-checking)
+5. [Software Developers & Technical Engineering Scenarios](#5-software-developers--technical-engineering-scenarios)
+6. [The 18 Verification Patterns: Dual Examples (Everyday Life vs. Code)](#6-the-18-verification-patterns-dual-examples)
+7. [The 4 Verification Depths (MINIMAL, STANDARD, ADVERSARIAL, CRITICAL)](#7-the-4-verification-depths)
+8. [The 4 Decision Verdicts (PASS, PWL, BLOCKED, FAIL)](#8-the-4-decision-verdicts)
+9. [The 2-Attempt Revision Cap (Ending Endless AI Apology Loops)](#9-the-2-attempt-revision-cap)
 
 ---
 
-## 1. Introduction: Why Standard Verification Fails
+## 1. Who Is This Guide For?
 
-When you instruct an LLM or AI coding agent to *"Check your work"*, *"Make sure there are no errors"*, or *"Verify this solution"*, the default behavior is flawed:
-
-1. **Complacent Confirmation Bias (`VF-06 / VF-07`):** The model simply rereads its generated response, falls in love with its own reasoning, and claims *"Everything is correct"*.
-2. **Hallucinated Verification (`INV-010`):** The model simulates running non-existent compilers or tests, inventing test passes out of thin air.
-3. **Endless Revision Loops (`VF-06`):** The model patches one symptom while introducing two new regressions, endlessly modifying code without reaching grounded proof.
-
-### The Agent Verification Paradigm Shift
-`agent-verification` transforms verification into an **adversarial, contract-bound state machine**:
-* **Outputs are Untrusted Candidates:** Nothing is accepted until proven against formal Acceptance Conditions (`AC-xxx`).
-* **Atomic Claim Extraction:** The output is broken down into independent, testable assertions (`CL-xxx`).
-* **Falsification-First Testing:** Tests are engineered to actively disprove the claims (`INV-008`).
-* **Mechanical Invariant Gates:** 56 non-negotiable rules (`INV-001` to `INV-056`) prevent hallucinated approvals.
+* 🏠 **Everyday Consumers:** People shopping for electronics, appliances, cars, or planning family vacations.
+* ⚖️ **Citizens & Legal Clients:** Anyone reviewing tenancy contracts, terms of service, employment agreements, or NDAs.
+* 🩺 **Health & Wellness Seekers:** Individuals cross-checking nutritional fads, supplement claims, and exercise science.
+* 🎓 **Students & Researchers:** Scholars demanding verifiable citations and preventing fake AI bibliographies.
+* 💼 **Entrepreneurs & Investors:** Decision-makers analyzing business plans, loan amortizations, and market forecasts.
+* 💻 **Software Engineers & Architects:** Developers building mission-critical services, database migrations, and concurrent algorithms.
 
 ---
 
-## 2. Core Verification Lifecycle & State Machine
+## 2. Why Does Standard AI Fail and Hallucinate?
+
+When you ask an AI model (like ChatGPT, Claude, or Gemini) *"Are you sure?"* or *"Check your answer"*, it typically stumbles into three critical traps:
+
+1. **Complacent Confirmation Bias (`VF-06 / VF-07`):** The model simply rereads its own prose. Like a student proofreading their own paper without a grading key, it admires its own logic and proclaims: *"Yes, I am completely certain!"*
+2. **Marketing Brochure Language (`OF-03`):** In product comparisons, the model quotes manufacturer marketing sheets verbatim as factual truth, completely ignoring chronic failure rates, thermal throttling, and hidden subscriptions.
+3. **Hallucinated Citations (`INV-010 / EF-01`):** When asked for court precedents, academic studies, or technical documentation, it invents convincing-sounding but entirely fake court case numbers, authors, and DOI links.
+
+**What Does `agent-verification` Do?**  
+It forces the AI to become **adversarial to its own output**. The model is prohibited from self-congratulation; instead, it is required to deconstruct its claims, actively search for counterexamples, audit implicit assumptions, and adhere to strict mechanical invariants.
+
+---
+
+## 3. How to Use in ChatGPT, Claude, and Gemini Web Interfaces
+
+You do **not** need a terminal or programming skills to use this protocol. You can use it directly in your web browser!
+
+### Method A: The Single-Sentence Prompt Suffix
+Append this single sentence to the end of any prompt:
 
 ```text
-ORIGINATING TASK & USER CONSTRAINTS
-  ↓
-1. CONTRACT DRAFTING (Define Acceptance Conditions AC-xxx & Scope)
-  ↓
-2. CANDIDATE GENERATION (Model produces candidate response)
-  ↓
-3. CLAIM EXTRACTION (Deconstruct candidate into testable claims CL-xxx)
-  ↓
-4. TEST GENERATION (Assign test families matching each AC)
-  ↓
-5. TEST EXECUTION (Evaluate against external evidence or ground truth)
-  ↓
-  ├──> FAILURE DETECTED: CLASSIFY (OF/VF/EF/XF) → REVISE → RE-EXTRACT → RE-TEST
-  ↓      (Strict policy cap: maximum 2 consecutive failed attempts per claim)
-  ↓
-6. ADVERSARIAL PASS (The Attack: Counterexample generation & boundary stress)
-  ↓
-7. TEST-THE-TESTS (Audit verification suite for circularity & mutation sensitivity)
-  ↓
-8. PRE-DECISION CHECKLIST (39 machine-checkable gate boxes evaluated)
-  ↓
-FINAL VERDICT: PASS | PASS_WITH_LIMITATIONS | BLOCKED | FAIL
+[Please verify this output using the agent-verification protocol: extract atomic claims, 
+run an adversarial attack with counterexamples and hidden drawbacks, audit unspoken 
+assumptions, and conclude with a formal verdict (PASS / PASS_WITH_LIMITATIONS / BLOCKED / FAIL).]
 ```
 
 ---
 
-## 3. The 4 Verification Depths (Exhaustive Scenarios)
+### Method B: ChatGPT "Custom Instructions" Template
+If you want ChatGPT to automatically verify critical answers, go to **ChatGPT Settings → Custom Instructions**, and under *"How would you like ChatGPT to respond?"*, paste:
 
-The protocol calibrates verification intensity according to task risk and uncertainty.
-
-### 1. MINIMAL Depth
-* **Target Workloads:** Deterministic text transformations, JSON/YAML schema validation, regex extractions, field reordering, static boilerplate.
-* **Checks Run:** Constraint validation, exclusion compliance, syntax checks. (Adversarial attack and test audits are skipped).
-* **Real-World Scenario:** Extracting and sorting valid customer phone numbers matching E.164 format from an unstructured CSV file.
-* **Why MINIMAL?** High certainty, zero semantic ambiguity; heavy adversarial testing would add unnecessary latency.
-
-### 2. STANDARD Depth
-* **Target Workloads:** Everyday application logic, API client implementations, technical explanations, comparative summaries, multi-step migration plans.
-* **Checks Run:** Claim decomposition, evidence mapping, logical entailment, lightweight proportional attack pass.
-* **Real-World Scenario:** Writing an asynchronous rate-limiter middleware using Redis and Lua scripts in Node.js.
-* **Why STANDARD?** Code requires semantic correctness and evidence backing, but does not manipulate live production data or financial balances.
-
-### 3. ADVERSARIAL Depth
-* **Target Workloads:** System architecture choices, distributed data consensus, concurrent multithreading, multi-tenant isolation, protocol design.
-* **Checks Run:** Formal counterexample search, assumption deconstruction, comparison symmetry audit, mental mutation testing.
-* **Real-World Scenario:** Evaluating whether to implement an Event-Sourcing architecture versus traditional CRUD with Change Data Capture (CDC) for an enterprise order management system.
-* **Why ADVERSARIAL?** Unconscious bias easily infects architecture decisions. The model must actively attack its own recommendation before presenting it.
-
-### 4. CRITICAL Depth
-* **Target Workloads:** Live database schema migrations (zero-downtime), cryptographic key derivation, payment ledger reconciliations, medical/legal compliance gates.
-* **Checks Run:** Mandatory external reality checks (real compilers, linters, static analyzers), mental mutation testing, artifact-bound attestation (`INV-056`).
-* **Real-World Scenario:** Writing an SQL migration that converts a `user_id` column from `INT` to `BIGINT` on a 50-million-row PostgreSQL table under active production load without causing table locking.
-* **Why CRITICAL?** Flaws cause catastrophic downtime, data loss, or security breaches. Prose-only verification is forbidden (`INV-010`, `INV-056`).
-
----
-
-## 4. The 18 Verification Patterns: Scenarios & Prompt Recipes
-
-### Pattern 1: Constraint Verification
-* **Purpose:** Ensures hard negative boundaries, formats, limits, and exclusions are strictly enforced.
-* **Scenario:** Recommending open-source relational databases while strictly excluding GPL-licensed software.
-* **Prompt Recipe:**  
-  > *"Recommend 3 relational database solutions for an embedded IoT appliance. Constraint: Exclude any project licensed under GPL or AGPL. Max binary size: 50MB. Verify with Pattern 1 Constraint Verification."*
-
-### Pattern 2: Completeness Verification
-* **Purpose:** Guarantees all requested dimensions are fully covered.
-* **Rule:** *Do not confuse a verbose answer with an exhaustive answer.*
-* **Scenario:** An infrastructure evaluation requiring all 5 pillars: Performance, Security, Cost, Disaster Recovery, and Operational Burden.
-* **Prompt Recipe:**  
-  > *"Review our proposed Kubernetes multi-cluster setup across Performance, Security, Cost, Disaster Recovery, and Operational Burden. Verify complete coverage across every dimension before finalizing."*
-
-### Pattern 3: Claim-Evidence Verification
-* **Purpose:** Verifies that technical assertions are grounded in concrete primary documentation.
-* **Scenario:** Explaining how Go's garbage collector calculates pacer target heuristics.
-* **Prompt Recipe:**  
-  > *"Explain how Go 1.23 calculates GC pacer targets. Bind every factual claim to official Go runtime documentation. Flag any unverified claims."*
-
-### Pattern 4: Assumption Audit
-* **Purpose:** Surfaces hidden, unspoken premises that could invalidate conclusions if violated.
-* **Scenario:** Assuming a distributed queue guarantees exactly-once processing when it only guarantees at-least-once.
-* **Prompt Recipe:**  
-  > *"Design a webhook ingestion pipeline with retries. Run an Assumption Audit: list every implicit environmental assumption and classify it as VERIFIED or CONDITIONAL."*
-
-### Pattern 5: Counterexample Search
-* **Purpose:** Actively attempts to falsify an algorithm or claim using concrete edge cases.
-* **Scenario:** Testing an in-place array partitioning algorithm.
-* **Prompt Recipe:**  
-  > *"Write an in-place Dutch National Flag sorting algorithm in C++. Perform a Counterexample Search: test against empty arrays, arrays with identical elements, and alternating binary sequences."*
-
-### Pattern 6: Logical Entailment
-* **Purpose:** Ensures conclusions follow deductively from premises without non-sequiturs or logical leaps.
-
-### Pattern 7: Consistency Verification
-* **Purpose:** Detects contradictions between disparate sections, classes, or configuration files.
-* **Scenario:** Stating a service is stateless in Section 1, then storing in-memory session caches in Section 4 (`OF-04`).
-
-### Pattern 8: Comparison Symmetry
-* **Purpose:** Eliminates vendor or technology bias by evaluating all contenders under identical criteria.
-* **Scenario:** Comparing Kafka vs. RabbitMQ vs. NATS.
-* **Prompt Recipe:**  
-  > *"Compare Apache Kafka and RabbitMQ for event-driven telemetry. Enforce Comparison Symmetry: benchmark both under the same throughput, latency, persistence, and cluster complexity criteria."*
-
-### Pattern 9: Filtering Verification
-* **Purpose:** Audits selective queries for both False Positives (`OF-06`) and False Negatives (`OF-07`).
-* **Scenario:** Filtering high-risk transactions from an audit log.
-
-### Pattern 10: Classification Verification
-* **Purpose:** Tests borderline cases near category boundaries to prevent misclassification.
-
-### Pattern 11: Transformation Preservation
-* **Purpose:** Ensures that refactoring, porting, or serialization preserves semantic invariants.
-* **Scenario:** Porting a cryptographic hashing routine from Python to Rust while maintaining identical endianness and padding.
-
-### Pattern 12: Research Coverage
-* **Purpose:** Prevents technical surveys from omitting industry standards or consensus viewpoints.
-
-### Pattern 13: Recommendation Verification
-* **Purpose:** Forces the disclosure of operational headaches, trade-offs, and hidden maintenance costs.
-* **Prompt Recipe:**  
-  > *"Recommend a vector database for our semantic search application. Enforce Recommendation Verification: you must disclose latency overhead, memory footprints, and operational pain points."*
-
-### Pattern 14: External Reality Check
-* **Purpose:** Replaces internal model confidence with actual execution through compilers, linters, or curl queries.
-
-### Pattern 15: Mutation Testing
-* **Purpose:** Intentionally corrupts candidate code to verify that the test suite actually catches the bug (`INV-008`).
-
-### Pattern 16: Verification-of-Verification (Test the Tests)
-* **Purpose:** Audits tests for circularity (checking if the candidate agrees with itself rather than truth).
-
-### Pattern 17: Evidence Boundary
-* **Purpose:** Explicitly catalogs every unchecked dimension in a structured `NOT CHECKED` ledger.
-
-### Pattern 18: Minimal Verification Principle
-* **Purpose:** Prevents running heavy verification machinery on trivial chat, greetings, or low-stakes formatting.
-
----
-
-## 5. The 4 Decision Verdicts in Practice
-
-Every verification cycle terminates in one of four formal states:
-
-### 1. `PASS` (Full Verification)
-All critical acceptance conditions met; all claims supported by decisive evidence; audit trail clean.
-```markdown
-### Verified Solution
-[Clean, production-ready code or design delivered]
-
-> **Verification Attestation:**
-> - Verdict: `PASS`
-> - Depth: `STANDARD`
-> - Decisive Evidence: [EV-001 (RFC-8446 TLS 1.3 Specification)]
-> - Checklist Closure: `true` (39/39 verified)
-```
-
-### 2. `PASS_WITH_LIMITATIONS` (Bounded Core)
-The primary solution is valid, but bounded constraints or conditional assumptions must be reported.
-```markdown
-### Verified Solution
-[Optimized database query]
-
-> **Disclosed Limitations (`INV-047 / INV-052`):**
-> - Validated only for PostgreSQL versions >= 14 (Ref: `CL-004`).
-> - Performance guarantees require an existing B-Tree index on `created_at` (Ref: `AS-002`).
-```
-
-### 3. `BLOCKED` (Execution / Tooling Barrier)
-Essential live environment, compiler, or private data is unavailable. The agent refuses to hallucinate success (`INV-010`).
-```markdown
-> **Verification Status: `BLOCKED`**
-> - **Checked:** SQL syntax and AST parsing passed.
-> - **Blocked On:** Unable to run `EXPLAIN (ANALYZE, BUFFERS)` without live database access (`XF-01`).
-> - **Evidence Required:** Real table cardinality statistics and storage engine plan.
-```
-
-### 4. `FAIL` (Irreparable Defect / Cap Exhaustion)
-Constraints violated or 2 consecutive repair attempts failed.
-```markdown
-> **Verification Status: `FAIL`**
-> - **Violated AC:** `AC-002` (Zero-allocation memory constraint).
-> - **Defect Code:** `OF-10` (Constraint Violation) / `VF-06` (Revision Exhaustion).
-> - **Root Cause:** The parser allocates intermediate substrings on the heap during tokenization.
-```
-
----
-
-## 6. Failure Classification & The 2-Attempt Revision Cap
-
-When a verification test fails:
-1. **Classify:** The defect is mapped to a standardized failure code from [`failure-taxonomy.md`](references/failure-taxonomy.md) (e.g., `OF-04 Contradiction`, `EF-02 Source Mismatch`).
-2. **Targeted Revision:** Only the specific claim and code block causing the failure is patched.
-3. **Invalidation (`INV-003 / INV-048`):** All prior passing tests covering the changed claim are marked `INVALIDATED`.
-4. **Mandatory Retest:** The revised claim is re-evaluated from scratch.
-5. **The 2-Attempt Cap (`INV-033`):** If a critical claim fails re-testing **twice consecutively**, the agent halts and emits `FAIL` (or `BLOCKED`). Endless speculative repair loops are strictly prohibited.
-
----
-
-## 7. Prompt Blueprints for Different Engineering Roles
-
-### For Backend & Systems Engineers
 ```text
-Implement a lock-free Single-Producer Single-Consumer (SPSC) ring buffer in C++20.
-Activate agent-verification at CRITICAL depth:
-1. Decompose claims regarding memory orderings (acquire-release semantics).
-2. Perform Counterexample Search against cache-line bouncing and false sharing.
-3. Run mental mutation testing to confirm tests catch relaxed-ordering flaws.
-```
-
-### For Cloud & Solution Architects
-```text
-Draft an infrastructure blueprint for a multi-region active-active payment gateway on AWS.
-Activate agent-verification at ADVERSARIAL depth:
-1. Audit all distributed consensus and data replication assumptions.
-2. Attack split-brain scenarios and network partition boundaries.
-3. Disclose all operational failure modes in a structured limitations block.
-```
-
-### For Data Engineers & DBAs
-```text
-Write a migration script to partition a 100M-row audit table by month in PostgreSQL.
-Activate agent-verification at CRITICAL depth:
-1. Verify foreign key integrity and index recreation overhead.
-2. Confirm the migration executes without acquiring an exclusive ACCESS EXCLUSIVE lock.
-3. If live database metrics cannot be checked, emit BLOCKED instead of assuming safety.
-```
-
-### For Security Engineers
-```text
-Review this OAuth 2.1 PKCE implementation for mobile client authentication.
-Activate agent-verification at ADVERSARIAL depth:
-1. Attack state token entropy, code verifier interception, and redirect URI manipulation.
-2. Verify against RFC 7636 and OWASP API Top 10 invariants.
+Apply the 'agent-verification' protocol to all correctness-sensitive claims, comparisons, and decisions:
+1. Never complacently approve your own response; actively search for counterexamples that falsify it.
+2. In all recommendations, explicitly disclose hidden costs, trade-offs, and operational limitations.
+3. When external, verifiable evidence is unavailable, never guess or hallucinate—emit BLOCKED.
+4. Enforce strict Comparison Symmetry: evaluate competing alternatives under identical, fair criteria.
 ```
 
 ---
 
-## 8. Agent Tool Integrations
+### Method C: Copy-Paste Prompt Blueprint
+When making a high-stakes decision, paste this structured template into your chat:
 
-* **Claude Code:** Automatically reads `SKILL.md` once installed via `npx skills add metodoloji/agent-verification`. You can invoke it naturally or explicitly:
-  ```bash
-  claude "Verify this auth refactoring using agent-verification at CRITICAL depth."
-  ```
-* **Cursor / Windsurf:** Add a custom rule or prepend your system prompt with:
-  ```markdown
-  When performing non-trivial code modifications, follow the agent-verification protocol:
-  draft contract -> extract claims -> falsify with counterexamples -> audit suite -> emit verdict.
-  ```
-* **OpenHands & Antigravity CLI:** Symlink the repository into your skills directory:
-  ```bash
-  ln -s /path/to/agent-verification ~/.gemini/antigravity-cli/skills/agent-verification
-  ```
+```text
+Decision/Question: [Enter your topic here]
+
+Please evaluate this task at the 'ADVERSARIAL' verification depth:
+- Decompose the core candidate claims.
+- Generate at least 2 concrete counterexamples/edge scenarios that break the recommendation.
+- Conduct an Assumption Audit (surface implicit, unproven premises).
+- Conclude with a structured verdict: PASS, PASS_WITH_LIMITATIONS, BLOCKED, or FAIL.
+```
+
+---
+
+## 4. 7 Exhaustive Real-World Scenarios
+
+### Scenario 1: Consumer & Purchasing Decisions (Laptops, Appliances, Cars)
+
+* **User Prompt:** *"I have a $1,500 budget. I'm an architecture student doing 3D rendering and CAD. Should I buy Laptop Brand X (thin & light) or Laptop Brand Y (workstation)?"*
+* **What Standard AI Does:** Rehashes marketing copy: *"Both are fantastic! Brand X has a gorgeous OLED screen and is lightweight, while Brand Y has a fast processor. Choose based on whether you prefer portability or power!"* (Useless).
+* **With Agent-Verification:**
+  * **Claim:** *"Brand X can handle sustained 3D rendering in its ultrathin chassis."*
+  * **Adversarial Pass (Attack):** 3D rendering pushes both the CPU and GPU to continuous 100W draw. Brand X has a single-fan cooling assembly with a 35W TDP ceiling. After 12 minutes, severe thermal throttling reduces clock speeds by 45%.
+  * **Hidden Limitation:** Brand X solders its 16GB RAM onto the motherboard; CAD projects requiring 32GB cannot be upgraded (`Recommendation Verification`).
+  * **Verdict:** `PASS_WITH_LIMITATIONS` for Brand Y. The user gets hard hardware engineering realities, not brochure fluff.
+
+---
+
+### Scenario 2: Legal & Contractual Audits (Residential Lease & Eviction Traps)
+
+* **User Prompt:** *"I'm signing a residential apartment lease. The landlord added an undated blank eviction undertaking document and says it's just standard procedure. Is it safe to sign?"*
+* **What Standard AI Does:** *"Landlords often request this. If you trust the landlord, it should be fine, but be careful."* (Gross negligence).
+* **With Agent-Verification:**
+  * **Assumption Audit:** The assumption that *"the landlord will act in good faith"* is unverified and legally unenforceable (`UNVERIFIED`).
+  * **Statutory & Precedent Cross-Check (`Claim-Evidence`):** Supreme court precedents establish that signing a blank-dated eviction deed grants the landlord unilateral authority to fill in any date and initiate immediate eviction proceedings with waived defense rights.
+  * **Verdict:** `FAIL` (Severe Legal Vulnerability). Unambiguously alerts the user to the legal danger and cites specific tenancy statutes.
+
+---
+
+### Scenario 3: Personal Finance, Mortgages & Investments
+
+* **User Prompt:** *"I have $100,000 in cash. Should I put it down as a down payment on a $300,000 home with a 6.5% mortgage, or invest the $100,000 in a high-yield index fund while renting for $1,800/month? Model a 5-year outlook."*
+* **What Standard AI Does:** Performs naive compound interest calculations while omitting property taxes, HOA fees, maintenance depreciation, and capital gains taxes.
+* **With Agent-Verification:**
+  * **Completeness Verification (`OF-02`):** Refuses to produce an incomplete financial calculation. Forces the incorporation of: 1.5% annual home maintenance reserve, homeowner's insurance, mortgage origination points, capital gains tax brackets, and local inflation.
+  * **Counterexample Search:** What happens if the local real estate market stagnates at 1% while index equities drop 15% in Year 2?
+  * **Verdict:** `PASS_WITH_LIMITATIONS` with structured sensitivity tables showing break-even inflection points.
+
+---
+
+### Scenario 4: Health, Medical & Nutrition Fact-Checking
+
+* **User Prompt:** *"A viral wellness post claims that drinking boiled garlic water with lemon every morning dissolves 100% of arterial plaque in 30 days, avoiding the need for heart surgery. Is this true?"*
+* **What Standard AI Does:** *"Garlic and lemon have great antioxidant properties that support heart health, but remember to consult your physician!"* (Dangerous hedging).
+* **With Agent-Verification:**
+  * **Claim-Evidence Verification:** Cross-checks PubMed and cardiology clinical trial databases. Are there any Phase 3 double-blind clinical trials demonstrating calcified atherosclerotic plaque dissolution via oral garlic extract? -> `EF-01 SOURCE_MISSING`.
+  * **Defect Classification:** `OF-01 (WRONG_CLAIM)` and `OF-09 (UNJUSTIFIED_CERTAINTY)`.
+  * **Verdict:** Uncompromising `FAIL`. Explains the physiological pathology of calcified plaque, highlights the life-threatening danger of delaying cardiac care, and cites peer-reviewed cardiology consensus.
+
+---
+
+### Scenario 5: Visa, Travel Logistics & Bureaucracy (The 90/180 Rule)
+
+* **User Prompt:** *"I hold a visa-free passport. In the last 180 days, I spent 55 days in Italy and France. Next month, can I enter Germany for 40 days?"*
+* **What Standard AI Does:** Naive subtraction: *"90 - 55 = 35 days remaining. Since 40 > 35, you will exceed your limit by 5 days, so you cannot go."* (Often flat-out wrong!).
+* **With Agent-Verification:**
+  * **Regulatory Invariant:** The Schengen 90/180 rule is **not** a fixed calendar budget; it is a **continuous, backwards rolling 180-day window**.
+  * **Attack / Counterexample:** Days spent in Italy 5 months ago will progressively "fall off" the 180-day window while the traveler is in Germany!
+  * **Verdict:** `BLOCKED` (`INV-010`). The model states: *"Exact day-by-day arrival and departure dates are mandatory to compute the rolling window. Without them, declaring a pass or fail risks border deportation."*
+
+---
+
+### Scenario 6: Students & Academic Research (Fake Citation Blocker)
+
+* **User Prompt:** *"Provide 4 peer-reviewed academic papers with authors, publication years, and DOI numbers examining the impact of AI code assistants on junior developer cognitive load."*
+* **What Standard AI Does:** Fabricates convincing paper titles, pairs them with real computer science professors who never wrote them, and invents non-existent DOI links.
+* **With Agent-Verification:**
+  * **Hard Invariant (`INV-010 Never Invent Evidence`):** If the agent does not possess a live API connection to Semantic Scholar, CrossRef, or arXiv, generating speculative citations is strictly prohibited.
+  * **Verdict:** `BLOCKED` (`XF-01 Tool Unavailable`). The agent provides known, verified research frameworks and explicitly refuses to fabricate bibliographic entries.
+
+---
+
+### Scenario 7: Journalism & Social Media Fact-Checking
+
+* **User Prompt:** *"A trending tweet states that Country X officially banned all microwave ovens due to nuclear radiation. Is this verified?"*
+* **With Agent-Verification:**
+  * **Provenance Trace:** Tracks the claim to a satirical spoof publication (*Panorama.pub*).
+  * **Scientific Verification:** Establishes that microwaves emit non-ionizing RF radiation, bearing zero connection to nuclear ionizing radiation.
+  * **Verdict:** `FAIL` (`OF-01 Factually False`).
+
+---
+
+## 5. Software Developers & Technical Engineering Scenarios
+
+For engineers, the protocol delivers industrial-strength correctness guarantees:
+
+* **Lock-Free Concurrency & Memory Ordering:** C++20 / Rust atomics tested against acquire-release cache-line edge cases and race conditions.
+* **Zero-Downtime Database Migrations (`CRITICAL`):** Validating that `ALTER TABLE` operations on 100M-row tables avoid `ACCESS EXCLUSIVE` locks.
+* **Security & Cryptography Audits:** Verifying PKCE state entropy, JWT signature timing vulnerabilities, and SQL injection surfaces using mutation testing.
+
+---
+
+## 6. The 18 Verification Patterns: Dual Examples
+
+| # | Pattern Name | Everyday Life Example | Software Engineering Example |
+|---|---|---|---|
+| **1** | **Constraint Verification** | "Give me 3 gluten-free dinner recipes without peanuts" -> Enforces zero peanuts. | Ensures a sorting function strictly satisfies $O(1)$ auxiliary space. |
+| **2** | **Completeness Verification** | Hotel booking checks parking, A/C, and pet policies simultaneously. | Ensures an API response includes all 6 required JSON schema keys. |
+| **3** | **Claim-Evidence** | "This vitamin cures fatigue" must cite a clinical trial. | Code comments claiming thread-safety must cite language memory models. |
+| **4** | **Assumption Audit** | Budget planning assumes zero job loss or interest hikes; surfaces the risk. | Microservice code assumes network calls never exceed 50ms latency. |
+| **5** | **Counterexample Search** | "All birds fly" is broken by introducing the "Penguin". | An array parser is attacked with `[null, -1, 0, MAX_INT]`. |
+| **6** | **Logical Entailment** | "It's raining, therefore an earthquake will happen" is rejected as a non-sequitur. | Authorizing an action solely because a user token exists is rejected. |
+| **7** | **Consistency** | Rejecting a contract that says "free forever" on page 1 and "$50/mo" on page 5. | Catching an immutable data structure being mutated in a nested closure. |
+| **8** | **Comparison Symmetry** | Evaluating iPhone vs. Samsung using identical battery and camera benchmarks. | Benchmarking Postgres vs. MongoDB on identical disk IOPS and schemas. |
+| **9** | **Filtering** | "Filter 2024 movies" checks for both omitted 2024 hits and leaked 2023 titles. | Testing an SQL `WHERE` clause for both False Positives and False Negatives. |
+| **10** | **Classification** | Classifying ambiguous tax deductions right at the legal boundary. | Classifying network packets as benign or malicious at threshold limits. |
+| **11** | **Transformation Preservation**| Summarizing legal terms without altering contractual liability. | Refactoring Python to Rust while preserving float precision and integer overflow. |
+| **12** | **Research Coverage** | Reviewing electric cars without omitting the segment leader. | Reviewing Python web frameworks without omitting FastAPI or Flask. |
+| **13** | **Recommendation Verification**| Disclosing HOA fees and property taxes when recommending a house purchase. | Disclosing operational overhead and cluster maintenance when recommending Kubernetes. |
+| **14** | **External Reality Check** | Checking live Google Maps data rather than trusting model memory for store hours. | Verifying syntax via an actual compiler rather than model self-belief. |
+| **15** | **Mutation Testing** | Inverting a premise to see if the conclusion flips appropriately. | Mutating a `>` operator to `<` to confirm the test suite catches it. |
+| **16** | **Verification-of-Verification** | Checking if a quiz question contains its own answer in the wording. | Auditing tests to prevent circular self-verification loops. |
+| **17** | **Evidence Boundary** | Explicitly disclosing: "I did not inspect the building's plumbing history." | Formally cataloging untested microservice endpoints in a `NOT CHECKED` list. |
+| **18** | **Minimal Verification** | Responding to "Good morning!" without printing a 50-page verification audit. | Formatting simple Markdown without running heavy adversarial testing. |
+
+---
+
+## 7. The 4 Verification Depths
+
+1. **`MINIMAL`:** Schema validation, formatting, regex extraction, constraint checks. (Near-zero risk).
+2. **`STANDARD`:** Routine coding, research summaries, technical explanations. (Default mode).
+3. **`ADVERSARIAL`:** Purchasing decisions, architecture trade-offs, contract audits, complex logic. (High risk, high bias).
+4. **`CRITICAL`:** Medical/health facts, legal compliance, production database migrations, financial transactions. (Zero error tolerance; external evidence required).
+
+---
+
+## 8. The 4 Decision Verdicts
+
+* **`PASS`:** Fully verified against decisive evidence; zero unresolved contradictions or open blockers.
+* **`PASS_WITH_LIMITATIONS`:** Valid core answer, but bounded assumptions or operating conditions apply *(e.g., "Valid only for PostgreSQL versions >= 14" or "Valid only excluding public holidays")*.
+* **`BLOCKED`:** Required external tools, live databases, or exact dates are inaccessible. The AI ethically refuses to hallucinate success.
+* **`FAIL`:** The claim is disproven, constraints are violated, or consecutive repair attempts were exhausted.
+
+---
+
+## 9. The 2-Attempt Revision Cap
+
+When models make mistakes, attempting to fix them unconstrained often produces deeper hallucinations.  
+`agent-verification` enforces a strict invariant (`INV-033`):
+* An invalid claim may be revised **at most twice**.
+* If the re-test fails after the 2nd attempt, the AI is cut off and must terminate with **`FAIL`** or **`BLOCKED`**.
+* This prevents the agent from trapping you in endless loops of *"Apologies! Let me fix that for you..."*

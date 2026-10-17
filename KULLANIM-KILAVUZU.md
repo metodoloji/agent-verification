@@ -1,254 +1,243 @@
 # Agent Verification: Kapsamlı Kullanıcı Kılavuzu
+### (Gündelik Kullanıcılar, ChatGPT/Claude/Gemini Meraklıları ve Yazılım Geliştiriciler İçin)
 
 [![Organization](https://img.shields.io/badge/org-metodoloji-0b7285?style=flat-square)](https://github.com/metodoloji)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f?style=flat-square)](LICENSE)
 [![English Guide](https://img.shields.io/badge/guide-English-blue?style=flat-square)](USER-GUIDE.md)
 
-> Bu kılavuz; `agent-verification` protokolünü tüm yönleriyle, 4 farklı derinlik seviyesini, 18 doğrulama desenini, hata taksonomisini ve uçtan uca gerçek hayat senaryolarını eksiksiz olarak öğrenip uygulayabilmeniz için hazırlanmıştır.
+> **"Bu proje sadece yazılımcılar için mi?"**  
+> **Kesinlikle HAYIR!** Doğruluk, güvenilirlik ve halüsinasyonsuz bilgi ihtiyacı; bir evin kira sözleşmesini imzalayan kiracıdan, çocuğuna sağlık tavsiyesi arayan ebeveyne, tez yazan üniversite öğrencisinden milyon liralık alışveriş kararı veren tüketiciye kadar **herkesin** en temel ihtiyacıdır.
 
 ---
 
 ## 📑 İçindekiler
 
-1. [Giriş: Neden Geleneksel Doğrulama Yetersizdir?](#1-giriş-neden-geleneksel-doğrulama-yetersizdir)
-2. [Temel Çalışma Mantığı ve Yaşam Döngüsü](#2-temel-çalışma-mantığı-ve-yaşam-döngüsü)
-3. [4 Doğrulama Derinliği ve Uygulama Senaryoları](#3-4-doğrulama-derinliği-ve-uygulama-senaryoları)
-   - [MINIMAL: Biçim ve Kısıt Denetimi](#1-minimal-derinlik)
-   - [STANDARD: Kod ve Bilgi Doğrulama](#2-standard-derinlik)
-   - [ADVERSARIAL: Hasmane Saldırı ve Karşıt Örnekler](#3-adversarial-derinlik)
-   - [CRITICAL: Üretim Düzeyi ve Dış Gerçeklik](#4-critical-derinlik)
-4. [18 Doğrulama Deseni: Pratik Örnekler ve Promptlar](#4-18-doğrulama-deseni-pratik-örnekler-ve-promptlar)
-5. [4 Karar Durumu ve Örnek Çıktılar (PASS, PWL, BLOCKED, FAIL)](#5-4-karar-durumu-ve-örnek-çıktılar)
-6. [Hata Sınıflandırma ve 2-Adımlı Revizyon Kuralı](#6-hata-sınıflandırma-ve-2-adımlı-revizyon-kuralı)
-7. [Farklı Roller İçin Prompt Şablonları](#7-farklı-roller-için-prompt-şablonları)
-8. [Araç Entegrasyonları (Claude Code, Cursor, OpenHands)](#8-araç-entegrasyonları)
+1. [Bu Kılavuz Kimler İçindir?](#1-bu-kılavuz-kimler-içindir)
+2. [Geleneksel Yapay Zeka Neden Hata Yapar?](#2-geleneksel-yapay-zeka-neden-hata-yapar)
+3. [ChatGPT, Claude ve Gemini'de Kod Yazmadan Nasıl Kullanılır?](#3-chatgpt-claude-ve-gemini-web-arayüzünde-nasıl-kullanılır)
+   - [Yöntem A: Sihirli Tek Satırlık Prompt Eki](#yöntem-a-sihirli-tek-satırlık-prompt-eki)
+   - [Yöntem B: ChatGPT "Özel Talimatlar (Custom Instructions)" Şablonu](#yöntem-b-chatgpt-özel-talimatlar-custom-instructions-şablonu)
+   - [Yöntem C: Kopyala-Yapıştır Doğrulama Çerçevesi](#yöntem-c-kopyala-yapıştır-doğrulama-çerçevesi)
+4. [Gündelik Yaşamdan 7 Kapsamlı Senaryo (Adım Adım & Karşılaştırmalı)](#4-gündelik-yaşamdan-7-kapsamlı-senaryo)
+   - [Senaryo 1: Tüketici & Alışveriş Kararları (Teknoloji/Beyaz Eşya)](#senaryo-1-tüketici--alışveriş-kararları-laptop-robot-süpürge-araba)
+   - [Senaryo 2: Hukuk & Sözleşme Denetimi (Kira ve Tahliye Taahhütnamesi)](#senaryo-2-hukuk--sözleşme-denetimi-kira-sözleşmesi-ve-tahliye)
+   - [Senaryo 3: Kişisel Finans & Kredi/Yatırım Kararları](#senaryo-3-kişisel-finans--kredi-mevduat-ve-yatırım-hesabı)
+   - [Senaryo 4: Sağlık, Tıp & Beslenme Teyidi (Mit Çürütme)](#senaryo-4-sağlık-tıp--beslenme-iddiaları-ve-mit-çürütme)
+   - [Senaryo 5: Vize, Seyahat & Bürokrasi (90/180 Gün Kuralı)](#senaryo-5-vize-seyahat--bürokrasi-schengen-hesaplaması)
+   - [Senaryo 6: Öğrenci & Akademik Araştırma (Sahte Kaynak Engeli)](#senaryo-6-öğrenci--akademik-araştırma-ve-tez-kaynakçası)
+   - [Senaryo 7: Haber Doğrulama & Sosyal Medya İddiaları (Fact-Checking)](#senaryo-7-haber-doğrulama--sosyal-medya-iddiaları)
+5. [Yazılım Geliştiriciler & Teknik Ekipler İçin Senaryolar](#5-yazılım-geliştiriciler--teknik-ekipler-için-senaryolar)
+6. [18 Doğrulama Deseni: Hem Günlük Hayat Hem Kod Örnekleri](#6-18-doğrulama-deseni-hem-günlük-hayat-hem-kod-örnekleri)
+7. [4 Doğrulama Derinliği (MINIMAL, STANDARD, ADVERSARIAL, CRITICAL)](#7-4-doğrulama-derinliği)
+8. [4 Karar Durumu ve Anlamları (PASS, PWL, BLOCKED, FAIL)](#8-4-karar-durumu-ve-anlamları)
+9. [2-Adımlı Revizyon Kuralı (Sonsuz Döngü Engeli)](#9-2-adımlı-revizyon-kuralı)
 
 ---
 
-## 1. Giriş: Neden Geleneksel Doğrulama Yetersizdir?
+## 1. Bu Kılavuz Kimler İçindir?
 
-Yapay zeka modellerine *"Cevabını kontrol et"*, *"Emin misin?"* veya *"Hata var mı bak"* dediğinizde genellikle şu gerçekleşir:
-* **Yalancı Onaylama (Confirmation Bias):** Model kendi ürettiği metni baştan okur, kendi mantığına hayran kalır ve *"Evet, her şey doğru"* der (`VF-06 / VF-07`).
-* **Halüsinatif Test:** Olmayan derleyicilerin veya veri tabanlarının çalıştığını iddia eder (`INV-010`).
-* **Sonsuz Düzeltme Döngüsü:** Bir yeri düzeltirken başka bir yeri bozar ve hiçbir zaman kesin bir kanıta ulaşamaz (`VF-06`).
+* 🏠 **Günlük Kullanıcılar:** Alışveriş yapan, ev kiralayan, tatil planlayan veya ChatGPT'ye günlük sorular soran herkes.
+* 🩺 **Sağlık & Yaşam Meraklıları:** Diyet, vitamin ve sağlık tavsiyelerinin bilimsel gerçekliğini sorgulayanlar.
+* ⚖️ **Vatandaşlar & Hukuk Takipçileri:** Sözleşmelerindeki tuzak maddeleri ve haklarını netleştirmek isteyenler.
+* 🎓 **Öğrenciler & Akademisyenler:** Uydurma referans ve sahte alıntılardan arınmış tez ve ödev hazırlayanlar.
+* 💼 **İş İnsanları & Yatırımcılar:** Finansal simülasyonlarındaki gizli varsayımları görmek isteyenler.
+* 💻 **Yazılımcılar & Mühendisler:** Kritik kod, veritabanı migration ve mimari kararlarını hasmane testten geçirmek isteyenler.
+
+---
+
+## 2. Geleneksel Yapay Zeka Neden Hata Yapar?
+
+Standart bir yapay zekaya (ChatGPT, Gemini vb.) *"Cevabından emin misin?"* veya *"Bu doğru mu?"* diye sorduğunuzda şu 3 ölümcül sorun yaşanır:
+
+1. **Yalancı Onaylama (Confirmation Bias):** Model az önce yazdığı cevabı tekrar okur. Tıpkı kendi yazdığı sınav kağıdını okuyan bir öğrenci gibi kendi mantık hatalarını göremez ve *"Evet, kesinlikle eminim"* der (`VF-06 / VF-07`).
+2. **Pazarlama / Broşür Dili Tuzağı:** Ürün karşılaştırmalarında üreticilerin iddialı reklam metinlerini gerçek sanır; kronik arızaları veya gizli maliyetleri söylemez (`OF-03`).
+3. **Halüsinasyonla Kaynak Uydurma:** Bir mahkeme kararı veya bilimsel makale sorulduğunda, kulağa çok mantıklı gelen ama gerçekte asla var olmayan sahte kaynaklar icat eder (`INV-010 / EF-01`).
 
 **`agent-verification` Ne Yapar?**  
-Doğrulamayı bir temenni olmaktan çıkarıp **mekanik bir sözleşmeye (contract)** bağlar:
-1. Yanıt baştan "doğrulanmamış aday" (`candidate output`) kabul edilir.
-2. Çıktı atomik iddialara (`claims`) bölünür.
-3. Her iddia için çürütmeye muktedir (`falsifiable`) testler üretilir.
-4. Çürütülemeyen iddialar kanıtlanır; çürütülenler sınıflandırılıp revize edilir.
+Modeli kendi cevabına **düşman (adversarial)** yapar. Model, yanıtı onaylamaya değil; **yanıtı çürütmeye, içindeki açıkları yakalamaya ve en zorlu köşe durumları üretmeye** zorlanır.
 
 ---
 
-## 2. Temel Çalışma Mantığı ve Yaşam Döngüsü
+## 3. ChatGPT, Claude ve Gemini Web Arayüzünde Nasıl Kullanılır?
 
-Doğrulama akışı aşağıdaki adımları sırayla işletir:
+Herhangi bir kod yazmanıza, terminal açmanıza veya yazılımcı olmanıza gerek yoktur! Doğrudan tarayıcınızda kullanabilirsiniz.
+
+### Yöntem A: Sihirli Tek Satırlık Prompt Eki
+Sorduğunuz herhangi bir normal sorunun sonuna şu cümleyi ekleyin:
 
 ```text
-GÖREV (TASK)
-  ↓
-1. SÖZLEŞME TASLAĞI (Verification Contract taslağı çıkarılır)
-  ↓
-2. ADAY ÇIKTI (Model yanıtı üretir)
-  ↓
-3. İDDİA AYRIŞTIRMA (Çıktıdan CL-001, CL-002 gibi test edilebilir iddialar çıkarılır)
-  ↓
-4. TEST ÜRETİMİ (AC şartlarına uygun testler atanır)
-  ↓
-5. TEST ÇALIŞTIRMA (Kanıt ve gerçeklik üzerinde test edilir)
-  ↓
-  ├──> HATA VARSA: SINIFLANDIR (OF/VF/EF/XF) → REVİZE ET → YENİDEN TEST ET (Maksimum 2 tur)
-  ↓
-6. HASMANE SALDIRI (Adversarial Pass: Karşıt örnek ve uç durum araması)
-  ↓
-7. TESTLERİN DENETİMİ (Audit & Mental Mutation Testing)
-  ↓
-8. PRE-DECISION CHECKLIST (39 kapı kuralı denetlenir)
-  ↓
-NİHAİ KARAR: PASS | PASS_WITH_LIMITATIONS | BLOCKED | FAIL
+[Lütfen bu çıktıyı agent-verification protokolüyle doğrula: İddiaları ayıkla, 
+karşıt örnekler ve saklanan dezavantajlarla hasmane test yap, doğrulanmamış 
+varsayımları açıkça listele ve nihai bir karar (PASS/PWL/BLOCKED/FAIL) bildir.]
 ```
 
 ---
 
-## 3. 4 Doğrulama Derinliği ve Uygulama Senaryoları
+### Yöntem B: ChatGPT "Özel Talimatlar (Custom Instructions)" Şablonu
+ChatGPT'nin her zaman bu titizlikle yanıt vermesini istiyorsanız, ChatGPT Ayarlarından **"Custom Instructions (Özel Talimatlar)"** kısmındaki *"ChatGPT'nin nasıl yanıt vermesini istersiniz?"* kutusuna şunu yapıştırın:
 
-İşinizin getirdiği riske göre sistem 4 farklı derinlik kademesinden birini seçer:
-
-### 1. MINIMAL Derinlik
-* **Ne Zaman Seçilir?** Deterministik metin işleme, şablon doldurma, JSON biçimlendirme, regex dönüşümleri, liste filtrelemeleri.
-* **Ne Yapar?** Çıktının biçimini, kullanıcı kısıtlarını ve şema kurallarını inceler. Ağır adversarial analiz yapmaz.
-* **Örnek Senaryo:** 500 satırlık müşteri listesinden sadece "aktif" ve "Türkiye" olanları JSON olarak çıkarmak.
-
-### 2. STANDARD Derinlik
-* **Ne Zaman Seçilir?** Genel kod yazımı, API istemcileri, teknik araştırmalar, kavramsal açıklamalar, planlama.
-* **Ne Yapar?** İddiaları ayıklar, her iddia için kanıt arar, mantıksal tutarlılığı ve hafif hasmane senaryoları inceler.
-* **Örnek Senaryo:** Python ile async Redis queue kuyruğu tüketicisi yazmak.
-
-### 3. ADVERSARIAL Derinlik
-* **Ne Zaman Seçilir?** Mimari tercihler, karmaşık algoritmalar, eşzamanlılık (concurrency/multithreading), güvenlik sınırları, çoklu veri modeli entegrasyonları.
-* **Ne Yapar?** Çıktıyı çürütmeye odaklanır. Matematiksel/mantıksal karşıt örnekler (`counterexamples`) arar, gizli varsayımları (`assumptions`) deşifre eder, karşılaştırmalarda taraflılık denetimi yapar.
-* **Örnek Senaryo:** İki mikroservis arasındaki dağıtık işlem (saga pattern) tasarımının tutarlılık analizi.
-
-### 4. CRITICAL Derinlik
-* **Ne Zaman Seçilir?** Canlı veritabanı migration scriptleri, ödeme ve finansal hesaplama motorları, yetkilendirme/kriptografi mekanizmaları, sıfır-kesinti üretim dağıtım adımları.
-* **Ne Yapar?** Dış gerçeklik denetimi zorunludur (derleyici, linter, runtime test veya resmi dokümantasyon kanıtı). Zihinsel mutasyon testi (`mutation testing`) işletilir.
-* **Örnek Senaryo:** 10 milyon satırlık PostgreSQL tablosunda tablo kilitlenmesi (table lock) yaratmadan sütun tipi değiştirme.
-
----
-
-## 4. 18 Doğrulama Deseni: Pratik Örnekler ve Promptlar
-
-Ajanınızın kullanabileceği 18 desen ve bunların pratik uygulamaları:
-
-### Desen 1: Kısıt Doğrulaması (Constraint Verification)
-* **Amaç:** Kullanıcının açıkça belirttiği limitleri, formatı ve yasakları doğrulamak.
-* **Örnek Prompt:** *"Bana son 5 yılın JavaScript framework'lerini karşılaştır. Kesinlikle React ve Vue'dan bahsetme, en fazla 3 alternatif listele."*
-* **Denetim:** Çıktıda React/Vue kelimesi geçti mi? Liste sayısı tam 3 mü? Yıllar 2021 ve sonrası mı?
-
-### Desen 2: Bütünlük / Kapsam Doğrulaması (Completeness Verification)
-* **Amaç:** Talep edilen tüm boyutların atlanmadan ele alındığından emin olmak.
-* **Kural:** *Uzun cevap, eksiksiz cevap demek değildir.*
-* **Örnek Prompt:** *"Yeni API mimarimizi performans, bellek, güvenlik, maliyet ve ölçeklenebilirlik açısından incele."*
-* **Denetim:** 5 boyuttan herhangi biri eksik bırakıldıysa `OF-02 (MISSING_CLAIM)` hatası üretilir.
-
-### Desen 3: İddia-Kanıt Eşleştirmesi (Claim-Evidence Verification)
-* **Amaç:** İddia edilen teknik verinin doğrudan bir kaynağa dayanmasını sağlamak.
-* **Örnek Prompt:** *"Go'daki `sync.Pool` yapısının bellek yönetiminde GC yükünü nasıl azalttığını resmi referanslarla açıkla."*
-* **Denetim:** Kaynak gerçekten Go bellek yöneticisinin davranışını kanıtlıyor mu, yoksa model sadece spekülasyon mu yapıyor?
-
-### Desen 4: Varsayım Denetimi (Assumption Audit)
-* **Amaç:** Çıktının dayandığı görünmez varsayımları açığa çıkarmak.
-* **Örnek:** *"Bu kod O(1) bellek tüketir."* → *Varsayım: Girdi dizisi bellekte zaten mevcuttur ve stream değildir.*
-* **Denetim:** Eğer varsayım `UNVERIFIED` ise iddia en fazla `SUPPORTED` olarak etiketlenebilir, `VERIFIED` olamaz (`INV-040`).
-
-### Desen 5: Karşıt Örnek Arama (Counterexample Search)
-* **Amaç:** Bir iddiayı çürütmek için somut bir girdi üretmek.
-* **Örnek İddia:** *"Bu fonksiyon tüm stringleri geçerli e-postaya dönüştürür veya reddeder."*
-* **Karşıt Örnek Testi:** `"user..name@domain.com"`, `".username@domain.com"`, `"trailing@dot."` gibi RFC uç durumları denenir.
-
-### Desen 6: Mantıksal Gerektirme (Logical Entailment)
-* **Amaç:** Öncüllerden varılan sonucun mantıksal bir sıçrama (non-sequitur) içermediğini denetlemek.
-
-### Desen 7: Tutarlılık Doğrulaması (Consistency Verification)
-* **Amaç:** Metnin veya kodun farklı bölümleri arasındaki çelişkileri yakalamak.
-* **Örnek Çelişki:** Giriş bölümünde *"Redis tek iş parçacıklıdır"* deyip, sonuçta *"Redis multithreaded olarak tüm CPU'ları tüketir"* demek (`OF-04`).
-
-### Desen 8: Karşılaştırma Simetrisi (Comparison Symmetry)
-* **Amaç:** İki teknolojiyi kıyaslarken birine karşı haksız avantaj/dezavantaj yaratılmasını önlemek.
-* **Örnek:** Postgres vs MongoDB kıyaslamasında Postgres'in en yeni sürüm özelliklerini MongoDB'nin 5 yıl önceki sürümüyle kıyaslamak simetriyi bozar.
-
-### Desen 9: Filtreleme Doğrulaması (Filtering Verification)
-* **Amaç:** Hem Yanlış Pozitifleri (`OF-06`) hem de Yanlış Negatifleri (`OF-07`) test etmek.
-* **Örnek:** *"Sadece Fortune 500'deki yapay zeka şirketlerini getir."* (Alakasız şirket eklendi mi? Girmesi gereken dev şirket unutuldu mu?)
-
-### Desen 10: Sınıflandırma Doğrulaması (Classification Verification)
-* **Amaç:** Sınırda kalan (borderline) durumların doğru kategorize edildiğinden emin olmak.
-
-### Desen 11: Dönüşümün Korunumu (Transformation Preservation)
-* **Amaç:** Refactoring veya dil çevirisinde anlamsal özelliklerin (semantic invariants) bozulmadığını garantilemek.
-* **Örnek:** Python'dan Rust'a taşınan bir fonksiyonda float hassasiyeti ve integer overflow davranışı korundu mu?
-
-### Desen 12: Araştırma Kapsamı (Research Coverage)
-* **Amaç:** Endüstri standardı haline gelmiş kütüphane veya yaklaşımların görmezden gelinmediğini denetlemek.
-
-### Desen 13: Öneri Doğrulaması (Recommendation Verification)
-* **Amaç:** Bir araç veya mimari önerilirken operasyonel yükünün, maliyetinin ve zayıf yönlerinin gizlenmesini engellemek.
-
-### Desen 14: Dış Gerçeklik Kontrolü (External Reality Check)
-* **Amaç:** Modelin kendi zihinsel inancı yerine derleyicileri, linter'ları, curl çağrılarını veya test koşucularını kullanması.
-
-### Desen 15: Mutasyon Testi (Mutation Testing)
-* **Amaç:** Test paketinin duyarlılığını ölçmek.
-* **Yöntem:** Yanıta kasten bir bug enjekte edilir. Eğer mevcut testler bu hatayı yakalayamazsa testler zayıftır (`VF-02`).
-
-### Desen 16: Doğrulamanın Doğrulanması (Verification-of-Verification)
-* **Amaç:** Testlerin döngüsel mantık (`circular reasoning`) içerip içermediğini denetlemek.
-
-### Desen 17: Kanıt Sınırı (Evidence Boundary)
-* **Amaç:** Test edilmeyen alanları açıkça `NOT CHECKED` listesine koyup raporlamak.
-
-### Desen 18: Minimal Doğrulama Prensibi (Minimal Verification Principle)
-* **Amaç:** Basit sohbetler, selamlaşmalar veya risksiz metin biçimlendirmeleri için gereksiz ağır doğrulama çalıştırmamak.
-
----
-
-## 5. 4 Karar Durumu ve Örnek Çıktılar
-
-Bir doğrulama oturumu her zaman aşağıdaki 4 durumdan biriyle biter:
-
-### 1. `PASS` (Tam Doğrulandı)
-Tüm kritik gereksinimler kanıtlanmış, hiçbir açık hata veya şüphe kalmamıştır.
-```markdown
-### Doğrulanmış Çözüm
-[Kod veya analiz metni temiz şekilde sunulur]
-
-> **Doğrulama Özeti:**
-> - Seviye: STANDARD
-> - Karar: PASS
-> - Belirleyici Kanıt: [EV-001 (Resmi dokümantasyon RFC-7519)]
-```
-
-### 2. `PASS_WITH_LIMITATIONS` (Sınırlı Kabul)
-Çözüm çalışır durumdadır ancak belirli sınır şartları veya varsayımlar mevcuttur.
-```markdown
-### Doğrulanmış Çözüm
-[Fonksiyon kodu]
-
-> **Kullanım Kısıtları (Disclosed Limitations):**
-> - Fonksiyon yalnızca `n <= 100.000` veri boyutu için doğrulanmıştır (CL-003).
-> - Bellek kısıtlı IoT cihazlarında stream buffer kullanılmalıdır (INV-047).
-```
-
-### 3. `BLOCKED` (Erişim veya Araç Engeli)
-Gereken canlı veritabanı veya derleyici ortamı mevcut olmadığı için agent spekülasyon yapmayı reddeder (`INV-010`).
-```markdown
-> **Doğrulama Durumu: BLOCKED**
-> - **Kontrol Edilen:** SQL syntax doğrulaması tamamlandı.
-> - **Engellenen:** Canlı Postgres 16 üzerinde EXPLAIN ANALYZE çalıştırılamadı (XF-01).
-> - **Gereken Kanıt:** Canlı tablo istatistikleri ve execution planı.
-```
-
-### 4. `FAIL` (Doğrulama Başarısız)
-Çözüm kısıtları ihlal etmiştir veya 2 revizyon hakkı dolmasına rağmen düzeltilememiştir.
-```markdown
-> **Doğrulama Durumu: FAIL**
-> - **İhlal Edilen Kural:** AC-002 (O(1) yardımcı bellek gereksinimi).
-> - **Hata Sınıfı:** OF-10 (Constraint Violation).
-> - **Sebep:** Algoritma özyineleme (recursion) sırasında çağrı yığını (call stack) nedeniyle O(log n) bellek kullanmaktadır.
+```text
+Doğruluk hassasiyeti gerektiren kararlarda, karşılaştırmalarda ve iddialarda 
+'agent-verification' protokolünü uygula:
+1. Kendi cevabını doğrudan onaylama; en zayıf noktasını çürütecek karşıt örnekler ara.
+2. Önerdiğin şeylerin mutlaka gizli maliyetlerini, dezavantajlarını ve sınırlarını açıkla.
+3. Elinde doğrulanabilir dış kanıt yoksa tahmin yürütme, BLOCKED ver ve eksik bilgiyi söyle.
+4. Kıyaslamalarda her iki seçeneğe de eşit, tarafsız ve simetrik kriterler uygula.
 ```
 
 ---
 
-## 6. Hata Sınıflandırma ve 2-Adımlı Revizyon Kuralı
+### Yöntem C: Kopyala-Yapıştır Doğrulama Çerçevesi
+Çok kritik bir karar vereceğiniz zaman şu şablonu kopyalayıp sorunuzla birlikte yapıştırın:
 
-Bir test başarısız olduğunda sistem panik yapmaz veya ezbere yanıt üretmez:
+```text
+Soru/Karar: [Buraya konunuzu yazın]
 
-1. **Sınıflandır:** Hata [`failure-taxonomy.md`](references/failure-taxonomy.md) tablosundaki 29 koddan birine bağlanır (Örn: `OF-04 Contradiction`).
-2. **Hedefe Yönelik Revize Et:** Sadece hataya sebep olan iddia düzeltilir.
-3. **Eski Testleri Geçersiz Kıl (`INV-003 / INV-048`):** *"Eski testler geçmişti"* denilemez, revize edilen iddia yeniden test edilir.
-4. **Tükenme Sınırı (`INV-033`):** Aynı kritik iddia üzerinde **arka arkaya 2 kez başarısız re-test** yaşanırsa revizyon durdurulur ve doğrudan `FAIL` verilir. Sonsuz döngü engellenir.
-
----
-
-## 7. Farklı Roller İçin Prompt Şablonları
-
-### Yazılım Geliştiriciler İçin
-> *"Python'da yüksek trafikli bir rate-limiter sınıfı yaz (Token Bucket algoritması). agent-verification skill'ini CRITICAL seviyede devreye al; eşzamanlılık (race conditions) ve thread-safety için hasmane testler çalıştır."*
-
-### Sistem Mimarları İçin
-> *"Mevcut monolit mimarimizi event-driven yapıya geçirmek istiyoruz. Bir geçiş planı hazırla. Planı agent-verification ADVERSARIAL derinlikte test et; veri kaybı ve ağ bölünmesi (network partition) durumlarını karşıt örneklerle sına."*
-
-### Veri Mühendisleri İçin
-> *"ClickHouse ile PostgreSQL arasında CDC (Change Data Capture) veri boru hattı tasarla. Tasarımı agent-verification STANDARD derinlikte doğrula; schema drift ve veri tipi uyumsuzluğu risklerini ortaya koy."*
-
-### DevOps / SRE Mühendisleri İçin
-> *"Kubernetes üzerinde çalışan stateful bir servis için Blue/Green deployment stratejisi yaz. agent-verification ile depolama birimi (PVC) çakışması ve DNS yayılma gecikmelerini denetle."*
+Lütfen bu görevi 'ADVERSARIAL' doğrulama derinliğinde ele al:
+- Temel iddialarını listele.
+- En az 2 adet çürütücü karşıt senaryo (counterexample) üret.
+- Saklanan/görünmeyen varsayımları (Assumption Audit) deşifre et.
+- Sonucu PASS, PASS_WITH_LIMITATIONS veya FAIL olarak bağla.
+```
 
 ---
 
-## 8. Araç Entegrasyonları
+## 4. Gündelik Yaşamdan 7 Kapsamlı Senaryo
 
-* **Claude Code:** Proje dizininde `npx skills add metodoloji/agent-verification` yaptıktan sonra Claude doğrudan skill'i tanır.
-* **Cursor / Windsurf:** Prompt başına `[Agent Verification Protocol: ADVERSARIAL]` ekleyerek modelin doğrulama sözleşmesi kurmasını sağlayabilirsiniz.
-* **OpenHands:** `.metodoloji/skills/agent-verification` yoluna semlink vererek agent döngüsüne mechanical gate olarak bağlayabilirsiniz.
+### Senaryo 1: Tüketici & Alışveriş Kararları (Laptop, Robot Süpürge, Araba)
+
+* **Kullanıcı Sorusu:** *"50.000 TL bütçem var. Mimarlık öğrencisiyim; 3D modelleme ve render için X Marka Laptop mu yoksa Y Marka Laptop mu almalıyım?"*
+* **Standart Yapay Zeka Ne Yapar?** İki bilgisayarın broşür özelliklerini alt alta yazar: *"İkisi de harika, X modelinin ekranı çok güzel, Y modelinin işlemcisi çok hızlı, bütçenize göre seçebilirsiniz."* (Kullanıcıya hiçbir fayda sağlamaz).
+* **Agent-Verification ile Ne Olur?**
+  * **İddia:** *"X bilgisayarı ince ve hafif kasasında render alabilir."*
+  * **Hasmane Test (Saldırı):** 3D render sırasında GPU ve CPU 100W güç çeker. X modelinin soğutma bloğu tek fanlıdır. 15 dakika sonra termal darboğaz (thermal throttling) yaşanıp frekans yarıya düşer mi?
+  * **Saklanan Kısıt:** X modelinde RAM anakarta lehimlidir, ileride 16 GB'tan 32 GB'a yükseltilemez (`Recommendation Verification`).
+  * **Sonuç:** `PASS_WITH_LIMITATIONS`. Kullanıcıya reklam diliyle değil, gerçek kronik sorunlar ve donanım sınırlarıyla net karar verdirilir.
+
+---
+
+### Senaryo 2: Hukuk & Sözleşme Denetimi (Kira Sözleşmesi ve Tahliye)
+
+* **Kullanıcı Sorusu:** *"Ev kiralayacağım. Ev sahibi kira kontratının yanına 'Tarihi boş bırakılmış tahliye taahhütnamesi' koymuş. 'Bu sadece formalite, sorun olmaz' diyor. İmzalamalı mıyım?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Genellikle ev sahipleri bunu talep eder, güveniyorsanız imzalayabilirsiniz ama dikkatli olun."* (Hayati bir hukuki riski hafife alır).
+* **Agent-Verification ile Ne Olur?**
+  * **Varsayım Denetimi (Assumption Audit):** *"Ev sahibinin taahhütnameyi kötüye kullanmayacağı"* varsayımı kanıtlanamaz bir güvendir (`UNVERIFIED`).
+  * **Yargıtay İçtihadı Çapraz Sorgusu (Claim-Evidence):** Yargıtay Hukuk Genel Kurulu kararlarına göre, boş tarihe imza atan kiracı sonradan atılan tarihi kabul etmiş sayılır. Ev sahibi istediği an 15 gün içinde tahliye davası açabilir.
+  * **Sonuç:** `FAIL` (Kritik Hukuki Risk). Kesin dille risk açıklanır, yasal haklar ve Yargıtay ilke kararları referans verilir.
+
+---
+
+### Senaryo 3: Kişisel Finans & Kredi, Mevduat ve Yatırım Hesabı
+
+* **Kullanıcı Sorusu:** *"Elimde 2 milyon TL nakit var. Aylık %3.5 faizle konut kredisi çekip 4 milyonluk ev mi alayım, yoksa 2 milyonu mevduat faizine yatırıp kirada mı kalayım? 1 yıllık simülasyon yap."*
+* **Standart Yapay Zeka Ne Yapar?** Basit bir faiz hesabı yapar: *"Mevduat size ayda 80.000 TL verir, kredi taksiti ise 120.000 TL, o yüzden kirada kalmak daha karlı."*
+* **Agent-Verification ile Ne Olur?**
+  * **Eksik Boyut Tespiti (`OF-02 / Completeness Verification`):** Model basit hesap yapamaz; vergi stopajını (%7.5-%10), konut ekspertiz ve tapu harcını (%4), yıllık DASK/konut sigortasını, konut fiyat artış enflasyonunu ve kira artış oranını dahil etmek zorundadır.
+  * **Karşıt Örnek Testi:** Enflasyon %40 olduğunda konutun reel değeri ile paranın satın alma gücü kaybı test edilir.
+  * **Sonuç:** `PASS_WITH_LIMITATIONS`. Tüm gizli maliyetler ve sınır şartları bir tabloyla kullanıcıya sunulur.
+
+---
+
+### Senaryo 4: Sağlık, Tıp & Beslenme İddiaları ve Mit Çürütme
+
+* **Kullanıcı Sorusu:** *"Sosyal medyada bir doktor 'Günde 2 diş sarımsağı limonla kaynatıp içerseniz tüm damar tıkanıklıkları 21 günde açılır, anjiyoya gerek kalmaz' diyor. Bu bilimsel mi?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Sarımsak ve limon damar sağlığı için çok faydalıdır, antioksidan içerir, deneyebilirsiniz ama doktorunuza danışın."* (Tehlikeli bir dengecilik).
+* **Agent-Verification ile Ne Olur?**
+  * **Kanıt Taraması (`Claim-Evidence Verification`):** PubMed, Cochrane ve kardiyoloji kılavuzlarında bu formülü doğrulayan tek bir faz-3 klinik çalışma var mı? -> `EF-01 SOURCE_MISSING`.
+  * **Hata Tipi:** `OF-01 WRONG_CLAIM` ve `OF-09 UNJUSTIFIED_CERTAINTY`.
+  * **Sonuç:** Kesin `FAIL`. Damar kireçlenmesinin (ateroskleroz) mekanik plak yapısının limon suyuyla çözülemeyeceği, hayati tehlike yaratabileceği tavizsiz şekilde açıklanır.
+
+---
+
+### Senaryo 5: Vize, Seyahat & Bürokrasi (Schengen Hesaplaması)
+
+* **Kullanıcı Sorusu:** *"Yeşil pasaportum var. Son 6 ay içinde toplam 55 gün İtalya ve Fransa'da kaldım. Önümüzdeki hafta 40 günlüğüne Almanya'ya gidebilir miyim?"*
+* **Standart Yapay Zeka Ne Yapar?** *"90 gün hakkınız var, 55 gün kalmışsınız, geriye 35 gün kalmış. 40 gün giderseniz 5 gün aşarsınız, gidemezsiniz."* (Yüzeysel ve eksik hesap).
+* **Agent-Verification ile Ne Olur?**
+  * **Kural:** Schengen 90/180 gün kuralı sabit bir takvim yılı değil, **geriye doğru kayan 180 günlük bir penceredir (rolling window)**.
+  * **Hasmane Test:** Kullanıcının İtalya'ya giriş yaptığı ilk tarihler 180 günün gerisinde kalıp siliniyor mu?
+  * **Sonuç:** Kullanıcıdan kesin giriş-çıkış tarihleri talep edilir; tarihler olmadan karar verilemeyeceği için durum `BLOCKED` ilan edilir (`INV-010`). Kullanıcının sınır kapısında sınır dışı edilmesi engellenir.
+
+---
+
+### Senaryo 6: Öğrenci & Akademik Araştırma ve Tez Kaynakçası
+
+* **Kullanıcı Sorusu:** *"Yapay zekanın telif hakları hukuku üzerindeki etkileri konulu yüksek lisans tezim için bana 4 adet Yargıtay veya AB Adalet Divanı karar özeti ve dosya numaralarını ver."*
+* **Standart Yapay Zeka Ne Yapar?** Kulağa harika gelen ama tamamen uydurma (halüsinasyon) karar numaraları ve sahte hakim isimleri üretir. Öğrenci bu kaynakları tezine koyarsa intihal ve sahtecilikten disipline gider!
+* **Agent-Verification ile Ne Olur?**
+  * **Kural (`INV-010 Never Invent Evidence`):** Eğer modelin elinde doğrudan Yargıtay veya ABAD resmi içtihat veritabanına erişim yoksa asla sahte numara üretemez.
+  * **Sonuç:** `BLOCKED`. Model şunu söyler: *"Canlı yargı veritabanına doğrudan API erişimim bulunmamaktadır (XF-01). Sahte karar numarası üretmek INV-010 kuralınca yasaktır. İlgili yasal direktifleri (AB 2019/790 DSM Direktifi Madde 4) inceleyebilirsiniz."*
+
+---
+
+### Senaryo 7: Haber Doğrulama & Sosyal Medya İddiaları
+
+* **Kullanıcı Sorusu:** *"Sosyal medyada 'Japonya tüm mikrodalga fırınları nükleer radyasyon yaydığı gerekçesiyle 2026 sonuna kadar yasakladı' haberi dolaşıyor. Doğru mu?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Japonya hükümeti mikrodalga konusunda araştırmalar yapmaktadır..."* gibi bulanık yanıtlar verebilir.
+* **Agent-Verification ile Ne Olur?**
+  * **Köken Taraması:** İddianın kaynağı Rus hiciv/parodi sitesi *Panorama.pub*'a kadar takip edilir.
+  * **Fizik Doğrulaması:** Mikrodalganın iyonlaştırıcı olmayan (non-ionizing) dalga olduğu, nükleer radyasyonla ilgisi bulunmadığı doğrulanır.
+  * **Sonuç:** `FAIL (Asılsız İddia / OF-01)`.
+
+---
+
+## 5. Yazılım Geliştiriciler & Teknik Ekipler İçin Senaryolar
+
+Yazılımcılar için sistem en yüksek standartta çalışır:
+
+* **Eşzamanlılık & Race Condition:** Go, Rust veya Java'da thread-safety denetimi; atomik işlemlerin bellek sıralaması (`acquire-release`) karşıt örneklerle test edilir.
+* **Sıfır-Kesinti DB Migration (`CRITICAL`):** 50 milyon satırlık tabloda `ALTER TABLE` çalıştırmadan önce `ACCESS EXCLUSIVE` kilitlenme riskleri denetlenir.
+* **Güvenlik & Kriptografi:** JWT imzalama, OAuth 2.1 PKCE akışları ve SQL injection açıkları mutasyon testleriyle taranır.
+
+---
+
+## 6. 18 Doğrulama Deseni: Hem Günlük Hayat Hem Kod Örnekleri
+
+| # | Desen Adı | Günlük Hayat Örneği | Yazılım / Kod Örneği |
+|---|---|---|---|
+| **1** | **Constraint Verification** | "Glutensiz ve fıstıksız 3 yemek öner" kuralında içeriğe fıstık girmesini engeller. | Fonksiyonun O(1) bellek sınırını aşmadığını denetler. |
+| **2** | **Completeness Verification** | Otel ararken otopark, klima ve evcil hayvan şartlarının üçünü de teyit eder. | API yanıtının 5 zorunlu JSON alanını da içerdiğini kontrol eder. |
+| **3** | **Claim-Evidence** | "Bu vitamin boy uzatır" iddiasını klinik deneyle eşleştirir. | Fonksiyonun thread-safe olduğunu resmi dil dökümanıyla kanıtlar. |
+| **4** | **Assumption Audit** | "Taksitleri öderim" derken işsizlik veya faiz artış riskini ortaya çıkarır. | Kodun internete her an bağlı olduğu varsayımını sorgular. |
+| **5** | **Counterexample Search** | "Tüm kuşlar uçar" iddiasına "Penguen" örneğini getirir. | Sıralama fonksiyonuna `[null, -1, 0, MAX_INT]` dizisini vererek kodu patlatmaya çalışır. |
+| **6** | **Logical Entailment** | "Hava bulutlu, o halde kesin deprem olacak" saçmalığını eler. | Doğrulanmamış token'dan doğrudan yetki verme mantık hatasını yakalar. |
+| **7** | **Consistency** | Metnin başında "ücretsiz" deyip sonunda "yıllık 500 TL" denmesini engeller. | Başta immutable tanımlanan nesnenin alt satırda mutate edilmesini yakalar. |
+| **8** | **Comparison Symmetry** | iPhone ile Samsung kıyaslarken birinin kamerasını, diğerinin bataryasını öne çıkarıp taraflılık yapmaz. | Postgres ile Mongo'yu aynı disk, bellek ve iş yükünde kıyaslar. |
+| **9** | **Filtering** | "Sadece 2020 sonrası filmler" istendiğinde hem eski filmleri eler hem yenileri kaçırmaz. | SQL WHERE filtresinde hem false-positive hem false-negative kayıtları test eder. |
+| **10** | **Classification** | Bir harcamanın "iş masrafı" mı "özel masraf" mı olduğunu sınır durumlarda test eder. | Network paketinin zararlı mı normal mi olduğunu sınır değerlerde sınar. |
+| **11** | **Transformation Preservation** | Bir metin özetlenirken hukuki anlam kaybı olmadığını garantiler. | Python'dan Rust'a çevrilen fonksiyonda float hassasiyetini korur. |
+| **12** | **Research Coverage** | Araç tavsiyesinde sadece popülerleri değil, standart açık kaynakları da inceler. | Web framework anketinde FastAPI varken Flask'ı unutmaz. |
+| **13** | **Recommendation Verification** | Bir hisse veya ev önerirken emlak vergisi, amortisman ve aidat yükünü zorla söyletir. | Kubernetes önerirken getireceği DevOps maliyetini ve karmaşıklığı açıklar. |
+| **14** | **External Reality Check** | Bir restoranın açık olup olmadığını Google Maps canlı verisinden kontrol eder. | Kodun syntax hatasını modelin inancına değil, derleyici çıktısına sorar. |
+| **15** | **Mutation Testing** | Mantığı kasten tersine çevirip cevabın hala doğru kabul edilip edilmediğine bakar. | Koddaki `>` işaretini `<` yapıp testlerin hata verip vermediğini dener. |
+| **16** | **Verification-of-Verification** | Kendi hazırladığı sınav sorusunun cevabı içinde fısıldayıp fısıldamadığını denetler. | Testlerin kendi kendini doğrulayan kısır döngü olmadığını inceler. |
+| **17** | **Evidence Boundary** | "Bu bilginin doğruluğunu test etmedim" diyerek bilmediği alanı dürüstçe açıklar. | Canlı ortamda test edilmemiş mikroservis uçlarını `NOT CHECKED` listesine yazar. |
+| **18** | **Minimal Verification** | "Günaydın" veya "Teşekkürler" mesajına 50 sayfalık doğrulama raporu üretmez. | Statik Markdown formatlama işine ağır hasmane test koşmaz. |
+
+---
+
+## 7. 4 Doğrulama Derinliği
+
+1. **`MINIMAL`:** Format, kısıt ve şablon işleri (Risk çok düşük).
+2. **`STANDARD`:** Genel bilgi soruları, teknik açıklamalar, rutin kodlar (Varsayılan mod).
+3. **`ADVERSARIAL`:** Satın alma kararları, teknoloji kıyaslamaları, sözleşme incelemeleri, karmaşık mimariler (Risk yüksek, taraflılık muhtemel).
+4. **`CRITICAL`:** Sağlık/ilaç bilgileri, hukuki davalar, canlı veritabanı migration'ları, para transferleri (Hata kabul edilemez, dış gerçeklik kanıtı şart).
+
+---
+
+## 8. 4 Karar Durumu ve Anlamları
+
+* **`PASS`:** İddia kesin olarak kanıtlandı, hiçbir şüphe veya açık köşe durum kalmadı. Güvenle kullanabilirsiniz.
+* **`PASS_WITH_LIMITATIONS`:** Çözüm veya yanıt genel olarak doğru, fakat şu şartlarda geçerli: *(Örn: "Yalnızca resmi tatiller hariç geçerlidir" veya "Yalnızca n < 100.000 veri boyutunda geçerlidir")*.
+* **`BLOCKED`:** Yapay zekanın elinde bunu doğrulamak için yeterli veri veya canlı erişim yok. Yapay zeka dürüst davranarak spekülasyon yapmayı reddetti.
+* **`FAIL`:** İddia çürütüldü, kural ihlali var, tehlikeli bir hata tespit edildi veya 2 tur düzeltme denemesine rağmen sorun çözülemedi.
+
+---
+
+## 9. 2-Adımlı Revizyon Kuralı
+
+Bir model bir hata yaptığında çoğu zaman düzeltmeye çalışırken daha büyük yalanlar söyler.  
+`agent-verification` protokolünde katı bir kural vardır (`INV-033`):
+* Bir iddia testten geçmezse model **en fazla 2 kez revize edebilir**.
+* 2. denemede de kanıtlanamazsa modelin konuşma hakkı biter; karar doğrudan **`FAIL`** veya **`BLOCKED`** olarak kilitlenir.
+* Böylece yapay zekanın sizi dakikalarca *"Hemen düzeltiyorum"* diyerek oyalaması engellenir.
