@@ -9,8 +9,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
-  "contract_version": "1.12",
-  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.12 covers INV-001..INV-044, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log.",
+  "contract_version": "1.13",
+  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.13 covers INV-001..INV-048, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log, non-vacuous criticality, escalation chain continuity, degraded-unit disclosure, complete revision invalidation.",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "risk_level_rule": "risk_level MUST satisfy the depth triggers for the task class (verification-depth.md §1) and the tie-break rule (ambiguous → HIGHER); internal consistency with depth_executed (INV-016) never excuses under-selection — a task at/above an ACT-expected or §1-triggered depth gated at a lower risk_level is VF-04 (INV-037).",
@@ -38,7 +38,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "assumption_ids": ["AS-001"],
       "test_ids": ["TEST-001"],
       "status": "UNVERIFIED | SUPPORTED | PARTIALLY_SUPPORTED | CONTRADICTED | VERIFIED",
-      "status_rule": "PARTIALLY_SUPPORTED is claim-level only: a critical test MUST be PASS/FAIL (never PARTIALLY_SUPPORTED); map partial evidence to the claim, not the test."
+      "status_rule": "PARTIALLY_SUPPORTED is claim-level only: a critical test MUST be PASS/FAIL (never PARTIALLY_SUPPORTED); map partial evidence to the claim, not the test.",
+      "criticality_rule": "At least one claim carrying the task's central conclusion (or the action it changes) MUST be critical: true, and the contract MUST declare at least one critical AC; a contract whose central-conclusion claims are all non-critical makes every critical gate vacuously true and is VF-04 (INV-045)."
     }
   ],
 
@@ -104,6 +105,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "retest_required": true,
       "retest_completed": false,
       "attempt_number_for_claim": 1,
+      "invalidation_rule": "invalidated_test_ids MUST include every test whose target_claim_ids intersect changed_claim_ids (INV-048, per §2 Claim Mutation); a revision leaving stale PASS tests attached to a changed claim is VF-06.",
       "monotonicity": "A revision MUST NOT widen claim scope, drop a critical AC, or downgrade a failure severity to reach PASS; scope-widening or severity-downgrading to pass is VF-07."
     }
   ],
@@ -131,8 +133,9 @@ The Verification Contract is the formal, machine-readable data model that binds 
     "escalation_log": [
       {"from": "STANDARD", "to": "ADVERSARIAL", "trigger": "counterexample found", "added_checks": ["TEST-004"]}
     ],
-    "escalation_log_rule": "Every escalation MUST be logged (INV-019), every escalation_log[].added_checks id MUST exist in tests[] and reference a test actually executed at/after the escalation (not PENDING/RUNNING), and any executed-depth downgrade below risk_level or below the task-class floor MUST be logged with its disclosure in disclosed_limitations[] (INV-043/044).",
+    "escalation_log_rule": "Every escalation MUST be logged (INV-019), every escalation_log[].added_checks id MUST exist in tests[] and reference a test actually executed at/after the escalation (not PENDING/RUNNING), and any executed-depth downgrade below risk_level or below the task-class floor MUST be logged with its disclosure in disclosed_limitations[] (INV-043/044). Log entries MUST form an ordered chain (each entry's from equals the previous entry's to, depths ordered MINIMAL < STANDARD < ADVERSARIAL < CRITICAL, and the final entry's to equals depth_executed unless a disclosed downgrade intervened); a broken or self-contradicting chain is VF-06 (INV-046).",
     "disclosed_limitations": [],
+    "degradation_rule": "PASS_WITH_LIMITATIONS requires every non-VERIFIED critical claim (SUPPORTED/PARTIALLY_SUPPORTED) and every failing or untested non-critical AC/test to be enumerated in disclosed_limitations[] — bounded means listed, not merely asserted; a degradation the trail/verdict does not name is VF-04 and blocks PSS_LIM (INV-047).",
     "blocked_reasons": []
   }
 }
@@ -194,6 +197,10 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Failure-resolution rule (`INV-042` enforcement): `failures[].resolved: true` requires a linked revision (`triggered_by_failure_id`) whose re-test completed with a passing result on the failure's `target_claim_ids[]`; flipping `resolved` without that revision+re-test pair is `VF-07` and blocks `PASS` while the underlying defect is open.
    - Downgrade-disclosure rule (`INV-043` enforcement): if the executed depth ends below `risk_level` (or below the task-class floor) — a disclosed downgrade under INV-031 — the downgrade MUST appear in `final_verdict.escalation_log[]` (from → to) and in `disclosed_limitations[]`; an undisclosed downgrade is `VF-06` and blocks `PASS`.
    - Escalation-substance rule (`INV-044` enforcement): every `escalation_log[].added_checks[]` id MUST exist in `tests[]` and reference a test actually executed (terminal, not `PENDING`/`RUNNING`) at/after the escalation; an escalation whose "added checks" never ran is `VF-06` — INV-019 log entries are evidence of execution, not intention.
+   - Non-vacuous-criticality rule (`INV-045` enforcement): the contract MUST declare at least one critical AC and at least one `critical: true` claim carrying the task's central conclusion; a contract whose central-conclusion claims are all non-critical makes every critical gate vacuously true and is `VF-04` — promote the central claims (never demote tests to dodge criticality) and re-run.
+   - Escalation-chain rule (`INV-046` enforcement): `escalation_log[]` entries MUST form an ordered chain — each entry's `from` equals the previous entry's `to`, depths follow MINIMAL < STANDARD < ADVERSARIAL < CRITICAL, and the final entry's `to` equals `depth_executed` unless a disclosed downgrade (INV-043) intervened; a broken or self-contradicting chain is `VF-06`.
+   - Degradation-disclosure rule (`INV-047` enforcement): `PASS_WITH_LIMITATIONS` requires every non-`VERIFIED` critical claim (`SUPPORTED`/`PARTIALLY_SUPPORTED`) and every failing or untested non-critical AC/test to be enumerated in `disclosed_limitations[]`; "bounded" means listed — an unnamed degradation is `VF-04` and blocks `PASS_WITH_LIMITATIONS` (reclassify: re-test, or `BLOCKED`/`FAIL`).
+   - Revision-invalidation rule (`INV-048` enforcement): `revisions[].invalidated_test_ids[]` MUST include every test whose `target_claim_ids[]` intersect `changed_claim_ids[]` (§2 Claim Mutation); a revision leaving a stale `PASS` test attached to a changed claim is `VF-06` and its result cannot support the verdict.
 
 ## 4. Pre-Decision Checklist (machine-checkable)
 
@@ -220,6 +227,10 @@ Applicability rule (`INV-032`): a box whose invariant does not apply at the clai
 [ ] every resolved failure has a linked passing revision+re-test (INV-042)
 [ ] depth downgrades below risk_level logged + disclosed (INV-043)
 [ ] every escalation_log added_checks id exists and was executed (INV-044)
+[ ] at least one critical AC and one critical central-conclusion claim exist (INV-045)
+[ ] escalation_log forms an ordered chain ending at depth_executed (INV-046)
+[ ] every non-VERIFIED critical + failing/untested non-critical AC enumerated in disclosed_limitations (INV-047)
+[ ] invalidated_test_ids covers every test of changed claims (INV-048)
 [ ] revisions link to failures; failures name catchers; revisions monotonic (INV-024/025/026)
 [ ] limitations disclosed + surfaced; BLOCKED entries named (INV-013 gate)
 [ ] depth_executed == verified_at_depth; escalations logged (INV-016/019)
