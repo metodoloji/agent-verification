@@ -66,7 +66,8 @@ Depth MUST escalate when:
 ### De-escalation Prohibition
 - Depth must **never** be downgraded mid-verification simply because early checks passed.
 - Passing a cheap constraint check does NOT excuse skipping required evidence or counterexample checks.
-- Tie-break rule: when a task matches two depths (e.g. STANDARD code task with ADVERSARIAL-grade uncertainty), select the HIGHER depth. Under-selection is `VF-04`; over-selection costs budget, under-selection costs correctness.
+- Tie-break rule: when a task matches two depths (e.g. STANDARD code task with ADVERSARIAL-grade uncertainty), select the HIGHER depth. Under-selection is `VF-04` (`INV-037`); over-selection costs budget, under-selection costs correctness — and `risk_level == depth_executed` consistency (`INV-016`) never waives the floor.
+- Downgrade logging: any executed-depth downgrade (the disclosed-downgrade path of INV-031) MUST be recorded in `escalation_log[]` (from → to) AND surfaced in `final_verdict.disclosed_limitations[]` (`INV-043`); an escalation's `added_checks` must name tests that actually ran (`INV-044`).
 
 ---
 

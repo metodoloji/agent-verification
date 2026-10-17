@@ -9,10 +9,11 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
-  "contract_version": "1.10",
-  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.10 covers INV-001..INV-036, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility.",
+  "contract_version": "1.12",
+  "version_rule": "Bump minor on additive changes (new optional fields or appended INV-xxx rows that extend existing gates); bump major only on breaking changes (removing or renaming existing fields, gates, or INV semantics). Current 1.12 covers INV-001..INV-044, critical flags, depth attestation, falsifiability, coded failures, detection/revision linkage, monotonicity, evidence freshness, checklist closure, verdict justification, audit-trail consistency, depth shortfall, failover re-test, checklist applicability, revision attempt caps, test-family match, open-blocker exclusion, version compatibility, depth-selection floor, test-link reciprocity, assumption-evidence reciprocity, assumption caps, retest-status derivation, evidenced failure resolution, disclosed depth downgrades, substantive escalation log.",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
+  "risk_level_rule": "risk_level MUST satisfy the depth triggers for the task class (verification-depth.md §1) and the tie-break rule (ambiguous → HIGHER); internal consistency with depth_executed (INV-016) never excuses under-selection — a task at/above an ACT-expected or §1-triggered depth gated at a lower risk_level is VF-04 (INV-037).",
   "depth_executed": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "scope": "Explicit domain or boundary conditions of the task",
   
@@ -72,7 +73,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "source_type": "EXTERNAL_TOOL | PRIMARY_DOC | SECONDARY_SOURCE | LOCAL_STATE",
       "scope": "Coverage of the evidence",
       "supports_claim_ids": ["CL-001"],
-      "scope_rule": "An evidence item supports a claim only within its recorded scope; citing it for a broader claim without a scope-matching check is EF-04."
+      "supports_assumption_ids": ["AS-001"],
+      "scope_rule": "An evidence item supports a claim only within its recorded scope; citing it for a broader claim without a scope-matching check is EF-04. supports_claim_ids and supports_assumption_ids MUST be mirrored by claims[].evidence_ids and assumptions[].evidence_ids respectively (INV-017 claims, INV-039 assumptions)."
     }
   ],
 
@@ -88,7 +90,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "detected_by_test_id": "TEST-001",
       "detected_by_rule": "A failure MUST name the test that caught it; a failure with no detecting test is VF-01 (untested path) unless it IS the test-suite defect (VF-*) caught by audit.",
       "resolution": "Description of corrective revision required",
-      "resolved": false
+      "resolved": false,
+      "resolution_rule": "resolved may be set true only when a revision linked via triggered_by_failure_id has completed its re-test with a passing result on this failure's target_claim_ids; flipping resolved without that revision+re-test pair is VF-07 (INV-042)."
     }
   ],
 
@@ -120,6 +123,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "external_check_result": "string summarizing external-validation outcome (CRITICAL depth)",
       "mutation_result": "string summarizing mutation-testing outcome (CRITICAL depth)",
       "retest_status": "NOT_REQUIRED | REQUIRED | COMPLETED | FAILED",
+      "retest_status_rule": "retest_status MUST be derived from revisions[]: NOT_REQUIRED only when no revision set retest_required; REQUIRED while any required re-test is outstanding; COMPLETED only when every retest_required revision has retest_completed true with a passing re-test; FAILED when a required re-test failed and the cap/exhaustion path applies (INV-041).",
       "open_limitations": []
     },
     "audit_trail_rule": "The audit trail MUST be drawn from this contract and agree with it (INV-030): a trail citing depth_executed/verified_at_depth, critical observations, or revision counts that contradict the contract is VF-06 and blocks PASS.",
@@ -127,6 +131,7 @@ The Verification Contract is the formal, machine-readable data model that binds 
     "escalation_log": [
       {"from": "STANDARD", "to": "ADVERSARIAL", "trigger": "counterexample found", "added_checks": ["TEST-004"]}
     ],
+    "escalation_log_rule": "Every escalation MUST be logged (INV-019), every escalation_log[].added_checks id MUST exist in tests[] and reference a test actually executed at/after the escalation (not PENDING/RUNNING), and any executed-depth downgrade below risk_level or below the task-class floor MUST be logged with its disclosure in disclosed_limitations[] (INV-043/044).",
     "disclosed_limitations": [],
     "blocked_reasons": []
   }
@@ -181,6 +186,14 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Test-family rule (`INV-034` enforcement): every critical AC MUST have a linked critical test whose `type` matches the AC's declared `test_family` (or a mapping documented in the contract); a critical AC "covered" only by a mismatched test family is `VF-04` and blocks `PASS`.
    - Open-blocker rule (`INV-035` enforcement): `PASS`/`PASS_WITH_LIMITATIONS` require an empty `final_verdict.blocked_reasons[]` and no unresolved critical `failures[]` (or blockers cleared via the failover `RE-EXTRACT → RE-TEST` loop); a non-empty blocker list or open critical failure at verdict time is `VF-06` and forces `BLOCKED`/`FAIL`.
    - Version-compatibility rule (`INV-036` enforcement): the contract MUST declare the current `contract_version` (schema §1); a contract carrying an obsolete or unknown version MUST be migrated to the current version (fields added, rules re-read) before the gate runs — gating an obsolete contract is `VF-06`.
+   - Depth-floor rule (`INV-037` enforcement): `risk_level` MUST meet the task class's depth trigger (verification-depth.md §1) with the tie-break applied (ambiguous → HIGHER); a self-consistent but under-selected pair (`risk_level == depth_executed` below the triggered floor) is `VF-04` and blocks `PASS` — re-run at the triggered depth.
+   - Test-link reciprocity rule (`INV-038` enforcement): `claims[].test_ids[]` and `tests[].target_claim_ids[]` MUST agree within the same contract (a claim lists a test that does not target it, or vice versa); one-sided test links are `VF-01` and block `PASS` (mirrors INV-017 for tests).
+   - Assumption-evidence reciprocity rule (`INV-039` enforcement): `assumptions[].evidence_ids[]` and `evidence[].supports_assumption_ids[]` MUST agree; an assumption citing evidence that does not reciprocate (or a dangling id) is `EF-02` and blocks `VERIFIED` dependents.
+   - Assumption-cap rule (`INV-040` enforcement): a critical claim depending on a `CONDITIONAL` or `UNVERIFIED` critical assumption MUST NOT close as `VERIFIED` — cap at `SUPPORTED` with the condition disclosed; a capped claim gated as `VERIFIED` is `VF-07`.
+   - Retest-status derivation rule (`INV-041` enforcement): `final_verdict.audit_trail.retest_status` MUST be derivable from `revisions[]` (`NOT_REQUIRED` only with no `retest_required`; `REQUIRED` while any is outstanding; `COMPLETED` only when every required re-test completed with a passing result; `FAILED` on the exhaustion path); a status contradicting the revision state is `VF-06` and blocks `PASS` (extends INV-030 beyond agreement to derivation).
+   - Failure-resolution rule (`INV-042` enforcement): `failures[].resolved: true` requires a linked revision (`triggered_by_failure_id`) whose re-test completed with a passing result on the failure's `target_claim_ids[]`; flipping `resolved` without that revision+re-test pair is `VF-07` and blocks `PASS` while the underlying defect is open.
+   - Downgrade-disclosure rule (`INV-043` enforcement): if the executed depth ends below `risk_level` (or below the task-class floor) — a disclosed downgrade under INV-031 — the downgrade MUST appear in `final_verdict.escalation_log[]` (from → to) and in `disclosed_limitations[]`; an undisclosed downgrade is `VF-06` and blocks `PASS`.
+   - Escalation-substance rule (`INV-044` enforcement): every `escalation_log[].added_checks[]` id MUST exist in `tests[]` and reference a test actually executed (terminal, not `PENDING`/`RUNNING`) at/after the escalation; an escalation whose "added checks" never ran is `VF-06` — INV-019 log entries are evidence of execution, not intention.
 
 ## 4. Pre-Decision Checklist (machine-checkable)
 
@@ -199,6 +212,14 @@ Applicability rule (`INV-032`): a box whose invariant does not apply at the clai
 [ ] each critical AC has a linked test whose type matches its test_family (INV-034)
 [ ] blocked_reasons empty; no unresolved critical failures (INV-035)
 [ ] contract_version is current; obsolete version migrated before gating (INV-036)
+[ ] risk_level meets the task-class depth floor; tie-break applied (INV-037)
+[ ] claims.test_ids and tests.target_claim_ids agree both ways (INV-038)
+[ ] assumption evidence links reciprocal (assumptions.evidence_ids <-> evidence.supports_assumption_ids) (INV-039)
+[ ] no critical claim VERIFIED over a CONDITIONAL/UNVERIFIED critical assumption (INV-040)
+[ ] retest_status derivable from revisions[] state (INV-041)
+[ ] every resolved failure has a linked passing revision+re-test (INV-042)
+[ ] depth downgrades below risk_level logged + disclosed (INV-043)
+[ ] every escalation_log added_checks id exists and was executed (INV-044)
 [ ] revisions link to failures; failures name catchers; revisions monotonic (INV-024/025/026)
 [ ] limitations disclosed + surfaced; BLOCKED entries named (INV-013 gate)
 [ ] depth_executed == verified_at_depth; escalations logged (INV-016/019)
