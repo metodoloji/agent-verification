@@ -9,8 +9,10 @@ The Verification Contract is the formal, machine-readable data model that binds 
 ```json
 {
   "contract_id": "vc_20261014_001",
+  "contract_version": "1.5",
   "task": "Natural language restatement of the user's prompt",
   "risk_level": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
+  "depth_executed": "MINIMAL | STANDARD | ADVERSARIAL | CRITICAL",
   "scope": "Explicit domain or boundary conditions of the task",
   
   "acceptance_conditions": [
@@ -43,7 +45,9 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "id": "AS-001",
       "description": "Underlying assumption necessary for the claim to hold",
       "critical": true,
-      "status": "UNVERIFIED | VERIFIED | CONDITIONAL"
+      "status": "UNVERIFIED | VERIFIED | CONDITIONAL",
+      "evidence_ids": ["EV-001"],
+      "assumption_rule": "A critical UNVERIFIED assumption with no evidence_ids blocks PASS (BLOCKED if external check impossible, else re-test after VERIFIED/CONDITIONAL with disclosure). CONDITIONAL caps dependents at SUPPORTED."
     }
   ],
 
@@ -55,7 +59,8 @@ The Verification Contract is the formal, machine-readable data model that binds 
       "purpose": "What this test attempts to falsify",
       "status": "PENDING | RUNNING | PASS | FAIL | INCONCLUSIVE | INVALIDATED",
       "critical": true,
-      "observation": "Concrete observed evidence during test execution"
+      "observation": "Concrete observed evidence during test execution",
+      "falsifiability": "Concrete wrong-answer input on which this test would FAIL (per INV-008); a test with no such input is not failure-capable."
     }
   ],
 
@@ -73,8 +78,11 @@ The Verification Contract is the formal, machine-readable data model that binds 
   "failures": [
     {
       "id": "F-001",
-      "type": "WRONG_CLAIM | SCOPE_ERROR | CONTRADICTION | CONSTRAINT_VIOLATION | UNSUPPORTED_CLAIM | FALSE_POSITIVE | FALSE_NEGATIVE | MISSING_CLAIM | INCOMPLETE | UNJUSTIFIED_CERTAINTY",
+      "category": "OUTPUT_FAILURE | VERIFICATION_FAILURE | EVIDENCE_FAILURE | EXECUTION_FAILURE",
+      "type": "taxonomy label from failure-taxonomy.md (e.g. WRONG_CLAIM, MISSING_TEST, SOURCE_MISMATCH, UNAVAILABLE_TOOL)",
+      "type_rule": "Use the exact label for the assigned code (OF-01 → WRONG_CLAIM, VF-01 → MISSING_TEST, EF-02 → SOURCE_MISMATCH, XF-01 → UNAVAILABLE_TOOL, ...). A failure outside the taxonomy is unclassifiable and blocks PASS.",
       "severity": "CRITICAL | MAJOR | MINOR",
+      "severity_rule": "CRITICAL severity on a gate-critical claim/test forces FAIL or BLOCKED; MAJOR forces re-test + LIM at best; MINOR may pass with disclosure.",
       "target_claim_ids": ["CL-001"],
       "detected_by_test_id": "TEST-001",
       "resolution": "Description of corrective revision required",
@@ -100,6 +108,10 @@ The Verification Contract is the formal, machine-readable data model that binds 
 
   "final_verdict": {
     "status": "PASS | PASS_WITH_LIMITATIONS | BLOCKED | FAIL",
+    "verified_at_depth": "depth actually executed (must match depth_executed)",
+    "escalation_log": [
+      {"from": "STANDARD", "to": "ADVERSARIAL", "trigger": "counterexample found", "added_checks": ["TEST-004"]}
+    ],
     "disclosed_limitations": [],
     "blocked_reasons": []
   }
@@ -131,7 +143,11 @@ The Verification Contract is the formal, machine-readable data model that binds 
    - Critical-AC binding: a critical AC (`acceptance_conditions[].critical == true`) MUST link to >= 1 critical test, and `PASS` requires every such linked test in `PASS`. A critical AC with zero linked critical tests is `VF-01` and blocks `PASS` (mirrors INV-009 at the AC level).
    - After 2 consecutive failed re-tests on the same critical claim (`revision_policy.max_consecutive_failed_retests_per_claim`), the contract MUST close as `FAIL` (or `BLOCKED` when the blocker is missing evidence/access).
    - Depth-risk binding: `risk_level` MUST equal the depth actually executed (`STANDARD` steps run → `risk_level: STANDARD` at minimum; any ADVERSARIAL/CRITICAL mandatory check executed raises it accordingly). A contract MUST NOT claim `risk_level: CRITICAL` while skipping CRITICAL mandatory checks, nor claim `STANDARD` after running an ADVERSARIAL attack pass without logging the escalation.
+   - Depth attestation (`INV-016` enforcement): `depth_executed` MUST equal the deepest depth whose required steps were all executed; `risk_level` MUST equal `depth_executed` except when an escalation was logged (then `risk_level` = escalated target and the log entry is mandatory). A contract whose `risk_level`/`depth_executed` disagree without an escalation record is `VF-06`.
    - Referential integrity: every `target_claim_ids[]` entry MUST resolve to a declared `claims[].id`; every `evidence_ids[]`/`assumption_ids[]`/`test_ids[]` entry MUST resolve to a declared `evidence[]`/`assumptions[]`/`tests[]` id. A dangling id is `VF-01` and blocks `PASS`.
    - Evidence rule: a `VERIFIED` critical claim requires at least one `evidence_ids[]` entry whose source is `EXTERNAL_TOOL` or `PRIMARY_DOC`, or a recorded `observation` from an executed external check; model reasoning alone (patterns §14 level 4) can support at most `SUPPORTED`.
    - Bidirectional evidence check (mirrors INV-004): every `evidence.supports_claim_ids[]` entry MUST have a matching `claims[].evidence_ids[]` entry within the same scope, and vice versa. One-sided links are `EF-02` and block `PASS`.
    - Observation rule: a critical test in `PASS` MUST carry a non-empty `observation` describing what was concretely checked; a bare `PASS` with no observation is `VF-06` and fails the gate.
+   - Failure-code rule: every failure MUST carry a `category` + taxonomy `type` label matching failure-taxonomy.md; an unclassifiable failure blocks `PASS`. `CRITICAL` severity on a gate-critical claim/test forces `FAIL` (or `BLOCKED` when the blocker is missing evidence/access); `MAJOR` forces re-test and `PASS_WITH_LIMITATIONS` at best.
+   - Falsifiability rule (`INV-008` enforcement): a critical test MUST declare `falsifiability` (a concrete wrong-answer input it would catch); a test that cannot name one is `VF-02` and blocks `PASS`.
+   - Assumption-evidence rule: a critical `UNVERIFIED` assumption with empty `evidence_ids[]` blocks `PASS`; if the external check is impossible → `BLOCKED` (`INV-010`), else verify/conditionalize + re-test.

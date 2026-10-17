@@ -66,8 +66,8 @@ Box-drawing characters below are decorative only: if a renderer or tool cannot p
 
 ## 2. Gate Decision Definitions
 
-- **`PASS`**: All critical acceptance conditions pass; critical claims are supported; no unresolved contradictions; all required re-tests completed successfully.
-- **`PASS_WITH_LIMITATIONS`**: Core requirements pass, but non-critical uncertainties or bounded assumptions remain and are explicitly disclosed to the user.
+- **`PASS`**: All critical acceptance conditions pass; critical claims are supported; no unresolved contradictions; all required re-tests completed successfully. Requires every critical test in `PASS` with a recorded `observation` (`INV-018`), every critical claim `VERIFIED` (or disclosed `SUPPORTED` per SKILL §9), and `verified_at_depth`/`depth_executed` agreement (`INV-019`).
+- **`PASS_WITH_LIMITATIONS`**: Core requirements pass, but non-critical uncertainties or bounded assumptions remain and are explicitly disclosed to the user. Allowed only for bounded `SUPPORTED`/`PARTIALLY_SUPPORTED` gaps (`INV-013`); every limitation in `final_verdict.disclosed_limitations[]`.
 - **`BLOCKED`**: Critical verification is impossible due to missing access, unavailable tools, or private external reality. The agent states what was checked, what was not checked, and what evidence is required.
 - **`FAIL`**: A critical constraint or acceptance condition fails, or repeated revisions fail to resolve the core contradiction. Output is rejected.
 - **Termination rule:** After 2 consecutive failed re-tests on the same critical claim, stop revising and return `FAIL` (or `BLOCKED` if the blocker is missing evidence/access). Log each revision attempt in the contract `revisions[]` array.
@@ -96,3 +96,6 @@ Box-drawing characters below are decorative only: if a renderer or tool cannot p
 | **INV-016** | `DEPTH EQUALS RISK CLAIM` | `risk_level` MUST equal the depth actually executed; claiming a higher level without its mandatory checks (or hiding an escalation) is `VF-06`. |
 | **INV-017** | `EVIDENCE LINKS ARE BIDIRECTIONAL` | `claims[].evidence_ids[]` and `evidence[].supports_claim_ids[]` MUST agree within the same scope; one-sided links are `EF-02`. |
 | **INV-018** | `NO BARE PASS` | A critical `PASS` without a recorded `observation` is `VF-06`. |
+| **INV-019** | `DEPTH IS ATTESTED` | `final_verdict.verified_at_depth` MUST equal `depth_executed`; every escalation MUST appear in `final_verdict.escalation_log[]` with from/to/trigger/added checks. A missing log entry is `VF-06`. |
+| **INV-020** | `FAILURES ARE CODED` | Every failure carries a taxonomy `category` + `type`; unclassifiable failures block `PASS`; `CRITICAL` severity on gate-criticals forces `FAIL`/`BLOCKED`. |
+| **INV-021** | `TESTS ARE FALSIFIABLE` | A critical test without a declared `falsifiability` input is `VF-02` and blocks `PASS`. |

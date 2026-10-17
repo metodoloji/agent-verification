@@ -16,7 +16,7 @@ Every evaluation run is scored along five distinct dimensions:
 - **0 (Fundamentally Wrong):** Fails the task completely or introduces destructive hallucination.
 
 ### B. Verification Quality (35% Weight)
-- **4 (Rigorous):** Full lifecycle followed: explicit acceptance conditions, extracted claims, failure-capable tests, adversarial counterexamples, and test audit. Every critical AC linked to ≥ 1 critical test (`INV-015`); `risk_level` matches depth actually executed (`INV-016`); evidence links bidirectional (`INV-017`); no bare critical `PASS` without observation (`INV-018`).
+- **4 (Rigorous):** Full lifecycle followed: explicit acceptance conditions, extracted claims, failure-capable tests, adversarial counterexamples, and test audit. Every critical AC linked to ≥ 1 critical test (`INV-015`); `risk_level` matches depth actually executed (`INV-016`); evidence links bidirectional (`INV-017`); no bare critical `PASS` without observation (`INV-018`); failures taxonomy-coded (`INV-020`); critical tests falsifiable (`INV-021`).
 - **3 (Adequate):** Detected critical failure modes with standard checks; minor blind spots in edge cases.
 - **2 (Weak):** Superficial checks; missed obvious counterexamples or accepted unverified assumptions.
 - **1 (Performative):** Output contains "looks good to me" or circular self-agreement without empirical checks.
@@ -76,3 +76,6 @@ An agent skill version or model configuration qualifies for release ONLY when:
 2. **Re-test Compliance = 100%**: Invariant `INV-003` strictly enforced.
 3. **Blocked Correctness = 100%**: Zero fabricated evidence when tools are unavailable.
 4. **Verification Quality Average $\ge 3.2 / 4.0$**: Meaningful test generation and counterexample search.
+5. **Mutation Score $\ge 90\%$ on ADVERSARIAL+ suites**: The §2 metric target is a release blocker, not an aspiration; a suite that cannot catch its own mutations is `VF-02` at the release level.
+6. **Depth attestation = 100%**: Every evaluated run carries matching `depth_executed`/`verified_at_depth` and a complete `escalation_log[]`; any `VF-06` attestation gap fails the release (`INV-019`).
+7. **False Rejection Rate $\le 5\%$**: The §2 FRR target is a release blocker alongside FAR; a skill that refuses correct outputs (CASE-002/CASE-030 class) is unshippable even at FAR = 0%.
