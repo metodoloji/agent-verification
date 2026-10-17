@@ -181,6 +181,94 @@ Lütfen bu görevi 'ADVERSARIAL' doğrulama derinliğinde ele al:
 
 ---
 
+### Senaryo 8: Girişimcilik & Startup (Pazar Büyüklüğü TAM/SAM/SOM Denetimi)
+
+* **Kullanıcı Sorusu:** *"Evcil hayvanlar için GPS'li akıllı tasma üreten bir girişimim var. Yatırımcı sunumunda Türkiye pazar büyüklüğünü (TAM) 5 milyar dolar yazdım. Bu rakam inandırıcı mı?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Evcil hayvan sektörü hızla büyüyor, Türkiye'de milyonlarca hayvan var, harika bir pazar fırsatı!"* (Yatırımcı önünde kurucuyu rezil edecek bir teyitsiz onay).
+* **Agent-Verification ile Ne Olur?**
+  * **İddia-Kanıt Çapraz Sorgusu (`Claim-Evidence`):** Türkiye'deki resmi veteriner ve çipli kayıtlı evcil kedi/köpek sayısı yaklaşık 6-8 milyondur. Akıllı tasma ortalama perakende satış fiyatı 40-50 dolardır.
+  * **Hasmane Sınır Testi (`Counterexample Search`):** Türkiye'deki **tüm** kedi ve köpek sahipleri bu tasmayı satın alsa dahi pazar tavanı 300-400 milyon doları geçemez. 5 milyar dolar iddiası 12 kat şişirilmiştir.
+  * **Hata Tipi:** `OF-01 (WRONG_CLAIM)` ve `OF-09 (UNJUSTIFIED_CERTAINTY)`.
+  * **Sonuç:** `FAIL`. Model şişirilmiş rakamı reddeder, girişimciye gerçekçi bir SAM/SOM hesaplama modeli sunar.
+
+---
+
+### Senaryo 9: İnsan Kaynakları & Kariyer (İş Teklifi ve Hisse Opsiyonu Kıyaslaması)
+
+* **Kullanıcı Sorusu:** *"A Şirketi 120.000 TL net maaş veriyor. B Şirketi ise 85.000 TL net maaş + 4 yılda hak kazanılacak 50.000 $ değerinde hisse opsiyonu (ESOP/hisse hakkı) teklif ediyor. Hangisi daha avantajlı?"*
+* **Standart Yapay Zeka Ne Yapar?** Basit matematik yapar: 50.000$ / 4 yıl = 12.500$/yıl. Bunu aylık maaşa ekleyip B şirketini daha karlı ilan eder.
+* **Agent-Verification ile Ne Olur?**
+  * **Varsayım Denetimi (`Assumption Audit`):** B şirketi halka açık bir şirket mi? Halka açık değilse hisseler likit değildir; bir satış/IPO olmadan paraya çevrilemez (`UNVERIFIED`).
+  * **Gizli Şart Denetimi:** 1 yıllık "cliff" süresi var mıdır? Çalışan 11. ayda ayrılırsa hisse hakkı sıfır kalır mı? İleriki yatırım turlarında sulandırma (dilution) riski nedir?
+  * **Sonuç:** `PASS_WITH_LIMITATIONS`. B şirketinin teklifindeki nakit akışı riskleri ve sınır şartları net bir tabloyla raporlanır.
+
+---
+
+### Senaryo 10: Ev Tadilatı, Usta Teklifleri ve Gizli Maliyetler
+
+* **Kullanıcı Sorusu:** *"120 m² dairem için bir usta '400.000 TL anahtar teslim komple banyo, mutfak ve zemin yenilerim' dedi. Bu bütçe yeterli mi, nerede yanılabilirim?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Evet, ortalama olarak 400 bin TL tadilat için makul bir fiyattır, ustanıza güvenebilirsiniz."*
+* **Agent-Verification ile Ne Olur?**
+  * **Eksiksizlik Denetimi (`Completeness Verification`):** Moloz atımı ve belediye çöp konteyner bedeli fiyata dahil mi? Eski tesisat borularındaki paslanma çıktığında kırılacak ek duvarların masrafı kime ait? Armatür ve seramikler 1. sınıf mı yoksa çıplak işçilik mi? KDV dahil mi?
+  * **Sonuç:** `PASS_WITH_LIMITATIONS`. Kullanıcının önüne ustaya imzalatması gereken 14 maddelik bağlayıcı şartname maddesi konur.
+
+---
+
+### Senaryo 11: Otomotiv & İkinci El Araç Ekspertiz Raporu Analizi
+
+* **Kullanıcı Sorusu:** *"Satıcı aracın 'Sadece sol ön çamurluğu boyalı, tramer kaydı 65.000 TL' olduğunu söylüyor. Ekspertiz raporunu nasıl okumalıyım?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Çamurluk boyası önemsizdir, güvenle alabilirsiniz."*
+* **Agent-Verification ile Ne Olur?**
+  * **Tutarlılık Denetimi (`Consistency Verification`):** Tek bir saç çamurluğun boya işçiliği tramerde 65.000 TL çıkaramaz.
+  * **Karşıt İddia Taraması:** Bu hasar rakamı; LED far kırılması, tampon demiri değişimi, radyatör paneli veya podye/şasi ezilmesine işaret eder.
+  * **Sonuç:** `PASS_WITH_LIMITATIONS`. Alıcıya doğrudan şasi ucu, airbag soketleri ve ön panel vidalarının kontrol edilmesi talimatı verilir.
+
+---
+
+### Senaryo 12: Eğitim & Sınav Sorusu Hazırlama (Öğretmenler İçin)
+
+* **Kullanıcı Sorusu:** *"Kimya dersinde 'Kimyasal Denge ve Le Chatelier İlkesi' konusunda üniversite sınavına yönelik zor bir çoktan seçmeli soru ve 5 şık hazırla."*
+* **Standart Yapay Zeka Ne Yapar?** Soru kökünde cevabı farkında olmadan fısıldar veya şıkların ikisini birbiriyle çelişkili/iki doğru cevaplı hale getirir.
+* **Agent-Verification ile Ne Olur?**
+  * **Doğrulamanın Doğrulanması (`Verification-of-Verification / Pattern 16`):** Soru kökü bağımsız olarak test edilir; soru metninde cevabı ima eden döngüsel bir ipucu var mı (`VF-03`)?
+  * **Çeldirici Denetimi:** Yanlış şıklar öğrencilerin en tipik kavram yanılgılarını (örn: katıların dengeye etkisi) hedefliyor mu?
+  * **Sonuç:** `PASS`. Sorunun tek ve kesin bir cevabı olduğu mekanik olarak kanıtlanır.
+
+---
+
+### Senaryo 13: E-Ticaret, Dropshipping & Reklam Kampanyası ROI Gerçekliği
+
+* **Kullanıcı Sorusu:** *"TikTok'tan bulduğum bir ürünü 4$'a alıp 25$'a satacağım. Reklam maliyetim satış başına 8$ olursa, günlük 20 satışta ayda 7.800$ net kar edebilir miyim?"*
+* **Standart Yapay Zeka Ne Yapar?** 25 - 4 - 8 = 13$ kar. 13 x 20 x 30 = 7.800$. *"Tebrikler, harika bir kazanç!"* der.
+* **Agent-Verification ile Ne Olur?**
+  * **Kapsam ve Eksik Masraf Denetimi (`OF-02 / OF-05`):** Ödeme altyapısı komisyonu (%3.5 + 0.30$), kargo ve gümrük masrafları, e-ticaret platform aboneliği, ortalama %15 iade oranı (chargeback ve kırık ürün), vergi stopajı hesaba katılmamıştır.
+  * **Hasmane Simülasyon:** %15 iade ve kargo zararı eklendiğinde gerçek karın sıfıra yaklaştığı veya eksiye düştüğü somut matematiksel tabloyla gösterilir.
+  * **Sonuç:** `FAIL (Gerçek Dışı Bütçe)`.
+
+---
+
+### Senaryo 14: Yaratıcı Yazarlık & Senaryo Mantık Tutarlılığı (Plot Holes)
+
+* **Kullanıcı Sorusu:** *"Dedektif romanımda katil, kurbanı gece 23:00'da kilitli bir odada zehirliyor. Aynı katil saat 23:15'te 50 km uzaktaki bir restoranda kamera kaydıyla alibi (mazeret) üretiyor. Kurgum tutarlı mı?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Çok heyecanlı bir kurgu, harika bir gizem!"* der.
+* **Agent-Verification ile Ne Olur?**
+  * **Fizik ve Mantık Denetimi (`Logical Entailment`):** Gece 23:00 ile 23:15 arasında 15 dakika vardır. 50 km mesafeyi 15 dakikada katetmek için katilin ortalama 200 km/s hızla hiç durmadan gitmesi gerekir. Şehir içi trafikte bu imkansızdır.
+  * **Çözüm:** Model katilin cinayet saatini geciktiren bir mekanizma (örn: gecikmeli salınan zehir veya buz kalıbı) kurmasını önererek senaryodaki mantık deliğini onarır.
+  * **Sonuç:** `PASS_WITH_LIMITATIONS`.
+
+---
+
+### Senaryo 15: Mutfak & Gastronomi (Kimyasal Reaksiyon ve Gıda Güvenliği)
+
+* **Kullanıcı Sorusu:** *"Tavuk göğsünü 54 derecede 35 dakika sous-vide (vakumda) pişirsem misafirlerime güvenle ikram edebilir miyim?"*
+* **Standart Yapay Zeka Ne Yapar?** *"Sous-vide ile tavuk çok sulu ve lezzetli olur, 54 derece denenebilir."* (Ağır gıda zehirlenmesi riski!).
+* **Agent-Verification ile Ne Olur?**
+  * **Risk Seviyesi:** `CRITICAL Derinlik`.
+  * **Dış Gerçeklik ve Sağlık Kılavuzu Denetimi (`External Reality Check`):** USDA ve FDA gıda güvenliği pastörizasyon tablolarına göre, tavukta *Salmonella* ve *Listeria* bakterilerinin log-7 seviyesinde yok edilmesi için 54°C sıcaklıkta etin merkezinin kesintisiz en az **112 dakika** tutulması zorunludur. 35 dakika süre kesinlikle ölümcül patojenleri öldürmez.
+  * **Sonuç:** Kesin `FAIL`. Misafirlere servis edilmesi engellenir, doğru pastörizasyon süre/derece tablosu verilir.
+
+---
+
 ## 5. Yazılım Geliştiriciler & Teknik Ekipler İçin Senaryolar
 
 Yazılımcılar için sistem en yüksek standartta çalışır:

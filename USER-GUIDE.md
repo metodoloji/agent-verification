@@ -179,6 +179,94 @@ Please evaluate this task at the 'ADVERSARIAL' verification depth:
 
 ---
 
+### Scenario 8: Entrepreneurship & Startups (Market Sizing TAM/SAM/SOM Audit)
+
+* **User Prompt:** *"I'm launching a smart GPS dog collar startup in Germany. In my investor pitch deck, I wrote that our Total Addressable Market (TAM) is $10 Billion. Is this defensible?"*
+* **What Standard AI Does:** *"Pet tech is booming, Europe has millions of pets, this is an incredible market opportunity!"* (Complacent affirmation that ruins founder credibility before venture capitalists).
+* **With Agent-Verification:**
+  * **Claim-Evidence Verification:** Cross-checks official municipal pet registries: Germany has approximately 10.3 million registered dogs. Average retail price for a smart GPS collar is $60 with a $5/month cellular connectivity subscription ($120/year total).
+  * **Adversarial Boundary Test (`Counterexample Search`):** Even assuming a 100% theoretical penetration where **every single dog owner** in Germany buys the collar, the absolute TAM ceiling is $1.2 Billion/year. A $10 Billion TAM assertion is inflated by ~800%.
+  * **Defect Classification:** `OF-01 (WRONG_CLAIM)` and `OF-09 (UNJUSTIFIED_CERTAINTY)`.
+  * **Verdict:** `FAIL`. Rejects the hallucinated figure and provides an audited, defensible bottom-up SAM/SOM model.
+
+---
+
+### Scenario 9: Human Resources & Career (Job Offer & Stock Option / ESOP Comparison)
+
+* **User Prompt:** *"Company A offers $140,000 base salary. Company B offers $105,000 base + $80,000 in equity options (ESOP) vesting over 4 years. Which offer has greater financial value?"*
+* **What Standard AI Does:** Naive arithmetic: $80,000 / 4 = $20,000/year equity. $105,000 + $20,000 = $125,000, declaring Company A superior on cash or B superior on upside without auditing terms.
+* **With Agent-Verification:**
+  * **Assumption Audit (`Pattern 4`):** Is Company B publicly traded? If pre-IPO, the equity is entirely illiquid with zero guaranteed secondary market (`UNVERIFIED`).
+  * **Hidden Clauses Check:** What is the 1-year cliff? If the employee departs in month 11, do options vest at $0? What are the strike price, exercise windows (90 days vs 10 years), and future dilution risk?
+  * **Verdict:** `PASS_WITH_LIMITATIONS`. Delivers an audited decision matrix mapping liquid cash vs. speculative private equity scenarios.
+
+---
+
+### Scenario 10: Home Renovation, Contractor Bids & Hidden Expenses
+
+* **User Prompt:** *"A general contractor quoted $35,000 all-inclusive to fully gut and remodel my 1,000 sq ft kitchen and two bathrooms. Is this quote realistic?"*
+* **What Standard AI Does:** *"Yes! $35,000 is an attractive budget for kitchen and bath remodeling. You can proceed if you like their portfolio."*
+* **With Agent-Verification:**
+  * **Completeness Verification (`Pattern 2`):** Demolition debris removal and municipal dumpster permits ($2,000-$4,000)? Upgrading legacy galvanized plumbing to PEX? Subfloor leveling? Are fixtures, tiles, and appliances included or labor-only?
+  * **Verdict:** `PASS_WITH_LIMITATIONS`. Emits a 14-point binding checklist of omitted scope items that the homeowner must have signed before making a deposit.
+
+---
+
+### Scenario 11: Automotive & Used Car Inspection Reports
+
+* **User Prompt:** *"The seller claims this 2022 sedan has 'only minor front fender paint touch-up', but the insurance claim report lists a $9,000 damage payout. How should I inspect this?"*
+* **What Standard AI Does:** *"Fender touch-ups are cosmetic and harmless, enjoy your purchase!"*
+* **With Agent-Verification:**
+  * **Consistency Verification (`Pattern 7`):** A $9,000 payout cannot logically reflect cosmetic fender repainting.
+  * **Adversarial Damage Attribution:** A $9,000 insurance payout on modern unibody vehicles implies matrix LED headlight assembly replacement, adaptive cruise radar sensor recalibration, or crumple-zone apron/apron strut damage.
+  * **Verdict:** `PASS_WITH_LIMITATIONS`. Equips the buyer with specific inspection targets: check front subframe weld points, radiator support bolts, and airbag harness deployment codes.
+
+---
+
+### Scenario 12: Education & Exam Question Design (For Teachers)
+
+* **User Prompt:** *"Generate a challenging multiple-choice chemistry question on Le Chatelier's Principle and dynamic equilibrium for AP Chemistry, with 1 correct answer and 4 distractors."*
+* **What Standard AI Does:** Frequently leaks hints in the question stem or creates ambiguous distractors with two defensible answers.
+* **With Agent-Verification:**
+  * **Verification-of-Verification (`Pattern 16`):** The question stem is audited in isolation to confirm it contains zero circular hints (`VF-03`).
+  * **Distractor Audit:** Confirms each incorrect option directly targets documented student misconceptions (e.g., confusing reaction rate with equilibrium position) while remaining unequivocally false under rigorous thermodynamics.
+  * **Verdict:** `PASS`. Mechanically proven to have exactly one non-ambiguous answer.
+
+---
+
+### Scenario 13: E-Commerce, Dropshipping & Ad Campaign ROI Reality
+
+* **User Prompt:** *"I found a trending product on TikTok for $6 and will retail it for $32. If my Facebook ad cost per purchase is $12, can I make $14 profit per unit and generate $8,400 monthly profit on 20 daily sales?"*
+* **What Standard AI Does:** 32 - 6 - 12 = $14 profit. 14 x 20 x 30 = $8,400. *"Congratulations on a fantastic e-commerce business model!"*
+* **With Agent-Verification:**
+  * **Scope & Omission Check (`OF-02 / OF-05`):** Payment gateway fees (2.9% + $0.30), international shipping and customs tariffs, e-commerce platform fees, average 15% return/chargeback rate, damaged-in-transit loss, and customer acquisition CPM inflation.
+  * **Adversarial Stress Test:** Incorporating real-world 15% return rates and ad churn drops net unit margin to near-zero or negative territory.
+  * **Verdict:** `FAIL (Unrealistic Pro Forma)`.
+
+---
+
+### Scenario 14: Creative Writing & Screenwriting Plot Logic (Plot Holes)
+
+* **User Prompt:** *"In my detective screenplay, the killer poisons the victim inside a locked room at 11:00 PM. The same killer produces a verified restaurant CCTV alibi 35 miles away at 11:12 PM. Is my mystery airtight?"*
+* **What Standard AI Does:** *"What an exciting mystery! Your readers will be on the edge of their seats!"*
+* **With Agent-Verification:**
+  * **Logical Entailment & Physical Bounds:** Traveling 35 miles in 12 minutes requires an average non-stop velocity of 175 mph through urban geography, which is physically impossible.
+  * **Constructive Repair:** The model suggests introducing a delayed delivery mechanism (e.g., an ice-cube suspension or slow-release capsule) to fix the timeline without destroying the plot.
+  * **Verdict:** `PASS_WITH_LIMITATIONS`.
+
+---
+
+### Scenario 15: Culinary Arts & Food Safety (Chemical Reactions & Sous-Vide)
+
+* **User Prompt:** *"Can I safely cook and serve chicken breast to dinner guests by sous-vide cooking it at 128°F (53.3°C) for 35 minutes?"*
+* **What Standard AI Does:** *"Sous-vide makes chicken tender, 128°F will be super juicy, enjoy your dinner!"* (High risk of severe bacterial food poisoning!).
+* **With Agent-Verification:**
+  * **Depth:** `CRITICAL Depth`.
+  * **External Reality & Pathogen Safety Check:** Audits USDA and FDA microbial lethality tables. To achieve a 7-log reduction of *Salmonella*, poultry meat must be held at 136°F (58°C) for at least 68 minutes. At 128°F (53.3°C), *Salmonella* bacteria thrive and replicate. 35 minutes produces zero pathogen pasteurization.
+  * **Verdict:** Absolute `FAIL`. Prevents life-threatening foodborne illness and outputs certified pasteurization time/temperature curves.
+
+---
+
 ## 5. Software Developers & Technical Engineering Scenarios
 
 For engineers, the protocol delivers industrial-strength correctness guarantees:
