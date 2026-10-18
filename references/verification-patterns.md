@@ -1,6 +1,6 @@
 # Verification Patterns
 
-Use this document when Step 5 (§5 Generate and Run Tests) or Step 6 (§6 Attack the Output) of `agent-verification` requires a concrete verification strategy.
+Use this document when Step 6 (§6 Generate and Run Tests) or Step 7 (§7 Attack the Output) of `agent-verification` requires a concrete verification strategy.
 The goal is not to use every pattern. Choose the smallest set of tests that can expose a meaningful failure.
 
 ---
@@ -269,3 +269,5 @@ Conflicting-test rule: when two critical tests disagree on the same claim (one `
 
 Do not maximize the number of tests; maximize failure detection per verification cost.
 A simple low-risk task needs constraint checking; a high-impact architectural/security decision requires adversarial checks, counterexamples, and external validation.
+
+The live progress trace is orthogonal to pattern selection: at every depth the agent narrates the stages it actually runs (`INV-057`, `references/progress-protocol.md`). Choosing fewer patterns shortens the trace; it never silences it.

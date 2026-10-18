@@ -31,6 +31,7 @@
 7. [4 Doğrulama Derinliği (MINIMAL, STANDARD, ADVERSARIAL, CRITICAL)](#7-4-doğrulama-derinliği)
 8. [4 Karar Durumu ve Anlamları (PASS, PWL, BLOCKED, FAIL)](#8-4-karar-durumu-ve-anlamları)
 9. [2-Adımlı Revizyon Kuralı (Sonsuz Döngü Engeli)](#9-2-adımlı-revizyon-kuralı)
+10. [Yapay Zekanın Çalışmasını İzlemek: Canlı Doğrulama İzi](#10-yapay-zekanın-çalışmasını-i̇zlemek-canlı-doğrulama-i̇zi)
 
 ---
 
@@ -329,3 +330,104 @@ Bir model bir hata yaptığında çoğu zaman düzeltmeye çalışırken daha b�
 * Bir iddia testten geçmezse model **en fazla 2 kez revize edebilir**.
 * 2. denemede de kanıtlanamazsa modelin konuşma hakkı biter; karar doğrudan **`FAIL`** veya **`BLOCKED`** olarak kilitlenir.
 * Böylece yapay zekanın sizi dakikalarca *"Hemen düzeltiyorum"* diyerek oyalaması engellenir.
+
+---
+
+## 10. Yapay Zekanın Çalışmasını İzlemek: Canlı Doğrulama İzi
+
+İzleyemediğiniz bir doğrulama, gerçekten yapılmış mı yoksa yapılmamış mı olduğunu ayırt edemeyeceğiniz bir doğrulamadır. Bu yüzden protokol, işi bitince yazılmış derli toplu bir özet yerine **çalışırken** anlatır: her aşamaya girerken, o aşamanın işi başlamadan önce kısa bir güncelleme gönderir.
+
+### Ekranda ne görürsünüz?
+
+```text
+🛡️ Doğrulama · ADVERSARIAL · 1/8 · derinlik
+Yüksek etkili satın alma kararı, kaynaklar çelişkili. ADVERSARIAL yürütülüyor:
+gizli maliyet denetimi, karşıt örnekler ve simetrik karşılaştırma.
+
+🛡️ Doğrulama · ADVERSARIAL · 4/8 · testler
+7 test tanımlandı. 6'sı geçti; TEST-004 başarısız (OF-05): alıntılanan batarya ölçümü
+25°C'de yapılmış, oysa CL-002 sürekli yük iddia ediyor.
+
+🛡️ Doğrulama · ADVERSARIAL · 5/8 · revizyon
+CL-002 "hafif yük" olarak daraltıldı; TEST-004 geçersiz sayıldı, eski sonuç artık sayılmıyor.
+
+🛡️ Doğrulama · ADVERSARIAL · 6/8 · yeniden test
+TEST-005, revize edilen iddia üzerinde yeniden koşuldu → PASS.
+
+🛡️ Doğrulama · ADVERSARIAL · 7/8 · saldırı
+4 saatlik render karşıt örneği: frekans %45 düşüyor. TEST-007 (soğutma) eklendi;
+ultrabook'ta başarısız oldu — sınır gizlenmedi, doğrulandı.
+
+⚠️ PASS_WITH_LIMITATIONS · ADVERSARIAL · LIVE
+Kritik iddialar: 3/3 doğrulandı · Testler: 7/8 geçti (TEST-007 başarısız, açıklandı) · Revizyon: 1
+Sınırlar: CL-002 yalnızca hafif yük için geçerli; TEST-007 (soğutma) ultrabook'ta başarısız oldu.
+[claims=3/3, tests=7/8, rev=1]
+```
+
+### Bu neden sonuçtan daha önemli?
+
+* **İtiraz edebileceğiniz an, iş sürerken.** Yapay zeka yanlış derinliği seçtiyse, soruyu yanlış anladıysa veya sizin için önemli bir kaynağı atladıysa, bunu 2. aşamada görürsünüz — kendinden emin bir cevap kararınızı çoktan çelmişken değil.
+* **Başarısız kontroller görünür kalır.** Hatasını sessizce düzelten bir ajan, ilk seferde doğru yapan bir ajandan dışarıdan ayırt edilemez. *Neyin başarısız olduğunu ve neyin değiştiğini* görmek, güven ile kör güven arasındaki farktır.
+* **Sınırlar kanıta bağlı gelir.** Karar kartındaki sınır, sözleşmedeki kayıtla aynıdır; böylece uyarı özetten sessizce kaybolamaz.
+
+### Detay seviyesini siz belirlersiniz
+
+| Ne dersiniz? | Ne alırsınız? |
+|---|---|
+| *(hiçbir şey)* | `concise`: her aşama için kısa bir satır + karar kartı |
+| *"Her adımı göster / hangi kontrolleri yaptın?"* | `detailed`: test kimlikleri, gözlemler, kanıt kimlikleri |
+| *"Sadece cevabı ver"* | `silent`: açılış satırı + karar kartı — iz yine kaydedilir, sadece yazdırılmaz |
+
+Doğrudan talep etmek için sorunuzun sonuna şunu ekleyin:
+
+```text
+[agent-verification ile doğrula ve her adımı canlı göster: seçilen derinlik,
+iddialar, testler, başarısız kontroller, revizyonlar ve karar — sadece sonuç değil.]
+```
+
+### Yapay zeka sessizleşirse
+
+Sessizlik bir üslup değil, hatadır. Şunu sorun: *"Hangi doğrulama aşamasındasın, şu ana kadar neyi kontrol ettin ve ne başarısız oldu?"* Arayüz gerçekten canlı akış desteklemiyorsa (tek yanıtlı API, toplu iş) ajan bunu söylemek ve `TRACE_DEFERRED` sınırlamasını açıklamak zorundadır — uydurma bir "canlı" günlük, dürüst bir özetten daha kötüdür.
+
+### Kart da denetlenir
+
+Karar kartı serbest metin değildir. Her sayı sözleşmeden türetilir (`INV-059`): kritik iddialar `claims[]`'ten, testler terminal `tests[]`'ten, revizyonlar `revisions[]`'ten, sınırlar `disclosed_limitations[]`'ten. "8/8 test geçti" yazıp altı test koştuysanız bu yuvarlama değil, `VF-10`'dur.
+
+Kartın sabit ve denetlenebilir bir biçimi vardır. Kart çizilmeden önce tanımlanan her test bitmiş olmalıdır (`INV-068`); yarım kalan bir test "7/8" paydasından sessizce düşemez. İlk satır her zaman işaret, karar, derinlik ve `LIVE`/`RETRO` durumudur (`INV-069`); son satır `[claims=…, tests=…, rev=…]` altbilgisidir. Etiket de kanıtıyla eşleşmelidir (`INV-070`): açık sınırı veya hatası olan bir `PASS` yanlış etiketlenmiştir, hiç sınırı olmayan bir `PASS_WITH_LIMITATIONS` de aynı şekilde yanlıştır; `BLOCKED` veya `FAIL` kartı engelini ya da açık hata kimliklerini göstermek zorundadır. İz ayrıca temiz kapanmalı (`INV-060`) ve kullanmadığı bir canlı akış yeteneğini iddia etmemelidir (`INV-061`).
+
+### Varsayımlar ve derinlik düşürmeler de görünürdür
+
+Doğrulanmış görünüp doğrulanmamış olmanın iki sessiz yolu burada kapatılır. Birincisi, bir varsayım sadece beyan edilerek "doğrulandı" yapılamaz (`INV-071`): onu gerçekten kapsayan kanıt gerekir; kritik bir varsayım için harici kaynak ya da gözlemlenmiş bir kontrol şarttır. İkincisi, sonucu sınırlayan koşul sözleşmenin görebileceği yerde adlandırılmalıdır — sınırlar (veya engeller) listesinde bir `AS-XXX` referansı (`INV-072`) — metin arasında geçen bir cümle değil. Bir kontrol koşulamadığı için ajan derinliği düşürmek zorunda kalırsa, bu yönlü bir *derinlik düşürmesidir*: neyin kontrol edilmekten çıktığını söylemeli ve bir `DOWNGRADE` referansı taşımalıdır (`INV-073`); böylece geri çekilme, ekstra titizlik gibi okunamaz.
+
+### Beyan, kayıt yerine geçmez
+
+Ajanın eskiden sadece *iddia edebildiği* üç şey artık *kaydediliyor*. Karar öncesi kontrol listesi kutu kutu bir kayıttır (`INV-074`): "tüm kutular işaretli" ancak her kutu ya yapıldı olarak ya da — uygulanmıyorsa — gerekçesiyle listelendiğinde kabul edilir. Bir kabul koşulunu farklı bir kontrol ailesiyle karşılayan test, gerekçesiyle istisna olarak bildirilmelidir (`INV-075`); böylece "belgelenmiş eşleme" "bana güven" anlamına gelemez. Ve *doğrulandı* işaretli bir iddia, **bu koşuda** gözlemlenen kanıta dayanmalıdır (`INV-076`); eski, önbellekten gelen kanıt cevaba katkı verebilir ama o iddiayı "destekleniyor" seviyesinde sınırlar ve açıklanmak zorundadır. Üç durumda da metin yetmez — sözleşmenin kaydı göstermesi gerekir.
+
+Aynı fikir, sistemin gerçeği kontrol etmeden kendini "doğrulamasının" üç yolunu da kapatır. Bir test neyle karşılaştırdığını bildirmek zorundadır: yalnızca cevabı kendi öncülleriyle karşılaştıran ya da aynı iddianın yeniden yazımını okuyan bir kontrol doğrulama değildir (`INV-077`). Bir onarım kapsam değişimini göstermelidir: düzeltmesi gereken başarısızlığı sessizce yumuşatmak ya da bir kabul koşulunu düşürmek onarım değildir (`INV-078`). Ve kanıtın bağımsız bir kaynağı olmalıdır: tek "kaynak" cevabın kendisiyse, iddia en fazla desteklenmiş sayılır, asla doğrulanmış değil (`INV-079`).
+
+### İzde asla görünmemesi gerekenler
+
+API anahtarı, parola, token, oturum kimliği veya kişisel veri yok — bunun yerine `EV-*` kimliği ya da dosya yolu kullanılır (`INV-062`). Her güncelleme 280 karakterin altındadır ve güncelleme sayısı derinliğe göre sınırlıdır; böylece şeffaflık log duvarına dönüşmez.
+
+### Hikâyenin sırası da denetlenir
+
+İz doğru olsa bile sırası yanıltıcı olabilir: hiç test koşmadan ATTACK, denetimden önce DECISION demek `VF-09`'dur (`INV-063`). Her aşama kendi kanıtını göstermelidir — başarısızlık için `F-*`, revizyon için `REV-*`, yeniden test için koşulmuş `TEST-*`, CRITICAL için external/mutation testi (`INV-064`). Bir adım bir dakikadan uzun sürerse sessizlik değil, "hâlâ çalışıyor, henüz sonuç yok" nabzı beklenir.
+
+### Kart, koşunun ne kadar titiz ve ne kadar canlı olduğunu söyler
+
+Kart ayrıca kaynağını bildirir: yürütülen derinlik ve izin `LIVE` mi `RETRO` mu olduğu (`INV-066`). İz de o derinlik için eksiksiz olmalıdır — açılış `DEPTH`, gereken aşamalar ve her başarısızlık/revizyon/yükseltme için bir kayıt (`INV-065`); kısa ve cilalı bir iz `VF-09`'dur, düzenli bir özet değil. Kartın metni ayrıca `[claims=..., tests=..., rev=...]` biçiminde kanonik bir altbilgi taşır ve bu değerler alanlarla eşleşmelidir (`INV-067`) — okuduğunuz sayılar sözleşmeden kopamaz.
+
+### Makinece denetlenen taraf
+
+* `INV-057` — iz, derinliğin gerektirdiği sıklıkta canlı akmalıdır; sonradan tek seferde yazılan iz `VF-09`'dur ve `PASS`'i engeller.
+* `INV-058` — her güncelleme gerçek sözleşme kimliklerine ve sonuçlarına dayanmalı; karar kartı ile nihai karar birbirini tutmalıdır.
+* `INV-059`–`INV-062` — kart türetilmiş olmalı (`VF-10`), iz kapalı olmalı, erteleme dürüst olmalı, içerik gizlenmiş ve sınırlı olmalı (`VF-09`).
+* `INV-063`–`INV-064` — hikâye yaşam döngüsü sırasıyla anlatılmalı ve her aşama kendi kanıtını göstermeli (`VF-09`).
+* `INV-065`–`INV-066` — iz derinlik için eksiksiz olmalı ve kart derinlik + `LIVE`/`RETRO` göstermeli (`VF-09`/`VF-10`).
+* `INV-067` — kartın metnindeki sayılar ve kanonik altbilgi alanlarla eşleşmeli (`VF-10`).
+* `INV-068`–`INV-070` — tanımlanan hiçbir test yarım bırakılamaz (`VF-06`); kart kanonik işaret/karar/derinlik/iz başlığıyla açılıp altbilgiyle kapanmalı; etiket kendi sınırları, engelleri veya açık hatalarıyla eşleşmelidir (`VF-10`).
+* `INV-071`–`INV-073` — `VERIFIED` bir varsayım gerçek ve karşılıklı kanıta dayanmalıdır (`EF-01`/`VF-07`); kritik koşullar sınırlarda ya da engellerde `AS-XXX` ile adlandırılmalıdır (`VF-04`/`VF-06`); yükseltme/düşürme kayıtları yönlüdür (`VF-06`).
+* `INV-074`–`INV-076` — kontrol listesi, kapanış bayrağının arkasında kutu kutu bir kayıttır (`VF-06`); uyuşmayan test ailesi istisna olarak bildirilmelidir (`VF-04`); `VERIFIED` iddialar önbellek değil bu koşunun kanıtını gerektirir (`EF-03`).
+* `INV-077`–`INV-079` — kritik test gerçek dayanak bildirmelidir (`VF-03`); revizyon neyi düşürdüğünü/daralttığını kaydetmelidir (`VF-07`); ve bir iddia cevabın kendisine karşı doğrulanamaz (`EF-06`).
+
+Tam şartname: [`references/progress-protocol.md`](references/progress-protocol.md).

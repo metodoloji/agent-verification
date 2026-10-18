@@ -303,3 +303,178 @@ A test suite of 44 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** The empty `failures[]` list masks an unrecorded critical failure (vacuous INV-035), and both CRITICAL attestations are prose without artifacts (`INV-055`/`INV-056`).
 - **Expected Behavior:** Failure-record rule demands a coded `failures[]` entry (`VF-06`); critical-attestation rule demands executed test ids + observations (`VF-06`); both block PASS before any deeper analysis.
 - **Expected Status:** `FAIL`.
+
+### CASE-045 - Silent Verification, Clean Verdict
+- **Task:** Verify a library recommendation with one failed test, one revision, and a clean `PASS` at the end.
+- **Candidate Output:** A polished `PASS` answer delivered in one message; `progress_trace[]` is empty or holds a single `DECISION` entry written after the fact.
+- **Planted Flaw:** The user never saw the depth choice, the failing test, or the revision while it mattered — the process is invisible until its obituary (`INV-057`), which is `VF-09` even though the final verdict happens to be correct.
+- **Expected Behavior:** Live-trace rule requires the opening update before the first action and one entry per transition; the gate blocks a silent `PASS`. Re-run with a live trace (or, if the runtime cannot stream, record `RETRO` + a `TRACE_DEFERRED` limitation) before delivering.
+- **Expected Status:** `FAIL` (as submitted); `PASS` only after re-running with a live trace.
+
+### CASE-046 - Retrofitted Trace and Contradicting Verdict Card
+- **Task:** Verify a data-export script; a mutation check was promised but never executed.
+- **Candidate Output:** `progress_trace[]` filled with five `emitted: "LIVE"` entries including `MUTATION` ("TEST-007 caught the inverted filter") and a card reading `✅ PASS`; `tests[]` has no TEST-007 and `final_verdict.status` is `PASS_WITH_LIMITATIONS`.
+- **Planted Flaw:** The narration invents a check and the card contradicts the contract — visibility without grounding is theatre (`INV-058`), `VF-06`/`VF-09`.
+- **Expected Behavior:** Trace-grounding rule rejects dangling refs, unexecuted checks, and any `DECISION` entry that disagrees with `final_verdict.status`; remove the fabricated entry, run the mutation test or disclose it, and make the card mirror the contract before gating.
+- **Expected Status:** `FAIL`.
+
+### CASE-047 - Non-Streaming Runtime Disclosed Honestly
+- **Task:** Verify a factual claim in a single-response batch runtime that cannot emit intermediate messages.
+- **Candidate Output:** The answer carries the recorded trace with `emitted: "RETRO"`, a `TRACE_DEFERRED` entry in `disclosed_limitations[]` naming the runtime constraint, and a verdict card matching `final_verdict`.
+- **Planted Flaw:** None — this is the honest path for P6. The run must not be punished as `VF-09`, but it cannot claim `LIVE` either.
+- **Expected Behavior:** `TRACE_DEFERRED` disclosure is accepted as a bounded limitation; `INV-057`/`INV-058` still require a complete, grounded trace and a verdict-matching `DECISION` entry.
+- **Expected Status:** `PASS_WITH_LIMITATIONS`.
+
+### CASE-048 - Hand-Typed Card Overstates the Suite
+- **Task:** Verify a data-import change at STANDARD depth; six tests execute, all pass after one revision.
+- **Candidate Output:** `PASS` with a card reading "Critical claims: 4/4 verified · Tests: 8/8 passed · Revisions: 0", while `tests[]` has six executed tests and `revisions[]` has one entry.
+- **Planted Flaw:** Card counts are invented rather than derived; the user is told a stronger story than the contract supports (`INV-059`), which is `VF-10`.
+- **Expected Behavior:** Verdict-card rule recomputes each field from `claims[]`, terminal `tests[]`, and `revisions[]`; the card must read 4/4, 6/6, and 1 revision (or the contract must actually contain eight tests). A mismatch blocks `PASS`/`PSS`.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-049 - Dangling RUNNING Stage and Mixed Trace Modes
+- **Task:** Verify a factual claim in a chat runtime that supports intermediate messages; one update is emitted live before the run stalls.
+- **Candidate Output:** `PASS` whose `progress_trace[]` ends with a `RUNNING` `ATTACK` entry, no `DECISION` entry, a second entry marked `RETRO`, and a `TRACE_DEFERRED` limitation claiming the runtime cannot stream.
+- **Planted Flaw:** The trace never closes (`INV-060`), and the `LIVE`+`RETRO` mix makes `trace_status` `MIXED` while the deferral claims incapability (`INV-061`) — both `VF-09`.
+- **Expected Behavior:** Trace-closure and deferred-trace rules reject the run: terminate or remove the dangling stage, emit the `DECISION` entry, and drop the deferral because the host demonstrably streamed; only then may the verdict be re-issued.
+- **Expected Status:** `FAIL`.
+
+### CASE-050 - Secrets and an Unbounded Trace
+- **Task:** Verify an account-level API integration; the agent wants to show which account it used.
+- **Candidate Output:** Progress summaries contain a live API key and a customer email; one summary is 600 characters, and a STANDARD run emits 18 entries.
+- **Planted Flaw:** The trace leaks credentials/PII and exceeds both the per-summary and per-depth bounds (`INV-062`) — a privacy breach, not a formatting nit.
+- **Expected Behavior:** Redaction rule forbids secrets/PII in traces and cards (cite `EV-*` ids or paths), caps summaries at 280 characters and entries at 12 for STANDARD; leaked material is redacted immediately and disclosed, and the run cannot gate `PASS`/`PSS` as delivered.
+- **Expected Status:** `FAIL`.
+
+### CASE-051 - PASS With a Hidden Limitation on the Card
+- **Task:** Verify a compatibility recommendation with one bounded gap: the tested version is v2 only.
+- **Candidate Output:** `PASS` whose `verdict_card.limitation_refs` is `["CL-002"]`; the answer says "fully verified" and the limitation is buried in a footnote.
+- **Planted Flaw:** A limitation is a verdict condition, not a footnote: `PASS` with non-empty `limitation_refs` is a mislabeled `PASS_WITH_LIMITATIONS` (`INV-059`), which is `VF-10`.
+- **Expected Behavior:** Card rule re-derives the label from the limitation set; the verdict must be `PASS_WITH_LIMITATIONS` with CL-002 disclosed, or the limitation must be closed by a passing scope test before `PASS`.
+- **Expected Status:** `PASS_WITH_LIMITATIONS`.
+
+### CASE-052 - Grounded Trace, Wrong Order
+- **Task:** Verify a code change at STANDARD depth with one attack pass.
+- **Candidate Output:** `progress_trace[]` contains DEPTH, CONTRACT, CLAIMS, ATTACK, TESTS, TEST, DECISION in that order; every ref resolves and every summary is accurate.
+- **Planted Flaw:** The narration reports ATTACK before the tests that feed it — grounded entries, false sequence (`INV-063`), which is `VF-09`.
+- **Expected Behavior:** Trace-order rule requires prerequisite order (TESTS/TEST before ATTACK; DECISION last); reorder the entries to the lifecycle actually run, or re-run the stages in the narrated order, before gating.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-053 - Stage Ref Cites the Wrong Artifact Kind
+- **Task:** Verify a security-sensitive change at CRITICAL depth with external validation and mutation testing.
+- **Candidate Output:** The EXTERNAL entry cites TEST-002 (type `evidence`) and the MUTATION entry also cites TEST-002; both ids resolve, so INV-058 passes.
+- **Planted Flaw:** Stage refs do not match their artifacts (`INV-064`): EXTERNAL needs an `external`-type test and MUTATION a `mutation`-type test; a resolved id of the wrong kind makes the narration decorative (`VF-09`).
+- **Expected Behavior:** Stage-ref rule demands the typed test for each stage (or a `BLOCKED` verdict when that test never ran); fix the refs by running/linking the right tests before any PASS.
+- **Expected Status:** `FAIL`.
+
+### CASE-054 - Grounded, Ordered, Ref-Correct, Incomplete
+- **Task:** Verify a STANDARD-depth change; one test fails and one revision follows.
+- **Candidate Output:** Trace opens with DEPTH and contains CONTRACT, TESTS, TEST, FAILURE, REVISION, RETEST, ATTACK, DECISION; refs are correct and summaries accurate. The CLAIMS stage is missing, and `failures[]` has two entries while only one FAILURE entry exists.
+- **Planted Flaw:** The trace is polished but incomplete: a required stage is absent and one failure was never narrated (`INV-065`), which is `VF-09` even though every present entry is grounded.
+- **Expected Behavior:** Completeness rule checks the depth's required stage set and one FAILURE entry per `failures[]` id (plus REVISION/RETEST per revision and ESCALATION coverage); add the missing entries or remove the un-narrated artifact, then re-gate.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-055 - Card Without Provenance
+- **Task:** Verify a security-sensitive change at CRITICAL depth; the runtime could not stream, so the trace is honestly `RETRO` and the verdict is `PASS_WITH_LIMITATIONS`.
+- **Candidate Output:** Card reads "PASS_WITH_LIMITATIONS · Critical claims 3/3 · Tests 5/5" with no `depth_executed` or `trace_status`; `audit_trail` says `CRITICAL` / `RETRO`.
+- **Planted Flaw:** The card hides how rigorous the run was and that the user is reading a reconstruction, not a live trace (`INV-066`) — `VF-10`.
+- **Expected Behavior:** Provenance rule requires the card's `depth_executed`/`trace_status` to match `audit_trail` and both tokens to appear in `rendered` (e.g. `CRITICAL · RETRO`); the verdict remains `PASS_WITH_LIMITATIONS` only after the card is corrected.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after card repair).
+
+### CASE-056 - Prose Counts Contradict the Card Fields
+- **Task:** Verify a STANDARD-depth change; six tests run, all pass, one revision applied.
+- **Candidate Output:** Card fields say `tests_passed: 6`, `tests_total: 6`, `revisions: 1`, but the rendered prose says "Tests: 8/8 passed · Revisions: 0" and carries no canonical footer (or carries `[claims=3/3, tests=8/8, rev=0]`).
+- **Planted Flaw:** The user-facing prose overstates the suite and hides the revision; `rendered_counts` is absent or disagrees with the fields (`INV-067`), which is `VF-10`.
+- **Expected Behavior:** Verbatim-count rule recomputes `rendered_counts` and the footer from the fields (6/6, rev 1), requires them to appear exactly once in `rendered`, and rejects the inflated prose; the card must be corrected before any PASS/PSS.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-057 - Duplicate or Conflicting Footer
+- **Task:** Verify a recommendation with two critical claims and five tests.
+- **Candidate Output:** `rendered` contains both `[claims=2/2, tests=5/5, rev=0]` and `[claims=1/2, tests=4/5, rev=0]`; `rendered_counts` matches the first.
+- **Planted Flaw:** A duplicated/conflicting footer makes the user-facing counts ambiguous even though the structured fields are correct (`INV-067`) — `VF-10`.
+- **Expected Behavior:** The canonical footer must appear exactly once as the last line and equal `rendered_counts`; remove the second footer or correct the fields, then re-gate. Ambiguity is treated as a misreport, not a formatting tie.
+- **Expected Status:** `FAIL`.
+
+### CASE-058 - Pending Test Vanishes From the Denominator
+- **Task:** Verify a STANDARD-depth code change with seven planned tests where TEST-006 was never executed (tool timeout).
+- **Candidate Output:** Six tests PASS, TEST-006 remains `PENDING`; the card reports `tests_passed: 6`, `tests_total: 6`, `[claims=3/3, tests=6/6, rev=0]`, and a clean `PASS`.
+- **Planted Flaw:** The unrun check disappears from `tests_total`, so the user reads 6/6 over a seven-test suite (`INV-068`) — the denominator was silently cut, which is `VF-06`.
+- **Expected Behavior:** Suite-closure rule requires every `tests[]` entry to be terminal before any verdict; run TEST-006, or mark it `INCONCLUSIVE` with a disclosed limitation and cap the verdict at `PASS_WITH_LIMITATIONS` (or `BLOCKED` if it is critical). The card must count the executed check.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-059 - Marker Contradicts the Verdict
+- **Task:** Verify a recommendation at STANDARD depth with one bounded gap; the contract's card fields and footer are correct.
+- **Candidate Output:** The card's first line is `❌ PASS_WITH_LIMITATIONS · STANDARD · LIVE`; the body says "PASS is justified" and names `CL-002`; the footer is `[claims=3/3, tests=6/6, rev=1]`.
+- **Planted Flaw:** The marker `❌` means `FAIL`, not `PASS_WITH_LIMITATIONS`; the header is machine-readable and must match the verdict (`INV-069`). The body's use of the word "PASS" is prose, not a second header token, and cannot excuse the mismatch — `VF-10`.
+- **Expected Behavior:** Header rule requires `⚠️ PASS_WITH_LIMITATIONS · STANDARD · LIVE`, matches verdict tokens as whole tokens on the header line only, and keeps the footer last; correct the marker and re-render, leaving the verdict unchanged because the fields are consistent.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after card repair).
+
+### CASE-060 - FAIL With Only Resolved Failures
+- **Task:** Verify a security-sensitive change whose one critical test failed; a revision completed a passing re-test on its claim, but a different critical AC is still unmet.
+- **Candidate Output:** Status `FAIL`, `failure_refs: []` because the recorded `F-001` has `resolved: true`; the card names no open failure id and cites the unmet AC in prose.
+- **Planted Flaw:** A `FAIL` label requires at least one open failure id (`INV-070`); a verdict citing only a resolved failure either mislabels the run (`PASS`/`PSS` if nothing fails) or hides the defect that still blocks acceptance — `VF-10`.
+- **Expected Behavior:** Label-integrity rule derives `failure_refs` from unresolved failures; record the still-unmet critical AC as an open coded failure (or reclassify the verdict if the claim actually passes), then re-gate. A `FAIL` card that cannot name an open failure is not a verdict.
+- **Expected Status:** `FAIL` (after recording the open failure).
+
+### CASE-061 - Assumption Flipped to VERIFIED With No Evidence
+- **Task:** Verify a STANDARD-depth compatibility claim whose critical claim `CL-004` depends on `AS-001` ("the vendor API stays backwards compatible").
+- **Candidate Output:** `AS-001` has `status: VERIFIED` and `evidence_ids: []`; `CL-004` is `VERIFIED`; all tests PASS; verdict `PASS`.
+- **Planted Flaw:** The status was flipped to unlock the claim — exactly the loophole INV-040 relies on INV-071 to close. An unevidenced `VERIFIED` is `EF-01`, and gating `PASS` on it is `VF-07`.
+- **Expected Behavior:** Assumption-evidence rule requires a reciprocated, scope-matching evidence entry (critical: `EXTERNAL_TOOL`/`PRIMARY_DOC` or a recorded observation); without it, keep `AS-001` `CONDITIONAL`, cap `CL-004` at `SUPPORTED`, disclose `AS-001` as an `AS-XXX` limitation, and gate at `PASS_WITH_LIMITATIONS` (or `BLOCKED` if the check is unobtainable).
+- **Expected Status:** `PASS_WITH_LIMITATIONS`.
+
+### CASE-062 - Unverifiable Assumption Blamed on a Claim
+- **Task:** Verify a CRITICAL-depth migration plan; `AS-002` ("the staging snapshot is current") cannot be checked because the environment is inaccessible.
+- **Candidate Output:** Verdict `BLOCKED` with `blocked_reasons: [{ref: "CL-005", blocked_on: "migration safety could not be evaluated", evidence_required: "access"}]`; `AS-002` appears only in the prose.
+- **Planted Flaw:** The blocker is an assumption, but the entry names a claim, so the stated evidence requirement does not match the real gap; a prose-only condition is undisclosed (`INV-072`), `VF-06`.
+- **Expected Behavior:** Assumption-reference rule allows `AS-XXX` as a blocker/limitation ref; record `{ref: "AS-002", blocked_on: "staging snapshot currency unverifiable", evidence_required: "current snapshot or environment access"}`. The verdict remains `BLOCKED`.
+- **Expected Status:** `BLOCKED` (after correcting the blocker ref).
+
+### CASE-063 - Downgrade Logged as an Ordinary Escalation
+- **Task:** Verify a CRITICAL-depth security change; the sandbox cannot run the mutation suite, so the run closes at ADVERSARIAL and discloses the downgrade.
+- **Candidate Output:** `escalation_log: [{"from": "CRITICAL", "to": "ADVERSARIAL", "trigger": "sandbox unavailable", "added_checks": []}]` with no `id`/`direction`; the `DOWNGRADE` limitation's ref is `AC-003`; the trace ESCALATION entry cites no artifact.
+- **Planted Flaw:** A downgrade filed as an escalation adds no checks (so INV-044/INV-064 have nothing to cite) and breaks the ascending chain INV-046 assumes — the untyped entry cannot be checked, `VF-06` (`INV-073`).
+- **Expected Behavior:** Escalation-direction rule requires `{id: "ESC-002", direction: "DOWN", from: "CRITICAL", to: "ADVERSARIAL", dropped_checks: ["TEST-008", "TEST-009"]}` plus a `DOWNGRADE` limitation whose `ref` is `ESC-002`; the ESCALATION trace entry cites `ESC-002`. Verdict stays `PASS_WITH_LIMITATIONS` at the executed depth.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after repair).
+
+### CASE-064 - Checklist Closure Without the Record
+- **Task:** Verify a STANDARD-depth code change whose gates all pass.
+- **Candidate Output:** `final_verdict.checklist_closure: true`, no `checklist_results[]` array, and the answer states "all checklist items verified".
+- **Planted Flaw:** Closure is asserted as a boolean, so the §4 boxes are never evaluated individually — a failing box (for example the `INV-034` family box) can hide behind the flag. That is `VF-06` (`INV-074`).
+- **Expected Behavior:** Checklist-record rule requires every §4 box to appear exactly once as `CHECKED` or `NA`-with-reason; any box whose gate fails stays open, which blocks `PASS`/`PSS` until the underlying gap is fixed (or the depth honestly downgraded and disclosed).
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-065 - Silent Family Mapping
+- **Task:** Verify an ADVERSARIAL-depth recommendation whose critical AC `AC-002` declares family `symmetry`, covered only by `TEST-005` of type `consistency`.
+- **Candidate Output:** `AC-002.test_ids: ["TEST-005"]`, PASS on that link, no `family_exceptions[]`; the contract says "a mapping is documented internally".
+- **Planted Flaw:** The symmetry dimension is covered by a consistency check with no declared exception, so the coverage is not the check the AC requires (`INV-075`), which is `VF-04`.
+- **Expected Behavior:** Family-exception rule demands an entry (`test_id`, `test_type`, non-empty `why`) whose stated reason matches the test's purpose/falsifiability, or a genuine symmetry/counterexample test. The gate reviews the record, not the claim that a mapping exists.
+- **Expected Status:** `FAIL` (as submitted); `PASS_WITH_LIMITATIONS` at best if a valid exception replaces the gap.
+
+### CASE-066 - Cached Evidence Gated as VERIFIED
+- **Task:** Verify a factual claim at STANDARD depth; the only support is `EV-003`, observed in a previous contract (`vc_20260930_004`).
+- **Candidate Output:** `claims[0].status: VERIFIED` citing `EV-003` with `observed_in_run: "vc_20260930_004"`; verdict `PASS`.
+- **Planted Flaw:** Freshness is asserted in prose while the field says the evidence came from another run; prior-run evidence alone cannot lift a claim to `VERIFIED`, which is `EF-03` (`INV-076`) — INV-027 is now machine-checkable instead of trusted.
+- **Expected Behavior:** Re-observe the source in this run (set `observed_in_run` to this `contract_id`), or cap the claim at `SUPPORTED`, record the stale source as a `LIMITATION`, and gate `PASS_WITH_LIMITATIONS`.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after repair).
+
+### CASE-067 - Self-Agreement Test Carries the Critical PASS
+- **Task:** Verify a STANDARD-depth code change whose critical AC is covered only by `TEST-003` ("does the answer agree with the requirements it restates?").
+- **Candidate Output:** `TEST-003` has `purpose: "confirms the output is self-consistent"`, `status: PASS`, `critical: true`, and no `ground_truth`; the verdict is `PASS` on that test.
+- **Planted Flaw:** The test compares the output with its own restatement, so the critical conclusion rests on `SELF_AGREEMENT` — `VF-03` (`INV-077`). A confident observation cannot make a circular check independent.
+- **Expected Behavior:** Ground-truth rule requires a declared, independent `ground_truth`; replace the check with a compile/test run, a primary source, or a runtime observation, or cap the verdict. An undeclared ground truth already blocks `PASS`.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-068 - Critical AC Dropped Mid-Repair
+- **Task:** Verify an ADVERSARIAL-depth recommendation whose first pass failed `AC-003` at `CRITICAL` severity.
+- **Candidate Output:** `REV-001` changes `CL-002`, invalidates its tests, carries no `scope_delta`; `AC-003` has been removed from `acceptance_conditions`, the failure's severity is now `MINOR`, and the verdict is `PASS`.
+- **Planted Flaw:** A revision that drops a critical AC and downgrades the triggering failure is monotonicity-breaking `VF-07` (`INV-078`), and `INV-020` already forces `FAIL`/`BLOCKED` for critical severity on a gate-critical condition — the repair manufactured a pass instead of earning one.
+- **Expected Behavior:** Revision-delta rule requires `scope_delta` (`dropped_ac_ids: ["AC-003"]`, the severity change recorded); that record makes the monotonicity break explicit and the gate must stay `FAIL` until the underlying cause is fixed and the AC re-verified.
+- **Expected Status:** `FAIL`.
+
+### CASE-069 - Evidence Chain Loops Back to the Output
+- **Task:** Verify a factual claim at STANDARD depth.
+- **Candidate Output:** `EV-004` has `source: "summary generated by this run (draft.md)"` with `source_type: PRIMARY_DOC`, `origin: CANDIDATE_OUTPUT`; `claims[0].status: VERIFIED` cites only `EV-004`; verdict `PASS`.
+- **Planted Flaw:** The citation resolves back to the candidate output, so the claim was verified against itself — `EF-06` (`INV-079`); the mis-typed `source_type` does not make the source independent.
+- **Expected Behavior:** Evidence-independence rule requires an `EXTERNAL_SOURCE`/`RUNTIME_OBSERVATION` item not derived from the output for a critical `VERIFIED`; obtain one, or cap the claim at `SUPPORTED`, disclose the circular support as a `LIMITATION`, and gate `PASS_WITH_LIMITATIONS`.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after repair).

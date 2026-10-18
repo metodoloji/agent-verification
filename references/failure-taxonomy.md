@@ -32,12 +32,14 @@ Flaws in the verification strategy or execution itself (Verification-of-Verifica
 |---|---|---|
 | `VF-01` | `MISSING_TEST` | A critical claim has no test capable of failing it. |
 | `VF-02` | `WEAK_TEST` | The test passes even on a corrupted/mutated answer. |
-| `VF-03` | `CIRCULAR_TEST` | The test checks whether the answer agrees with its own premises. |
-| `VF-04` | `BLIND_SPOT` | A plausible failure mode is completely unmonitored. |
+| `VF-03` | `CIRCULAR_TEST` | The test checks whether the answer agrees with its own premises, or a critical test declares its `ground_truth` as `SELF_AGREEMENT`/`CANDIDATE_RESTATEMENT` (`INV-077`). |
+| `VF-04` | `BLIND_SPOT` | A plausible failure mode is completely unmonitored, a critical `CONDITIONAL`/`UNVERIFIED` assumption is left unnamed in the limitations/blockers (`INV-072`), or a test-family mismatch is left undeclared (`INV-075`). |
 | `VF-05` | `BAD_COUNTEREXAMPLE` | Counterexample attempted was trivial or misaligned with the claim. |
-| `VF-06` | `PREMATURE_PASS` | Accepted as PASS before running all required tests or re-tests. |
-| `VF-07` | `FALSE_ACCEPTANCE` | A wrong or flawed output was erroneously approved. |
+| `VF-06` | `PREMATURE_PASS` | Accepted as PASS before running all required tests or re-tests, closing a verdict with a `PENDING`/`RUNNING` test still in `tests[]` (`INV-068`), an `escalation_log[]` entry whose direction, added checks, or downgrade disclosure does not match its effect (`INV-073`), or a `checklist_closure: true` flag without a matching `checklist_results[]` record (`INV-074`). |
+| `VF-07` | `FALSE_ACCEPTANCE` | A wrong or flawed output was erroneously approved, including a revision reaching `PASS` after dropping a critical AC/claim or downgrading the triggering failure's severity (`INV-078`). |
 | `VF-08` | `FALSE_REJECTION` | A correct output was rejected based on a flawed verification test. |
+| `VF-09` | `SILENT_VERIFICATION` | The verification process stayed invisible to the user until the verdict, or its progress trace was retro-fitted/ungrounded, so the work could not be followed or audited while it happened (`INV-057`/`INV-058`). |
+| `VF-10` | `MISREPORTED_CARD` | The verdict card's counts, decisive evidence, or limitation refs disagree with the contract, the card is missing, its header is malformed or unparseable, or its label contradicts its own limitations/blockers/failures (`INV-059`/`INV-069`/`INV-070`). |
 
 ---
 
@@ -47,12 +49,12 @@ Issues with sources, references, or observational inputs.
 
 | Code | Label | Description |
 |---|---|---|
-| `EF-01` | `SOURCE_MISSING` | No source exists for a claim that requires citation. |
+| `EF-01` | `SOURCE_MISSING` | No source exists for a claim that requires citation, or an assumption is marked `VERIFIED` with no reciprocated evidence (`INV-071`). |
 | `EF-02` | `SOURCE_MISMATCH` | The cited source does not state or support the claim made. |
-| `EF-03` | `STALE_SOURCE` | The source applies to an outdated version, date, or context. |
+| `EF-03` | `STALE_SOURCE` | The source applies to an outdated version, date, or context, or an `evidence[]` item's `observed_in_run` is a prior contract while the claim it supports is gated `VERIFIED` (`INV-076`). |
 | `EF-04` | `INSUFFICIENT_SCOPE` | Narrow benchmark or study is cited as a universal proof. |
 | `EF-05` | `CONTRADICTORY_SOURCES` | Reliable sources conflict without reconciliation. |
-| `EF-06` | `CIRCULAR_EVIDENCE` | Source relies directly on the claim being evaluated. |
+| `EF-06` | `CIRCULAR_EVIDENCE` | Source relies directly on the claim being evaluated, or a citation chain resolves back to the candidate output (`INV-079`). |
 
 ---
 
@@ -105,3 +107,6 @@ Resolve ambiguity between neighboring codes before assigning:
 27. **Prose-grounded verdict vs unstructured disclosure?** If a `PASS`/`PASS_WITH_LIMITATIONS` has decisive evidence only in narrative text (no non-empty resolvable `final_verdict.decisive_evidence_ids[]`) → `VF-07` (`INV-051`); if the citation field is sound but `disclosed_limitations[]`/`blocked_reasons[]` entries are bare strings or carry unresolvable refs → `VF-04`/`VF-06` (`INV-052`). One is *grounded nowhere*, the other *listed nowhere* — check the fields, not the sentences.
 28. **Unlinked AC vs untraced re-test?** If a critical AC has zero linked tests (or links don't reciprocate through `tests[].target_ac_ids[]` / fail `test_family`) → `VF-01`/`VF-04` (`INV-053`); if links are sound but a revision sets `retest_completed: true` without `retest_test_ids[]` resolving to passing tests on its `changed_claim_ids[]` → `VF-07` (`INV-054`). Coverage and resolution are different claims — each needs its own artifact.
 29. **Unrecorded failing test vs unattested CRITICAL check?** If a critical test sits `FAIL`/`INCONCLUSIVE` with no matching `failures[]` entry, INV-035 passes vacuously → `VF-06` (`INV-055`); if `external_check_result`/`mutation_result` are prose with no cited executed test ids at CRITICAL depth → `VF-06` (`INV-056`). An empty list and a confident sentence are both *absence of record* — demand the ids.
+30. **Silent trace vs ungrounded trace?** If no user-visible progress appeared until the final answer (or the trace was assembled after the run) → `VF-09` (`INV-057`); if progress was narrated but its entries cite checks/ids/results absent from the contract, or the verdict card contradicts `final_verdict` → `VF-06`/`VF-09` (`INV-058`). Visibility without grounding is theatre; grounding without visibility is a log the user never saw.
+
+31. **Ungrounded trace vs misreported card?** If progress was narrated and its entries resolve, but the card's counts, decisive evidence, or limitation refs disagree with the contract (or the card is missing) → `VF-10` (`INV-059`). Visible work with a wrong summary is still a misreport — check the card's fields, not its confident wording.

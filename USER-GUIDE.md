@@ -31,6 +31,7 @@
 7. [The 4 Verification Depths (MINIMAL, STANDARD, ADVERSARIAL, CRITICAL)](#7-the-4-verification-depths)
 8. [The 4 Decision Verdicts (PASS, PWL, BLOCKED, FAIL)](#8-the-4-decision-verdicts)
 9. [The 2-Attempt Revision Cap (Ending Endless AI Apology Loops)](#9-the-2-attempt-revision-cap)
+10. [Watching the AI Work: The Live Verification Trace](#10-watching-the-ai-work-the-live-verification-trace)
 
 ---
 
@@ -327,3 +328,104 @@ When models make mistakes, attempting to fix them unconstrained often produces d
 * An invalid claim may be revised **at most twice**.
 * If the re-test fails after the 2nd attempt, the AI is cut off and must terminate with **`FAIL`** or **`BLOCKED`**.
 * This prevents the agent from trapping you in endless loops of *"Apologies! Let me fix that for you..."*
+
+---
+
+## 10. Watching the AI Work: The Live Verification Trace
+
+A verdict you cannot watch being built is a verdict you cannot really judge. The protocol therefore narrates its own work **while it runs**: one short update per stage, before the stage begins — not a polished summary written after the fact.
+
+### What you will see
+
+```text
+🛡️ Verification · ADVERSARIAL · 1/8 · depth
+High-impact purchase decision with conflicting reviews. Running ADVERSARIAL:
+hidden-cost audit, counterexamples, and comparison symmetry — not just a spec sheet.
+
+🛡️ Verification · ADVERSARIAL · 4/8 · tests
+7 tests defined. 6 passed; TEST-004 failed (OF-05): the quoted battery benchmark
+was measured at 25°C, while CL-002 claims sustained load.
+
+🛡️ Verification · ADVERSARIAL · 5/8 · revision
+CL-002 narrowed to "light load"; TEST-004 invalidated, its result no longer counts.
+
+🛡️ Verification · ADVERSARIAL · 6/8 · re-test
+TEST-005 re-run on the revised claim → PASS.
+
+🛡️ Verification · ADVERSARIAL · 7/8 · attack
+Thermal counterexample: 4-hour CAD render drops clocks 45%. Added TEST-007 (cooling);
+it failed on the ultrabook, confirming the limitation instead of hiding it.
+
+⚠️ PASS_WITH_LIMITATIONS · ADVERSARIAL · LIVE
+Critical claims: 3/3 verified · Tests: 7/8 passed (TEST-007 failed, disclosed) · Revisions: 1
+Limitations: CL-002 applies to light load only; TEST-007 (cooling) failed on the ultrabook.
+[claims=3/3, tests=7/8, rev=1]
+```
+
+### Why this matters more than the final wording
+
+* **You can object while it matters.** If the AI picked the wrong depth, misunderstood the question, or skipped a source you care about, you see it at stage 2 — not after a confident answer has already anchored your decision.
+* **Failed checks stay visible.** A silent agent that fixes its own mistake looks identical to one that was right the first time. Seeing *what failed and what changed* is the difference between trust and blind trust.
+* **Limitations arrive attached to evidence.** The verdict card repeats the same limitation as the contract, so the caveat cannot quietly disappear from the summary.
+
+### Controlling the detail
+
+| You say | You get |
+|---|---|
+| *(nothing)* | `concise`: one short update per stage + verdict card |
+| *"Show me every step / explain the checks"* | `detailed`: test ids, observations, evidence ids |
+| *"Just give me the answer"* | `silent`: opening line + verdict card only — the trace is still recorded, just not printed |
+
+To request it directly, append:
+
+```text
+[Verify with agent-verification and show me each step live: depth chosen, claims,
+tests, failures, revisions, and the verdict as you go — not only the final answer.]
+```
+
+### If the AI goes silent
+
+Silence is a defect, not a style. Ask: *"Which verification stage are you in, what have you checked so far, and what failed?"* If the interface truly cannot stream (single-response API, batch run), the agent must say so and disclose a `TRACE_DEFERRED` limitation — a fabricated "live" log is worse than an honest summary.
+
+### The card is audited too
+
+The verdict card is not free-form marketing. Every number in it is derived from the contract (`INV-059`): critical claims from `claims[]`, tests from terminal `tests[]`, revisions from `revisions[]`, limitations from `disclosed_limitations[]`. A card that says "8/8 tests passed" while six ran is `VF-10`, not a rounding error.
+
+The card also has a fixed, checkable shape. Before it is drawn, every defined test must be finished (`INV-068`) — a test left pending cannot silently drop out of the "7/8" denominator. The first line is always the marker, verdict, depth, and `LIVE`/`RETRO` status (`INV-069`); the last line is the `[claims=…, tests=…, rev=…]` footer. And the label must match its evidence (`INV-070`): a `PASS` with an open limitation or failure is mislabeled, a `PASS_WITH_LIMITATIONS` with nothing limited is equally wrong, and a `BLOCKED` or `FAIL` card must name its blockers or open failure ids. The trace must also close cleanly (`INV-060`) and never claim a streaming capability it did not use (`INV-061`).
+
+### Assumptions and downgrades are visible too
+
+Two quiet ways an answer can look verified when it is not are closed here. First, an assumption cannot be promoted to "verified" just by declaring it (`INV-071`): it needs evidence that actually covers it, and a critical assumption needs an external source or an observed check. Second, a condition that bounds the conclusion must be named where the contract can see it — an `AS-XXX` reference in the limitations (or blockers) list (`INV-072`) — not a passing remark in the prose. And if the agent has to lower the depth because a check cannot run, that is a directional *downgrade*: it must state what stopped being checked and carry a `DOWNGRADE` reference (`INV-073`), so a retreat never reads like extra rigor.
+
+### Assertions are not records
+
+Three things the agent used to be able to *assert* are now *recorded*. The pre-decision checklist is a per-box record (`INV-074`): "all boxes checked" is accepted only when every box is listed as done — or as not applicable, with a reason. A test that covers an acceptance condition with a different check family must be declared as an exception with a reason (`INV-075`), so "documented mapping" cannot mean "trust me". And a claim marked *verified* must rest on evidence observed **in this run** (`INV-076`); older, cached evidence may inform the answer, but it caps that claim at "supported" and must be disclosed. In all three cases, prose is not enough — the contract has to show the record.
+
+The same idea closes the three ways a system can "verify" itself without checking reality. A test must declare what it checked against: a check that only compares the answer with its own premises, or re-reads a rephrasing of the same claim, is not verification (`INV-077`). A repair must show its scope change: quietly dropping an acceptance condition or softening the failure it was supposed to fix is not a repair (`INV-078`). And evidence must have an independent origin: if the only "source" is the answer itself, the claim can be at most supported, never verified (`INV-079`).
+
+### What never appears in the trace
+
+No API keys, passwords, tokens, session ids, or personal data — those are cited as `EV-*` ids or file paths instead (`INV-062`). Each update stays under 280 characters and the number of updates is capped per depth, so transparency never turns into a wall of logs.
+
+### The order of the story is audited too
+
+A trace can be grounded and still mislead by sequencing: saying ATTACK before any TEST, or DECISION before the audit, is `VF-09` (`INV-063`). Each stage must also cite its own artifact — the failure id for a failure, the revision id, the executed test id, an external/mutation test for CRITICAL checks (`INV-064`). If a step takes longer than about a minute, expect a heartbeat ("still running; no result yet") rather than silence.
+
+### The card says how rigorous and how live the run was
+
+The card also declares its provenance: the executed depth and whether the trace was `LIVE` or `RETRO` (`INV-066`). And the trace must be complete for that depth — opening `DEPTH`, the required stages, and one entry per failure, revision, and escalation (`INV-065`); a short, polished trace is `VF-09`, not a tidy summary. The card's prose also carries a canonical `[claims=..., tests=..., rev=...]` footer that must match its fields (`INV-067`) — the numbers you read cannot drift from the contract.
+
+### The machine-checkable side
+
+* `INV-057` — the trace must be streamed at the depth's cadence; an end-of-run dump is `VF-09` and blocks `PASS`.
+* `INV-058` — every update must resolve to real contract ids and results, and the final card must match the actual verdict.
+* `INV-059`–`INV-062` — the card is derived (`VF-10` if not), the trace is closed, deferrals are honest, and content is redacted and bounded (`VF-09`).
+* `INV-063`–`INV-064` — the story is told in lifecycle order and each stage cites its own artifact (`VF-09`).
+* `INV-065`–`INV-066` — the trace is complete for the depth and the card shows depth + `LIVE`/`RETRO` (`VF-09`/`VF-10`).
+* `INV-067` — the card's prose counts and canonical footer match the fields (`VF-10`).
+* `INV-068`–`INV-070` — no defined test may be left unrun (`VF-06`); the card opens with the canonical marker/verdict/depth/trace header and ends with the footer; and its label must match its limitations, blockers, or open failures (`VF-10`).
+* `INV-071`–`INV-073` — a `VERIFIED` assumption needs real, reciprocated evidence (`EF-01`/`VF-07`); critical conditions must be named by `AS-XXX` in the limitations or blockers (`VF-04`/`VF-06`); and escalation entries are directional (`VF-06`).
+* `INV-074`–`INV-076` — the checklist is a per-box record behind the closure flag (`VF-06`); a mismatched test family must be declared as an exception (`VF-04`); and `VERIFIED` claims need this run's evidence, not a cached source (`EF-03`).
+* `INV-077`–`INV-079` — a critical test must declare real ground truth (`VF-03`); a revision must record what it dropped or narrowed (`VF-07`); and a claim cannot be verified against the answer itself (`EF-06`).
+
+Full specification: [`references/progress-protocol.md`](references/progress-protocol.md).
