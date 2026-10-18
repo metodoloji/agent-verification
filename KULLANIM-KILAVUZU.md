@@ -413,6 +413,10 @@ Aynı fikir, sistemin gerçeği kontrol etmeden kendini "doğrulamasının" üç
 
 Kesin görünmenin iki yolu daha. Birincisi kapsamlar: bir iddianın ya da kaynağın belirtilen kapsamı boşsa ya da sadece "tümü" ise, "dar kanıt, geniş iddia" kontrolünün karşılaştıracak bir şeyi kalmaz ve o iddia varsayılan olarak geçer (`INV-083`). İkincisi birbiriyle çelişen etiketler: bir atıf, kaynak türü olarak yerel bir dosyayı gösterirken harici köken iddia edemez; bir test yalnızca cevabın iç tutarlılığını kontrol ederken kendini harici sayamaz (`INV-084`). Ve adım kaydı, o adımları gerçekten gösteren iz girdilerine işaret etmelidir — yalnızca son duyuruyu göstermek kapsama değildir (`INV-085`).
 
+### Şiddet, çürütücü girdi ve hiçbir şey söylemeyen cümleler
+
+Değerli görünüp hiçbir şey taşımayan üç yer daha. Bir başarısızlığın şiddeti artık düzenlenebilir bir alan değil, bir *geçmiş*: yalnızca onu değiştiren revizyon üzerinden hareket edebilir; eski ve yeni değer, gerekçe ve — şiddet düşürülüyorsa — bulgunun gerçekten daraldığını gösteren taze bir gözlem kaydedilir (`INV-086`). Ayrıca çözülmemiş `MAJOR` veya `CRITICAL` bir bulgu nihai kararı sınırlar (`MAJOR` `PASS_WITH_LIMITATIONS`'ta, `CRITICAL` `FAIL`/`BLOCKED`'ta); yani ibreyi aşağı çevirmek temiz bir PASS'e giden yol değildir. Kritik bir test, yakalayacağı yanlış girdiyi adlandırmalıdır — "yanlış bir cevap" değil, yanındaki testle aynı cümle de değil (`INV-087`); tek yanlış cevabı "bir şeyler yanlış" olan test bir eşik koymamıştır. Ve izlediğiniz ilerleme satırları ne üzerinde çalıştığını söylemelidir (`INV-088`): on iki tane "Kontrol ediliyor." gerçek kimliklere çözülebilir ama size hiçbir şey anlatmaz; her özet kendi birimini adlandırır.
+
 ### İzde asla görünmemesi gerekenler
 
 API anahtarı, parola, token, oturum kimliği veya kişisel veri yok — bunun yerine `EV-*` kimliği ya da dosya yolu kullanılır (`INV-062`). Her güncelleme 280 karakterin altındadır ve güncelleme sayısı derinliğe göre sınırlıdır; böylece şeffaflık log duvarına dönüşmez.
@@ -439,5 +443,6 @@ Kart ayrıca kaynağını bildirir: yürütülen derinlik ve izin `LIVE` mi `RET
 * `INV-077`–`INV-079` — kritik test gerçek dayanak bildirmelidir (`VF-03`); revizyon neyi düşürdüğünü/daralttığını kaydetmelidir (`VF-07`); ve bir iddia cevabın kendisine karşı doğrulanamaz (`EF-06`).
 * `INV-080`–`INV-082` — deneme sayacı yazılmaz, türetilir (`VF-06`/`VF-07`); iddia edilen derinliğin her adımı kanıtıyla kaydedilir (`VF-06`); gerekçeler yer tutucu değil, gerçek olmalıdır (`VF-06`/`VF-04`).
 * `INV-083`–`INV-085` — kapsamlar kaydedilmelidir ki eşleşme boşa düşmesin (`EF-04`); beyan çiftleri aynı eseri anlatmalıdır (`VF-06`); ve adım kaydı gerçekten sahip olduğu iz kapsamını göstermelidir (`VF-06`/`VF-09`).
+* `INV-086`–`INV-088` — şiddet yalnızca kayıtlı ve kanıtlı bir revizyon farkıyla değişir, ciddi açık bulgu kararı sınırlar (`VF-06`/`VF-07`); kritik test somut bir yanlış girdi adlandırmalıdır (`VF-02`); ve her iz özeti anlattığı birimi adlandırmalıdır (`VF-09`).
 
 Tam şartname: [`references/progress-protocol.md`](references/progress-protocol.md).

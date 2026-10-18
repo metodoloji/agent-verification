@@ -88,6 +88,9 @@ Minimum shape of each update:
   did about it. Never dump raw JSON, hidden reasoning, or a wall of logs.
 - Never report a check you did not run, a percentage you cannot compute, or a
   verdict before the gate (`INV-058`).
+- Each update names the unit it acts on  (`AC-002`, `TEST-004`, `F-001`, the v2
+  benchmark, or the task class and risk reason on the `DEPTH` line) and what it found; "checking", "in progress", or the same sentence
+  repeated every stage is not a trace (`INV-088`).
 - In a tool-using runtime, post the update as a readable message between tool
   calls. Tool logs, raw JSON, and a footnote in the final answer do not count.
 
@@ -266,6 +269,9 @@ Run the machine-checkable Pre-Decision Checklist in `references/verification-con
 - **Scopes are recorded (`INV-083`)**: the task scope, every claim scope, and every evidence scope must name the boundary (version, inputs, environment); an empty or universal scope makes the scope match vacuous (`EF-04`/`VF-04`), so narrow evidence can never be stretched by leaving the scope blank.
 - **Declared facts agree (`INV-084`)**: `evidence.source_type` ↔ `evidence.origin` must match the mapping table, and `tests[].type` ↔ `ground_truth.kind` must not contradict — an `external` test needs external/primary/runtime truth and a `mutation` test needs a runtime tool (`VF-06`).
 - **Step record matches the trace (`INV-085`)**: every DONE `depth_steps[]` entry cites a terminal trace seq, and the cited seqs together cover the depth's required stages (`INV-065`); a step record citing only the DECISION entry — or a LIVE card resting on RETRO-only refs — is `VF-06`/`VF-09`.
+- **Severity is a record and a floor (`INV-086`)**: every `failures[].severity` change appears in that revision's `scope_delta.severity_changes[]` with `from`/`to`/`why`, and a downgrade needs a resolving evidence item observed in this run; an unrecorded or unevidenced downgrade is `VF-06`, one that carries a `PASS` is `VF-07`, and no `PASS` may be issued over an unresolved `MAJOR`/`CRITICAL` failure (`MAJOR` caps at `PASS_WITH_LIMITATIONS`, `CRITICAL` forces `FAIL`/`BLOCKED`).
+- **Falsifiers are concrete (`INV-087`)**: a critical test's `falsifiability` names the wrong input and the result it would produce — not a placeholder, not a restatement of its `purpose` or the claim, and not the same falsifier another critical test on that claim already declares (`VF-02`).
+- **Trace summaries say something (`INV-088`)**: each `progress_trace[].summary` names the unit it narrates (an id from its own `refs`, or the concrete subject that ref names when the entry is a decision such as `DEPTH`) and what was found; placeholder, stage-name-only, or duplicated summaries are `VF-09`.
 - **Verdict label matches its evidence (`INV-070`)**: `PASS` carries no limitations/blockers/open failures; `PASS_WITH_LIMITATIONS` carries ≥ 1 limitation and no blocker; `BLOCKED` carries ≥ 1 blocker; `FAIL` carries ≥ 1 open failure id. A PSS with nothing limited, a PASS with an open failure, or a FAIL naming no open failure is mislabeled (`VF-10`).
 Enforce the lifecycle invariants in `references/state-machine.md`:
 - **`PASS`**: All critical conditions met; critical claims supported; re-tests complete; no unresolved blind spots. Requires every critical test in `PASS` and every critical claim `VERIFIED` (or `SUPPORTED` only for explicitly non-critical refinements with disclosed limits — otherwise use `PASS_WITH_LIMITATIONS`).

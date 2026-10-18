@@ -49,7 +49,8 @@ in the final answer do not count as progress.
 | **P5 — Grounded in the contract** | Every update refers to checks that exist in the contract and states results that match `tests[]`/`final_verdict`. Invented checks, invented percentages, or a progress line claiming "all passed" before the gate are `VF-06`/`VF-09` (`INV-058`). |
 | **P6 — Honest when the runtime cannot stream** | If the host cannot emit intermediate messages (single-response API, batch job), do not fabricate a live stream. Emit what the runtime allows, record the trace with `emitted: "RETRO"`, and add a `TRACE_DEFERRED` entry to `final_verdict.disclosed_limitations[]`; that disclosure is a limitation, so the best available verdict is `PASS_WITH_LIMITATIONS`. An all-RETRO trace with no `TRACE_DEFERRED` entry is an undisclosed retro trace and is `VF-09`. |
 | **P7 — Redacted and bounded** | Never put credentials, tokens, session ids, or personal data in an update or card; cite `EV-*` ids or paths. Keep each summary <= 280 characters and stay within the depth's base entry cap. Visibility never outranks privacy or attention. |
-| **P8 — Heartbeat, don't stall** | If a stage or tool call runs longer than about a minute, emit one short heartbeat ("still running X; no result yet") and repeat at most once per minute. A heartbeat updates the current stage's entry in place (same `seq`, `status: RUNNING`) rather than appending a new one, so it does not consume the cap; it cites no new artifacts and never invents progress. |
+| **P8 — Say what the line is about** | Every `summary` names the unit it narrates — an id from its own `refs`, or the concrete subject that ref names when the entry narrates a decision rather than a check (the `DEPTH` line names the task class and risk reason behind its `AC-*` ref) — and what was found or decided. A placeholder (`checking`), a stage name alone (`RUNNING TESTS`), or a sentence copied from another entry is `VF-09`: the trace can resolve perfectly and still tell the watcher nothing (`INV-088`). |
+| **P9 — Heartbeat, don't stall** | If a stage or tool call runs longer than about a minute, emit one short heartbeat ("still running X; no result yet") and repeat at most once per minute. A heartbeat updates the current stage's entry in place (same `seq`, `status: RUNNING`) rather than appending a new one, so it does not consume the cap; it cites no new artifacts and never invents progress. |
 
 ---
 
@@ -193,7 +194,7 @@ and cannot be reconstructed after the fact.
 | `seq` | Contiguous from 1, in emission order (not lifecycle order after a revision loop). |
 | `stage` | One of §4; `TEST` may repeat per batch, and `FAILURE`/`REVISION`/`RETEST`/`ESCALATION` repeat per event. |
 | `status` | `DONE`, `FAILED`, `BLOCKED`, or `RUNNING` (only the last emitted entry may be `RUNNING`, and it must reach a terminal status — updated in place — before the verdict). |
-| `summary` | One or two sentences (<= 280 characters), in the user's language, stating what was checked and decided; no secrets or personal data. |
+| `summary` | One or two sentences (<= 280 characters), in the user's language, naming the unit it narrates (an id from its own `refs`, or the concrete subject that ref names when the entry is a decision such as `DEPTH`) and stating what was checked and decided; no secrets or personal data, no placeholder or repeated sentence (`INV-088`). |
 | `refs` | Resolvable ids, stage-specific per §4.1: FAILURE → `F-*`, REVISION → `REV-*`, RETEST → `TEST-*`, ESCALATION → `TEST-*` (an `UP` entry's `added_checks`) or `ESC-*` (a `DOWN` downgrade), EXTERNAL/MUTATION → typed test (or a blocked ref when `BLOCKED`). Empty only for `DEPTH`; `DECISION` cites `EV-*` for PASS/PSS. |
 | `emitted` | `LIVE` when delivered before the next stage began; `RETRO` only under P6 with a disclosed `TRACE_DEFERRED` limitation. |
 
@@ -311,6 +312,7 @@ hand-typed count, a hidden limitation, a malformed header, or a missing card is
 | Retro-fitted trace | Looks live, conceals where time went | Record `emitted: RETRO` + disclose `TRACE_DEFERRED` |
 | Narrating internal deliberation | Noise, and not a check the user can audit | Narrate decisions, evidence, and observations |
 | Silent on revision | Hides the defect that was fixed | Announce failure, revision, and re-test |
+| "Checking." on every line | Ids resolve, but the user learns nothing about what is being checked | Name the unit and the finding (`INV-088`) |
 | Card as decoration (hand-typed "8/8") | The summary can diverge from what was verified | Derive every card field from the contract (`VF-10`) |
 | Secret or personal data in an update | Leaks credentials/PII into a permanent transcript | Cite `EV-*` ids or paths (`INV-062`) |
 | Mixing `LIVE` and `RETRO` entries | Claims a capability it just used, to excuse the rest | One honest mode per run (`INV-061`) |

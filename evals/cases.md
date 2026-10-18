@@ -520,3 +520,24 @@ A test suite of 44 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** The step record cites the verdict announcement as proof for every step, so the record adds no coverage; the cited seqs do not show the ATTACK/AUDIT stages the depth requires — `VF-06`/`VF-09` (`INV-085`).
 - **Expected Behavior:** Step–trace rule requires each DONE step's refs to resolve to terminal entries whose union covers the required stage set (counterexample → the ATTACK entry, suite audit → the AUDIT entry); with correct refs the verdict may stand, otherwise the depth claim is unsupported.
 - **Expected Status:** `FAIL` (as submitted); `PASS` after the refs are corrected to the entries that show each step.
+
+### CASE-076 - The Failure Was Quietly Downgraded
+- **Task:** Verify a STANDARD-depth code change; TEST-003 fails with a CRITICAL `OF-05` finding on a critical claim.
+- **Candidate Output:** `F-001.severity` is `MINOR`; `REV-001.scope_delta.severity_changes: []`; `changed_claim_ids: ["CL-002"]`. The test is re-run on the revised claim and passes; verdict `PASS`.
+- **Planted Flaw:** The severity was lowered between detection and verdict with no `severity_changes[]` entry and no new observation, which is a silent severity edit — `VF-06`; the `PASS` that depends on the lower number is `VF-07` (`INV-086`).
+- **Expected Behavior:** Severity-history rule requires the change to appear in the revision that made it (`from: CRITICAL`, `to: MINOR`, substantive `why`, plus resolving current-run `evidence_refs` proving the finding is narrower). Without that evidence the finding stays CRITICAL and the verdict is `FAIL`.
+- **Expected Status:** `FAIL` (as submitted); `PASS` only after the downgrade is evidenced or the defect is actually fixed.
+
+### CASE-077 - Falsifier That Restates the Claim
+- **Task:** Verify a recommendation with two critical tests on `CL-001`.
+- **Candidate Output:** `TEST-001.falsifiability: "the recommendation would be wrong"`; `TEST-002.falsifiability: "the recommendation would be wrong"`; both PASS, both listed as independent dimensions of the claim.
+- **Planted Flaw:** Neither falsifier names a wrong input or an expected failing result, and the two tests share one, so the claim has one unnamed check counted twice — `VF-02` (`INV-087`), even though `purpose`, `observation`, and `ground_truth` are all well-formed.
+- **Expected Behavior:** Falsifier rule requires each critical test to name the concrete wrong input and the result it would then produce (and distinct falsifiers per claim); rewrite the falsifiers to the actual breaking cases, or merge the tests and add a real second dimension before gating.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-078 - Twelve Identical Progress Updates
+- **Task:** Verify a STANDARD-depth change; the trace has the required stages, contiguous seqs, correct refs, and a matching DECISION entry.
+- **Candidate Output:** All twelve `summary` values read `"Checking."`; the user-visible stream shows the same line each time.
+- **Planted Flaw:** Every constraint on the trace holds except the one that makes it readable: the summaries resolve but narrate nothing, so the user cannot see what was checked or found — `VF-09` (`INV-088`).
+- **Expected Behavior:** Trace-summary rule requires each summary to name the unit it narrates (an id from its own `refs`, or the subject that ref names when the entry is a decision such as `DEPTH`) and state what was found or decided, with no placeholder, stage-name-only, or duplicated text; rewrite the summaries from the entries' artifacts, then re-gate.
+- **Expected Status:** `FAIL` (as submitted).

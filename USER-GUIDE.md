@@ -411,6 +411,10 @@ Three numbers and lists used to be self-reported. The revision-attempt counter i
 
 Two more ways to look precise without being it. First, scopes: if a claim's or a source's stated scope is blank or just "all", the "narrow evidence, broad claim" check has nothing to compare, so every such claim passes by default (`INV-083`). Second, labels that contradict each other: a citation cannot declare an external origin while naming a local file as its source type, and a test cannot call itself external while checking only the answer's internal consistency (`INV-084`). And the step record has to point at trace entries that actually show those steps — citing only the final announcement is not coverage (`INV-085`).
 
+### Severity, falsifiers, and words that say nothing
+
+Three more places where a value can look meaningful and carry nothing. A failure's severity is now a *history*, not a field you can edit: it can only move through the revision that changed it, recording the old and new value, the reason, and — for a downgrade — a fresh observation showing the finding really is narrower (`INV-086`). An unresolved `MAJOR` or `CRITICAL` finding also caps the verdict (`MAJOR` at `PASS_WITH_LIMITATIONS`, `CRITICAL` at `FAIL`/`BLOCKED`), so turning the dial down is not a route to a clean pass. A critical test must name the wrong input it would catch, not "a wrong answer" and not the same sentence as the test next to it (`INV-087`); a test whose only wrong answer is "something wrong" has not set a bar. And the progress lines you watch must say what they are working on (`INV-088`): twelve entries of "Checking." can resolve to real ids and still tell you nothing, so each summary names its unit.
+
 ### What never appears in the trace
 
 No API keys, passwords, tokens, session ids, or personal data — those are cited as `EV-*` ids or file paths instead (`INV-062`). Each update stays under 280 characters and the number of updates is capped per depth, so transparency never turns into a wall of logs.
@@ -437,5 +441,6 @@ The card also declares its provenance: the executed depth and whether the trace 
 * `INV-077`–`INV-079` — a critical test must declare real ground truth (`VF-03`); a revision must record what it dropped or narrowed (`VF-07`); and a claim cannot be verified against the answer itself (`EF-06`).
 * `INV-080`–`INV-082` — the attempt counter is derived, not typed (`VF-06`/`VF-07`); every step of the claimed depth is recorded with proof (`VF-06`); and reasons must be substantive, not placeholders (`VF-06`/`VF-04`).
 * `INV-083`–`INV-085` — scopes must be recorded so a scope match cannot be vacuous (`EF-04`); declaration pairs must describe the same artifact (`VF-06`); and a step record must cite trace coverage it actually has (`VF-06`/`VF-09`).
+* `INV-086`–`INV-088` — severity only moves through a recorded, evidenced revision delta and a serious open finding caps the verdict (`VF-06`/`VF-07`); a critical test must name a concrete wrong input (`VF-02`); and every trace summary must name the unit it narrates (`VF-09`).
 
 Full specification: [`references/progress-protocol.md`](references/progress-protocol.md).
