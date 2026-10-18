@@ -33,12 +33,12 @@ Flaws in the verification strategy or execution itself (Verification-of-Verifica
 | `VF-01` | `MISSING_TEST` | A critical claim has no test capable of failing it. |
 | `VF-02` | `WEAK_TEST` | The test passes even on a corrupted/mutated answer. |
 | `VF-03` | `CIRCULAR_TEST` | The test checks whether the answer agrees with its own premises, or a critical test declares its `ground_truth` as `SELF_AGREEMENT`/`CANDIDATE_RESTATEMENT` (`INV-077`). |
-| `VF-04` | `BLIND_SPOT` | A plausible failure mode is completely unmonitored, a critical `CONDITIONAL`/`UNVERIFIED` assumption is left unnamed in the limitations/blockers (`INV-072`), or a test-family mismatch is left undeclared (`INV-075`). |
+| `VF-04` | `BLIND_SPOT` | A plausible failure mode is completely unmonitored, a critical `CONDITIONAL`/`UNVERIFIED` assumption is left unnamed in the limitations/blockers (`INV-072`), a test-family mismatch is left undeclared (`INV-075`), or a limitation/assumption reason is a placeholder rather than a substantive disclosure (`INV-082`). |
 | `VF-05` | `BAD_COUNTEREXAMPLE` | Counterexample attempted was trivial or misaligned with the claim. |
-| `VF-06` | `PREMATURE_PASS` | Accepted as PASS before running all required tests or re-tests, closing a verdict with a `PENDING`/`RUNNING` test still in `tests[]` (`INV-068`), an `escalation_log[]` entry whose direction, added checks, or downgrade disclosure does not match its effect (`INV-073`), or a `checklist_closure: true` flag without a matching `checklist_results[]` record (`INV-074`). |
-| `VF-07` | `FALSE_ACCEPTANCE` | A wrong or flawed output was erroneously approved, including a revision reaching `PASS` after dropping a critical AC/claim or downgrading the triggering failure's severity (`INV-078`). |
+| `VF-06` | `PREMATURE_PASS` | Accepted as PASS before running all required tests or re-tests, closing a verdict with a `PENDING`/`RUNNING` test still in `tests[]` (`INV-068`), an `escalation_log[]` entry whose direction, added checks, or downgrade disclosure does not match its effect (`INV-073`), a `checklist_closure: true` flag without a matching `checklist_results[]` record (`INV-074`), a reset/under-declared `attempt_number_for_claim` (`INV-080`), a missing or ref-less `depth_steps[]` entry (`INV-081`), an empty blocker/checklist reason (`INV-082`), or a citation/check whose declared facts contradict each other (`INV-084`). |
+| `VF-07` | `FALSE_ACCEPTANCE` | A wrong or flawed output was erroneously approved, including a revision reaching `PASS` after dropping a critical AC/claim or downgrading the triggering failure's severity (`INV-078`), or a `PASS` reached by resetting the revision attempt counter (`INV-080`). |
 | `VF-08` | `FALSE_REJECTION` | A correct output was rejected based on a flawed verification test. |
-| `VF-09` | `SILENT_VERIFICATION` | The verification process stayed invisible to the user until the verdict, or its progress trace was retro-fitted/ungrounded, so the work could not be followed or audited while it happened (`INV-057`/`INV-058`). |
+| `VF-09` | `SILENT_VERIFICATION` | The verification process stayed invisible to the user until the verdict, or its progress trace was retro-fitted/ungrounded, so the work could not be followed or audited while it happened (`INV-057`/`INV-058`), or a depth-step record cites trace coverage it does not have (`INV-085`). |
 | `VF-10` | `MISREPORTED_CARD` | The verdict card's counts, decisive evidence, or limitation refs disagree with the contract, the card is missing, its header is malformed or unparseable, or its label contradicts its own limitations/blockers/failures (`INV-059`/`INV-069`/`INV-070`). |
 
 ---
@@ -52,7 +52,7 @@ Issues with sources, references, or observational inputs.
 | `EF-01` | `SOURCE_MISSING` | No source exists for a claim that requires citation, or an assumption is marked `VERIFIED` with no reciprocated evidence (`INV-071`). |
 | `EF-02` | `SOURCE_MISMATCH` | The cited source does not state or support the claim made. |
 | `EF-03` | `STALE_SOURCE` | The source applies to an outdated version, date, or context, or an `evidence[]` item's `observed_in_run` is a prior contract while the claim it supports is gated `VERIFIED` (`INV-076`). |
-| `EF-04` | `INSUFFICIENT_SCOPE` | Narrow benchmark or study is cited as a universal proof. |
+| `EF-04` | `INSUFFICIENT_SCOPE` | Narrow benchmark or study is cited as a universal proof, or a claim/evidence scope is empty or universal so the scope match is vacuous (`INV-083`). |
 | `EF-05` | `CONTRADICTORY_SOURCES` | Reliable sources conflict without reconciliation. |
 | `EF-06` | `CIRCULAR_EVIDENCE` | Source relies directly on the claim being evaluated, or a citation chain resolves back to the candidate output (`INV-079`). |
 

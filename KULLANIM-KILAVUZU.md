@@ -405,6 +405,14 @@ Ajanın eskiden sadece *iddia edebildiği* üç şey artık *kaydediliyor*. Kara
 
 Aynı fikir, sistemin gerçeği kontrol etmeden kendini "doğrulamasının" üç yolunu da kapatır. Bir test neyle karşılaştırdığını bildirmek zorundadır: yalnızca cevabı kendi öncülleriyle karşılaştıran ya da aynı iddianın yeniden yazımını okuyan bir kontrol doğrulama değildir (`INV-077`). Bir onarım kapsam değişimini göstermelidir: düzeltmesi gereken başarısızlığı sessizce yumuşatmak ya da bir kabul koşulunu düşürmek onarım değildir (`INV-078`). Ve kanıtın bağımsız bir kaynağı olmalıdır: tek "kaynak" cevabın kendisiyse, iddia en fazla desteklenmiş sayılır, asla doğrulanmış değil (`INV-079`).
 
+### Defter tutma da denetlenir
+
+Üç sayı ve liste eskiden kendi beyanına dayanıyordu. Revizyon deneme sayacı artık her iddia için revizyon geçmişinden **hesaplanır** (`INV-080`); böylece ajan sonsuza kadar yamamak ya da iki deneme sınırını aşmak için sayacı sıfırlayamaz — yalnızca sayaç sıfırlandığı için ayakta kalan bir PASS geçersizdir. İddia edilen derinlik bir **adım kaydıyla** desteklenir (`INV-081`): o seviyenin numaralı her adımı, kanıtlayan iz veya esere işaret ederek "yapıldı" ya da gerekçesiyle "uygulanmıyor" olarak listelenir. Gerekçe taşıyan metin alanları da (sınır neden geçerli, engeli ne kaldırır, aile istisnası neden sağlam) gerçekten bir şey söylemek zorundadır (`INV-082`): "N/A", "-" ya da alan adının tekrarı gerekçe değildir.
+
+### Boş kapsamlar ve çelişen etiketler
+
+Kesin görünmenin iki yolu daha. Birincisi kapsamlar: bir iddianın ya da kaynağın belirtilen kapsamı boşsa ya da sadece "tümü" ise, "dar kanıt, geniş iddia" kontrolünün karşılaştıracak bir şeyi kalmaz ve o iddia varsayılan olarak geçer (`INV-083`). İkincisi birbiriyle çelişen etiketler: bir atıf, kaynak türü olarak yerel bir dosyayı gösterirken harici köken iddia edemez; bir test yalnızca cevabın iç tutarlılığını kontrol ederken kendini harici sayamaz (`INV-084`). Ve adım kaydı, o adımları gerçekten gösteren iz girdilerine işaret etmelidir — yalnızca son duyuruyu göstermek kapsama değildir (`INV-085`).
+
 ### İzde asla görünmemesi gerekenler
 
 API anahtarı, parola, token, oturum kimliği veya kişisel veri yok — bunun yerine `EV-*` kimliği ya da dosya yolu kullanılır (`INV-062`). Her güncelleme 280 karakterin altındadır ve güncelleme sayısı derinliğe göre sınırlıdır; böylece şeffaflık log duvarına dönüşmez.
@@ -429,5 +437,7 @@ Kart ayrıca kaynağını bildirir: yürütülen derinlik ve izin `LIVE` mi `RET
 * `INV-071`–`INV-073` — `VERIFIED` bir varsayım gerçek ve karşılıklı kanıta dayanmalıdır (`EF-01`/`VF-07`); kritik koşullar sınırlarda ya da engellerde `AS-XXX` ile adlandırılmalıdır (`VF-04`/`VF-06`); yükseltme/düşürme kayıtları yönlüdür (`VF-06`).
 * `INV-074`–`INV-076` — kontrol listesi, kapanış bayrağının arkasında kutu kutu bir kayıttır (`VF-06`); uyuşmayan test ailesi istisna olarak bildirilmelidir (`VF-04`); `VERIFIED` iddialar önbellek değil bu koşunun kanıtını gerektirir (`EF-03`).
 * `INV-077`–`INV-079` — kritik test gerçek dayanak bildirmelidir (`VF-03`); revizyon neyi düşürdüğünü/daralttığını kaydetmelidir (`VF-07`); ve bir iddia cevabın kendisine karşı doğrulanamaz (`EF-06`).
+* `INV-080`–`INV-082` — deneme sayacı yazılmaz, türetilir (`VF-06`/`VF-07`); iddia edilen derinliğin her adımı kanıtıyla kaydedilir (`VF-06`); gerekçeler yer tutucu değil, gerçek olmalıdır (`VF-06`/`VF-04`).
+* `INV-083`–`INV-085` — kapsamlar kaydedilmelidir ki eşleşme boşa düşmesin (`EF-04`); beyan çiftleri aynı eseri anlatmalıdır (`VF-06`); ve adım kaydı gerçekten sahip olduğu iz kapsamını göstermelidir (`VF-06`/`VF-09`).
 
 Tam şartname: [`references/progress-protocol.md`](references/progress-protocol.md).

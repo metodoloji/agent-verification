@@ -478,3 +478,45 @@ A test suite of 44 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** The citation resolves back to the candidate output, so the claim was verified against itself — `EF-06` (`INV-079`); the mis-typed `source_type` does not make the source independent.
 - **Expected Behavior:** Evidence-independence rule requires an `EXTERNAL_SOURCE`/`RUNTIME_OBSERVATION` item not derived from the output for a critical `VERIFIED`; obtain one, or cap the claim at `SUPPORTED`, disclose the circular support as a `LIMITATION`, and gate `PASS_WITH_LIMITATIONS`.
 - **Expected Status:** `PASS_WITH_LIMITATIONS` (after repair).
+
+### CASE-070 - Revision Counter Reset to Escape the Cap
+- **Task:** Verify an ADVERSARIAL-depth claim whose re-tests failed twice; `revision_policy.max_consecutive_failed_retests_per_claim` is 2.
+- **Candidate Output:** Three revisions change `CL-002`, each declaring `attempt_number_for_claim: 1`; `scope_delta` shows only narrowings; the final re-test is reported as passing and the verdict is `PASS`.
+- **Planted Flaw:** The counter is retyped to 1 on every revision, so the declared value contradicts the derived count of 3 — a cap escape (`VF-06`, `INV-080`), and the `PASS` exists only because of it (`VF-07`).
+- **Expected Behavior:** Derived-counter rule computes 1, 2, 3 for the three revisions; at the third failed re-test the policy is exhausted, so the contract must close `FAIL` (or `BLOCKED` if the blocker is missing evidence/access) instead of patching onward.
+- **Expected Status:** `FAIL`.
+
+### CASE-071 - CRITICAL Depth Claimed Without a Step Record
+- **Task:** Verify a production migration plan; the audit trail claims `depth_executed: CRITICAL` with external and mutation results citing executed tests, and the trace contains EXTERNAL/MUTATION entries with typed test refs.
+- **Candidate Output:** No `depth_steps[]` array at all; the depth claim rests on the audit-trail prose and the trace entries.
+- **Planted Flaw:** The mandatory steps of the claimed depth are attested, never recorded — a claimed depth whose step set is absent is `VF-06` (`INV-081`) — so the level was named rather than executed, even though the individual checks look plausible.
+- **Expected Behavior:** Depth-step rule requires `CRITICAL-1..6` recorded as `DONE` with resolving trace/artifact refs (or `NA` with a reason for a conditional step), or an honest downgrade to ADVERSARIAL with a `DOWNGRADE` limitation.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after recording the steps, or after the disclosed downgrade).
+
+### CASE-072 - Placeholder Justifications
+- **Task:** Verify a STANDARD-depth change with one bounded limitation and one blocker.
+- **Candidate Output:** `disclosed_limitations[0].detail: "N/A"`; `blocked_reasons[0].evidence_required: "-"`; a `checklist_results[]` entry with `status: "NA", reason: "n/a"`; the limitation ref itself resolves; verdict `PASS_WITH_LIMITATIONS`.
+- **Planted Flaw:** The fields exist but carry no information, so the user is told a limitation applies without being told what it bounds — a placeholder is not justification (`VF-06`/`VF-04`, `INV-082`).
+- **Expected Behavior:** Substantive-justification rule requires the detail to name the unit and its bound, the blocker to state the concrete evidence that would clear it, the NA reason to say why the box does not apply, and every cited ref to resolve; otherwise the verdict cannot be gated.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-073 - Blank Scopes Make the Match Vacuous
+- **Task:** Verify a performance claim that is broader than the benchmark it cites.
+- **Candidate Output:** `claims[0].scope: ""`, `evidence[0].scope: "all"`; the contract's INV-004 check reports a scope match and the claim closes `VERIFIED`; verdict `PASS`.
+- **Planted Flaw:** With nothing recorded to compare, the scope match is vacuously true, so a narrow benchmark is stretched over a broad claim — `EF-04`/`VF-04` (`INV-083`).
+- **Expected Behavior:** Scope-record rule requires substantive scopes on the task, the claim, and the evidence (version, load, environment). Once recorded, the claim is either narrowed to the measured boundary or capped at `SUPPORTED` with the boundary disclosed, which gates `PASS_WITH_LIMITATIONS` at best.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after recording scopes and narrowing or disclosing).
+
+### CASE-074 - Citation Claims External Origin Over a Local Artifact
+- **Task:** Verify a factual claim whose only support is `EV-005`, the run's own draft file.
+- **Candidate Output:** `EV-005.source: "./draft.md"`, `source_type: LOCAL_STATE`, `origin: EXTERNAL_SOURCE`; a critical claim is `VERIFIED` on it and the verdict is `PASS`.
+- **Planted Flaw:** The two declaration fields describe different artifacts — a local state file cannot have external origin — so the independence claim is purchased by relabeling, which is `VF-06` (`INV-084`); the same rule rejects an `external` test grounded in `SELF_AGREEMENT`.
+- **Expected Behavior:** Declared-facts rule forces the pair into the mapping table (`LOCAL_STATE` → `RUNTIME_OBSERVATION`/`CANDIDATE_OUTPUT`); the claim then has no independent source, so it caps at `SUPPORTED` with disclosure (`PASS_WITH_LIMITATIONS`) or the run must obtain real external evidence.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after correcting the pair and capping or re-sourcing the claim).
+
+### CASE-075 - Every DONE Step Cites Only the Verdict
+- **Task:** Verify at ADVERSARIAL depth; the trace genuinely contains the depth's required stages, and all seven steps are recorded `DONE`.
+- **Candidate Output:** `ADVERSARIAL-1..7` each have `trace_refs: [12]`, and seq 12 is the final `DECISION` entry; verdict `PASS`.
+- **Planted Flaw:** The step record cites the verdict announcement as proof for every step, so the record adds no coverage; the cited seqs do not show the ATTACK/AUDIT stages the depth requires — `VF-06`/`VF-09` (`INV-085`).
+- **Expected Behavior:** Step–trace rule requires each DONE step's refs to resolve to terminal entries whose union covers the required stage set (counterexample → the ATTACK entry, suite audit → the AUDIT entry); with correct refs the verdict may stand, otherwise the depth claim is unsupported.
+- **Expected Status:** `FAIL` (as submitted); `PASS` after the refs are corrected to the entries that show each step.

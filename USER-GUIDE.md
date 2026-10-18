@@ -403,6 +403,14 @@ Three things the agent used to be able to *assert* are now *recorded*. The pre-d
 
 The same idea closes the three ways a system can "verify" itself without checking reality. A test must declare what it checked against: a check that only compares the answer with its own premises, or re-reads a rephrasing of the same claim, is not verification (`INV-077`). A repair must show its scope change: quietly dropping an acceptance condition or softening the failure it was supposed to fix is not a repair (`INV-078`). And evidence must have an independent origin: if the only "source" is the answer itself, the claim can be at most supported, never verified (`INV-079`).
 
+### The bookkeeping is audited too
+
+Three numbers and lists used to be self-reported. The revision-attempt counter is now **computed** from the revision history for each claim (`INV-080`), so an agent cannot reset it to keep patching forever or to squeeze past the two-attempt cap; a pass that only survives because the counter was reset is invalid. The claimed depth is backed by a **step record** (`INV-081`): every numbered step of the claimed level is listed as done — with a pointer to the trace or artifact that proves it — or as not applicable with a reason. And the text fields that carry justifications (why a limitation applies, what would clear a blocker, why a family exception is sound) must actually say something (`INV-082`): "N/A", "-", or a restated field name is not a reason.
+
+### Blank scopes and mismatched labels
+
+Two more ways to look precise without being it. First, scopes: if a claim's or a source's stated scope is blank or just "all", the "narrow evidence, broad claim" check has nothing to compare, so every such claim passes by default (`INV-083`). Second, labels that contradict each other: a citation cannot declare an external origin while naming a local file as its source type, and a test cannot call itself external while checking only the answer's internal consistency (`INV-084`). And the step record has to point at trace entries that actually show those steps — citing only the final announcement is not coverage (`INV-085`).
+
 ### What never appears in the trace
 
 No API keys, passwords, tokens, session ids, or personal data — those are cited as `EV-*` ids or file paths instead (`INV-062`). Each update stays under 280 characters and the number of updates is capped per depth, so transparency never turns into a wall of logs.
@@ -427,5 +435,7 @@ The card also declares its provenance: the executed depth and whether the trace 
 * `INV-071`–`INV-073` — a `VERIFIED` assumption needs real, reciprocated evidence (`EF-01`/`VF-07`); critical conditions must be named by `AS-XXX` in the limitations or blockers (`VF-04`/`VF-06`); and escalation entries are directional (`VF-06`).
 * `INV-074`–`INV-076` — the checklist is a per-box record behind the closure flag (`VF-06`); a mismatched test family must be declared as an exception (`VF-04`); and `VERIFIED` claims need this run's evidence, not a cached source (`EF-03`).
 * `INV-077`–`INV-079` — a critical test must declare real ground truth (`VF-03`); a revision must record what it dropped or narrowed (`VF-07`); and a claim cannot be verified against the answer itself (`EF-06`).
+* `INV-080`–`INV-082` — the attempt counter is derived, not typed (`VF-06`/`VF-07`); every step of the claimed depth is recorded with proof (`VF-06`); and reasons must be substantive, not placeholders (`VF-06`/`VF-04`).
+* `INV-083`–`INV-085` — scopes must be recorded so a scope match cannot be vacuous (`EF-04`); declaration pairs must describe the same artifact (`VF-06`); and a step record must cite trace coverage it actually has (`VF-06`/`VF-09`).
 
 Full specification: [`references/progress-protocol.md`](references/progress-protocol.md).

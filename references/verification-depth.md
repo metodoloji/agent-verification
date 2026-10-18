@@ -57,6 +57,8 @@ TASK → ACTIVATION → SELECT DEPTH → EXECUTE VERIFICATION LIFECYCLE
   6. Final Decision.
 - **Attestation rule (`INV-056`)**: the Final Decision's `external_check_result` and `mutation_result` MUST cite the ids of the executed external/mutation tests plus their observations; prose-only attestation ("validated, looks fine") is `VF-06` and blocks `PASS` — steps 2 and 3 are proven by artifacts, not by their mention.
 
+**Step record (`INV-081`):** `final_verdict.depth_steps[]` lists each numbered step of the executed depth as `DONE` with resolving trace/artifact refs, or `NA` with a reason for a conditional step (which forces the disclosed-downgrade path). Keys are depth-scoped: `MINIMAL-1..4`, `STANDARD-1..6`, `ADVERSARIAL-1..7`, `CRITICAL-1..6`. A depth is claimed only when its whole set is recorded; a missing step or a `DONE` step with no ref blocks every verdict (`VF-06`). The revision-attempt cap is a computed count too (`INV-080`), so no depth can extend a repair loop by re-declaring the counter, and every justification field recorded here (limitation detail, blocker requirement, NA reason) must be substantive rather than a placeholder (`INV-082`). The recorded scopes behind a depth's checks must name the boundary (`INV-083`), each evidence item's `source_type` and `origin` must describe the same artifact (`INV-084`), and the step record must agree with the trace it cites — the cited seqs have to cover this depth's required stages, not just the verdict announcement (`INV-085`).
+
 ---
 
 ## 2. Escalation & De-escalation Rules
