@@ -4,8 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f?style=flat-square)](LICENSE)
 [![User Guide (EN)](https://img.shields.io/badge/manual-User%20Guide%20(EN)-blue?style=flat-square)](USER-GUIDE.md)
 [![Kullanım Kılavuzu (TR)](https://img.shields.io/badge/kılavuz-Kullanım%20Kılavuzu%20(TR)-red?style=flat-square)](KULLANIM-KILAVUZU.md)
-[![Contract Version](https://img.shields.io/badge/contract-v1.27-blueviolet?style=flat-square)](references/verification-contract.md)
-[![Invariants](https://img.shields.io/badge/invariants-INV--001..INV--088-orange?style=flat-square)](references/state-machine.md)
+[![Contract Version](https://img.shields.io/badge/contract-v1.28-blueviolet?style=flat-square)](references/verification-contract.md)
+[![Invariants](https://img.shields.io/badge/invariants-INV--001..INV--091-orange?style=flat-square)](references/state-machine.md)
 [![Failure Taxonomy](https://img.shields.io/badge/failures-31%20codes-crimson?style=flat-square)](references/failure-taxonomy.md)
 [![Verification Patterns](https://img.shields.io/badge/patterns-18%20strategies-indigo?style=flat-square)](references/verification-patterns.md)
 [![Verification Depth](https://img.shields.io/badge/depth-4%20levels-informational?style=flat-square)](references/verification-depth.md)
@@ -18,7 +18,7 @@
 * 🇬🇧 [**English User Guide (`USER-GUIDE.md`)**](USER-GUIDE.md) — Exhaustive scenarios, 18 pattern recipes, 4 depths, and prompt blueprints.
 * 🇹🇷 [**Türkçe Kullanım Kılavuzu (`KULLANIM-KILAVUZU.md`)**](KULLANIM-KILAVUZU.md) — Tüm senaryolar, pratik kullanım örnekleri, rol bazlı prompt şablonları.
 
-`agent-verification` is a contract-driven, adversarial self-audit protocol and agent skill for AI coding and reasoning systems. It replaces complacent model self-approval with a rigorous, machine-checkable audit pipeline: decomposing candidate outputs into atomic claims, attacking hypotheses with concrete counterexamples, auditing verification suites against mutations, enforcing mechanical invariants (`INV-001` .. `INV-088`), and narrating the work live — before issuing a final verdict.
+`agent-verification` is a contract-driven, adversarial self-audit protocol and agent skill for AI coding and reasoning systems. It replaces complacent model self-approval with a rigorous, machine-checkable audit pipeline: decomposing candidate outputs into atomic claims, attacking hypotheses with concrete counterexamples, auditing verification suites against mutations, enforcing mechanical invariants (`INV-001` .. `INV-091`), and narrating the work live — before issuing a final verdict.
 
 ---
 
@@ -33,7 +33,7 @@
   - [4. Adversarial Pass (The Attack)](#4-adversarial-pass-the-attack)
   - [5. Test-the-Tests (Audit & Mutation)](#5-test-the-tests-audit--mutation)
   - [6. Standardized Failure Taxonomy (31 Codes)](#6-standardized-failure-taxonomy-31-codes)
-  - [7. Strict Lifecycle Invariants (`INV-001` .. `INV-088`)](#7-strict-lifecycle-invariants-inv-001--inv-088)
+  - [7. Strict Lifecycle Invariants (`INV-001` .. `INV-091`)](#7-strict-lifecycle-invariants-inv-001--inv-091)
   - [8. Pre-Decision Gate & Checklist Closure](#8-pre-decision-gate--checklist-closure)
   - [9. Live Verification Trace (Visible Progress)](#9-live-verification-trace-visible-progress)
 - [Decision Verdicts](#-decision-verdicts)
@@ -92,12 +92,12 @@ To prevent endless hallucinated repair loops, consecutive failed re-tests on the
 ## 🧱 Key Architectural Pillars
 
 ### 1. The Verification Contract
-Defined in [`references/verification-contract.md`](references/verification-contract.md), the **Verification Contract (v1.27)** is a formal, machine-readable data model that binds an unverified candidate output to its task requirements, decomposed claims, test suite, and outcome.
+Defined in [`references/verification-contract.md`](references/verification-contract.md), the **Verification Contract (v1.28)** is a formal, machine-readable data model that binds an unverified candidate output to its task requirements, decomposed claims, test suite, and outcome.
 
 ```json
 {
   "contract_id": "vc_20261017_001",
-  "contract_version": "1.27",
+  "contract_version": "1.28",
   "task": "Task restatement with explicit constraints",
   "risk_level": "STANDARD",
   "depth_executed": "STANDARD",
@@ -233,8 +233,8 @@ Detailed in [`references/failure-taxonomy.md`](references/failure-taxonomy.md), 
 * **Execution Failures (`EXECUTION_FAILURE`):**
   `XF-01` (`UNAVAILABLE_TOOL`), `XF-02` (`UNAVAILABLE_DATA`), `XF-03` (`TIMEOUT`), `XF-04` (`PERMISSION_BLOCKED`), `XF-05` (`ENVIRONMENT_MISMATCH`).
 
-### 7. Strict Lifecycle Invariants (`INV-001` .. `INV-088`)
-Detailed in [`references/state-machine.md`](references/state-machine.md), 88 invariants govern the state machine:
+### 7. Strict Lifecycle Invariants (`INV-001` .. `INV-091`)
+Detailed in [`references/state-machine.md`](references/state-machine.md), 91 invariants govern the state machine:
 - **`INV-001` / `INV-002`:** `UNVERIFIED ≠ PASS` and `INCONCLUSIVE ≠ PASS`.
 - **`INV-003` / `INV-048`:** Any claim mutation invalidates all dependent tests; stale test passes cannot support a revised verdict.
 - **`INV-010`:** Never invent evidence or simulate checks; missing access strictly forces `BLOCKED`.
@@ -270,9 +270,12 @@ Detailed in [`references/state-machine.md`](references/state-machine.md), 88 inv
 - **`INV-086`:** A failure's severity can only move through a revision's `scope_delta.severity_changes[]` entry (`from`/`to`/`why`, plus current-run evidence for a downgrade); an unrecorded edit is `VF-06`, a `PASS` resting on it is `VF-07`, and an unresolved `MAJOR`/`CRITICAL` finding blocks a clean `PASS` (`MAJOR` caps at `PASS_WITH_LIMITATIONS`, `CRITICAL` forces `FAIL`/`BLOCKED`) — severity is a record and a floor, not a dial.
 - **`INV-087`:** A critical test's `falsifiability` names the wrong input and the result it would produce — not a placeholder, not a restatement of `purpose`/claim/observation, and not the same falsifier another critical test on that claim declares (`VF-02`).
 - **`INV-088`:** Every trace `summary` names the unit it narrates (an id from its own `refs`, or the subject that ref names on a decision line such as `DEPTH`) and what was found; placeholder, stage-name-only, or duplicated summaries are `VF-09` — a trace that resolves but says nothing is not visibility.
+- **`INV-089`:** Every declared id is unique within its array and carries that array's prefix (`AC-`/`CL-`/`AS-`/`TEST-`/`EV-`/`F-`/`REV-`/`ESC-`); a duplicate makes refs, reciprocal links, decisive evidence, and the card's derived counts name two units at once (`VF-06`), and a `PASS` resting on the duplicated unit is `VF-07`.
+- **`INV-090`:** A critical test's `observation` states what was run or read (input, command, source) and what it returned; a placeholder (`PASS`, `verified`, `looks good`) or a sentence copied from another critical test on the same claim records no result (`VF-06`, `VF-07` when it carries the `PASS`) — `INV-018` forbids a bare `PASS`, this makes the recorded observation say something.
+- **`INV-091`:** An assumption named in a `critical: true` claim's `assumption_ids[]` must itself be `critical: true`, so its status flows through the `INV-040` cap, the `INV-071` evidence floor, and the `INV-072` disclosure; demoting a load-bearing assumption to non-critical is `VF-04` — criticality follows the claim.
 
 ### 8. Pre-Decision Gate & Checklist Closure
-Before issuing any `PASS` or `PASS_WITH_LIMITATIONS`, the machine-checkable Pre-Decision Checklist ([`references/verification-contract.md §4`](references/verification-contract.md#4-pre-decision-checklist-machine-checkable)) must evaluate all 70 gate checks. Any unchecked box leaves `checklist_closure: false` and mechanically blocks approval (`INV-028`). Non-applicable items must state explicit `N/A` reasons (`INV-032`).
+Before issuing any `PASS` or `PASS_WITH_LIMITATIONS`, the machine-checkable Pre-Decision Checklist ([`references/verification-contract.md §4`](references/verification-contract.md#4-pre-decision-checklist-machine-checkable)) must evaluate all 73 gate checks. Any unchecked box leaves `checklist_closure: false` and mechanically blocks approval (`INV-028`). Non-applicable items must state explicit `N/A` reasons (`INV-032`).
 
 ### 9. Live Verification Trace (Visible Progress)
 Specified in [`references/progress-protocol.md`](references/progress-protocol.md), the trace makes the verification lifecycle observable **while it runs**. The agent emits one short update per transition — before starting the work it describes — and records each update in `progress_trace[]`.
@@ -303,6 +306,7 @@ CL-002 narrowed to v2 (REV-001). TEST-004 invalidated; TEST-005 re-run on the re
 - **Closed suite and card grammar (`INV-068`–`INV-070`):** every defined test is terminal before the card; the card opens with the canonical marker/verdict/depth/trace header and closes with the footer; and its label matches its own limitation/blocker/failure arrays.
 - **Scopes, declared facts, and step-trace agreement (`INV-083`–`INV-085`):** scopes are recorded so a scope match cannot be vacuous, declaration pairs (`source_type`/`origin`, test type/ground truth) must describe the same artifact, and the step record must cite trace coverage that actually exists.
 - **Severity, falsifiers, and what the user reads (`INV-086`–`INV-088`):** a failure's severity only moves through a recorded, evidenced revision delta and an unresolved `MAJOR` finding caps the verdict; a critical test must name the wrong input it would catch; and every progress summary must name the unit it narrates — resolved ids with placeholder or repeated text is narration in form only.
+- **One name, one unit (`INV-089`–`INV-091`):** identifiers are unique and correctly prefixed, so a citation or derived count can never silently point at two objects; a critical `observation` must record the check and its result rather than the word "verified"; and an assumption a critical claim depends on is itself critical, so its unresolved condition cannot escape the cap, evidence, and disclosure gates through a label.
 - **Bookkeeping is derived (`INV-080`–`INV-082`):** the revision-attempt counter is computed from the revision history (no reset to dodge the cap), `depth_steps[]` records every step of the claimed depth with refs, and every justification field is substantive rather than a placeholder.
 - **Anti-circularity (`INV-077`–`INV-079`):** declared test ground truth, recorded revision deltas, and independent evidence close the three paths where a system can "verify" itself without ever checking reality.
 - **Records, not assertions (`INV-074`–`INV-076`):** the §4 checklist is a per-box record behind `checklist_closure`, a test-family mismatch is a declared exception with a reason, and every `VERIFIED` critical claim cites evidence observed in this run.
@@ -335,8 +339,8 @@ agent-verification/
 ├── SKILL.md                            # Agent Skill definition (prompts & operational lifecycle)
 ├── references/                         # Detailed formal specifications
 │   ├── failure-taxonomy.md             # Standardized failure taxonomy (31 codes: OF, VF, EF, XF)
-│   ├── state-machine.md                # Formal state transitions & 88 invariants (INV-001..INV-088)
-│   ├── verification-contract.md        # Machine-readable Verification Contract schema (v1.27)
+│   ├── state-machine.md                # Formal state transitions & 91 invariants (INV-001..INV-091)
+│   ├── verification-contract.md        # Machine-readable Verification Contract schema (v1.28)
 │   ├── progress-protocol.md            # Live Verification Trace: visible progress while verification runs
 │   ├── verification-depth.md           # 4-tier risk classification & depth triggers
 │   └── verification-patterns.md        # 18 concrete verification & adversarial patterns
@@ -386,7 +390,7 @@ The [`evals/`](evals/) directory provides a comprehensive test suite to measure 
 ## 🤝 Contributing
 
 Contributions are welcome! To maintain protocol integrity:
-1. All changes must preserve backward compatibility with invariants `INV-001` .. `INV-088`.
+1. All changes must preserve backward compatibility with invariants `INV-001` .. `INV-091`.
 2. Schema updates must bump `contract_version` in [`references/verification-contract.md`](references/verification-contract.md) following semver rules.
 3. Every new invariant or pattern must be accompanied by benchmark cases in [`evals/cases.md`](evals/cases.md).
 

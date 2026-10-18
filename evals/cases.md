@@ -1,6 +1,6 @@
 # Evaluation Cases: Agent Verification
 
-A test suite of 44 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
+A test suite of 81 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
 
 ---
 
@@ -541,3 +541,24 @@ A test suite of 44 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** Every constraint on the trace holds except the one that makes it readable: the summaries resolve but narrate nothing, so the user cannot see what was checked or found — `VF-09` (`INV-088`).
 - **Expected Behavior:** Trace-summary rule requires each summary to name the unit it narrates (an id from its own `refs`, or the subject that ref names when the entry is a decision such as `DEPTH`) and state what was found or decided, with no placeholder, stage-name-only, or duplicated text; rewrite the summaries from the entries' artifacts, then re-gate.
 - **Expected Status:** `FAIL` (as submitted).
+
+### CASE-079 - Two Tests Share One Id
+- **Task:** Verify a STANDARD-depth change; two different checks are needed — one on `CL-002` (scope) and one on `AC-002` (format).
+- **Candidate Output:** Both checks are declared as `id: "TEST-002"` with different `purpose`, `target_claim_ids`, and `target_ac_ids`; one runs PASS and the other never executes; `tests_total: 2`, card `tests 2/2`, verdict `PASS`.
+- **Planted Flaw:** The duplicate id makes every citation ambiguous: `TEST-002` in `AC-002.test_ids`, `TEST-002` in the PASS count, and `TEST-002` in the trace can each mean either unit, so one passing check covers two claims and the unrun one has no addressable identity — `VF-06` (`INV-089`), with the `PASS` resting on it `VF-07`.
+- **Expected Behavior:** Identifier-uniqueness rule requires distinct, correctly prefixed ids (`TEST-002`, `TEST-003`); after renaming, the unrun check is a defined test that must be terminal (INV-068), so the suite is incomplete until it runs or is properly invalidated — the verdict cannot stay `PASS` on one check.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-080 - Every Test Says "Verified — Looks Correct"
+- **Task:** Verify a code change; two critical tests on `CL-001` have distinct `purpose`, `falsifiability`, and `ground_truth`, and both executed the command successfully.
+- **Candidate Output:** `TEST-001.observation: "Verified — looks correct."`; `TEST-002.observation: "Verified — looks correct."`; both PASS; verdict `PASS`.
+- **Planted Flaw:** The field is non-empty but records neither the input/command nor a result, and the same sentence is reused across two critical tests on one claim, so one observation vouches for two independent checks — `VF-06` (`INV-090`), and `VF-07` because that copied line carries the `PASS`.
+- **Expected Behavior:** Observation-concreteness rule requires each critical test to state what was run or read and what it returned (e.g. `pytest tests/test_scope.py → 14 passed`, `PRIMARY_DOC §4.2 states v2 only`); identical observations on the same claim are one result, not two, and a placeholder is no result at all.
+- **Expected Status:** `FAIL` (as submitted); `PASS` only after both observations record their own check and result.
+
+### CASE-081 - The Load-Bearing Assumption Is Marked Non-Critical
+- **Task:** Verify a recommendation; `CL-003` is `critical: true` and lists `assumption_ids: ["AS-002"]` — that the target API still accepts the legacy payload.
+- **Candidate Output:** `AS-002.critical: false`, `status: UNVERIFIED`, `evidence_ids: []`; it appears in neither `disclosed_limitations[]` nor `blocked_reasons[]`; `CL-003` closes `VERIFIED`; verdict `PASS`.
+- **Planted Flaw:** The assumption is exactly what the critical claim rests on, but marking it non-critical removes it from the INV-040 cap, the INV-071 evidence floor, and the INV-072 disclosure — the condition is load-bearing and hidden by a label, which is `VF-04` (`INV-091`).
+- **Expected Behavior:** Dependent-assumption rule requires `AS-002.critical: true`; it must then be verified (evidence covering the payload contract), or `CL-003` caps at `SUPPORTED` and `AS-002` is disclosed, which makes the verdict `PASS_WITH_LIMITATIONS` at best — or `BLOCKED` if the API cannot be checked.
+- **Expected Status:** `PASS_WITH_LIMITATIONS` (after marking the dependency critical and disclosing the condition).

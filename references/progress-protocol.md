@@ -250,7 +250,7 @@ what stopped being checked (`INV-073`):
 ```text
 🛡️ Verification · STANDARD · 6/10 · escalation
 ADVERSARIAL → STANDARD (ESC-002, DOWN): the sandbox cannot run the mutation suite.
-Dropping TESTS-008/009; disclosing a DOWNGRADE limitation instead of claiming them.
+Dropping TEST-008/TEST-009; disclosing a DOWNGRADE limitation instead of claiming them.
 ```
 
 ### 7.5 Verdict card

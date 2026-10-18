@@ -172,6 +172,7 @@ At lower depths run them as a proportional lightweight pass, never skip the
 reasoning entirely.
 
 *Observe rule: `INCONCLUSIVE` is never `PASS`.*
+Each critical test's `observation` must record the check you actually ran and what it returned — the input/command/source plus the result — not `PASS`, `looks good`, or a rephrasing of why the test exists (`INV-090`). Two critical tests on one claim cannot share the same observation: that is one result counted twice.
 
 ---
 
@@ -272,6 +273,9 @@ Run the machine-checkable Pre-Decision Checklist in `references/verification-con
 - **Severity is a record and a floor (`INV-086`)**: every `failures[].severity` change appears in that revision's `scope_delta.severity_changes[]` with `from`/`to`/`why`, and a downgrade needs a resolving evidence item observed in this run; an unrecorded or unevidenced downgrade is `VF-06`, one that carries a `PASS` is `VF-07`, and no `PASS` may be issued over an unresolved `MAJOR`/`CRITICAL` failure (`MAJOR` caps at `PASS_WITH_LIMITATIONS`, `CRITICAL` forces `FAIL`/`BLOCKED`).
 - **Falsifiers are concrete (`INV-087`)**: a critical test's `falsifiability` names the wrong input and the result it would produce — not a placeholder, not a restatement of its `purpose` or the claim, and not the same falsifier another critical test on that claim already declares (`VF-02`).
 - **Trace summaries say something (`INV-088`)**: each `progress_trace[].summary` names the unit it narrates (an id from its own `refs`, or the concrete subject that ref names when the entry is a decision such as `DEPTH`) and what was found; placeholder, stage-name-only, or duplicated summaries are `VF-09`.
+- **Identifiers are unique (`INV-089`)**: every `AC-*`/`CL-*`/`AS-*`/`TEST-*`/`EV-*`/`F-*`/`REV-*`/`ESC-*` id is unique in its array and carries its prefix; a duplicate makes refs and card counts name two units at once (`VF-06`), and a PASS resting on it is `VF-07` — fix the collision before gating.
+- **Observations are concrete (`INV-090`)**: a critical test's `observation` states what was run or read (input, command, source) and what it returned; a placeholder (`PASS`, `verified`, `looks good`), a restatement of `purpose`/`falsifiability`/claim, or an observation copied from another critical test on the same claim is `VF-06` and blocks PASS.
+- **Depended-on assumptions are critical (`INV-091`)**: an assumption listed in a `critical: true` claim's `assumption_ids[]` MUST be `critical: true`, so its status is capped, evidenced, and disclosed (`INV-040`/`INV-071`/`INV-072`). Marking it non-critical to keep the claim `VERIFIED` over an unresolved condition is `VF-04`.
 - **Verdict label matches its evidence (`INV-070`)**: `PASS` carries no limitations/blockers/open failures; `PASS_WITH_LIMITATIONS` carries ≥ 1 limitation and no blocker; `BLOCKED` carries ≥ 1 blocker; `FAIL` carries ≥ 1 open failure id. A PSS with nothing limited, a PASS with an open failure, or a FAIL naming no open failure is mislabeled (`VF-10`).
 Enforce the lifecycle invariants in `references/state-machine.md`:
 - **`PASS`**: All critical conditions met; critical claims supported; re-tests complete; no unresolved blind spots. Requires every critical test in `PASS` and every critical claim `VERIFIED` (or `SUPPORTED` only for explicitly non-critical refinements with disclosed limits — otherwise use `PASS_WITH_LIMITATIONS`).

@@ -417,6 +417,14 @@ Kesin görünmenin iki yolu daha. Birincisi kapsamlar: bir iddianın ya da kayna
 
 Değerli görünüp hiçbir şey taşımayan üç yer daha. Bir başarısızlığın şiddeti artık düzenlenebilir bir alan değil, bir *geçmiş*: yalnızca onu değiştiren revizyon üzerinden hareket edebilir; eski ve yeni değer, gerekçe ve — şiddet düşürülüyorsa — bulgunun gerçekten daraldığını gösteren taze bir gözlem kaydedilir (`INV-086`). Ayrıca çözülmemiş `MAJOR` veya `CRITICAL` bir bulgu nihai kararı sınırlar (`MAJOR` `PASS_WITH_LIMITATIONS`'ta, `CRITICAL` `FAIL`/`BLOCKED`'ta); yani ibreyi aşağı çevirmek temiz bir PASS'e giden yol değildir. Kritik bir test, yakalayacağı yanlış girdiyi adlandırmalıdır — "yanlış bir cevap" değil, yanındaki testle aynı cümle de değil (`INV-087`); tek yanlış cevabı "bir şeyler yanlış" olan test bir eşik koymamıştır. Ve izlediğiniz ilerleme satırları ne üzerinde çalıştığını söylemelidir (`INV-088`): on iki tane "Kontrol ediliyor." gerçek kimliklere çözülebilir ama size hiçbir şey anlatmaz; her özet kendi birimini adlandırır.
 
+### Tek ad, tek birim — ve bir şey kaydeden gözlem
+
+Kaydın eksiksiz görünüp yine de belirsiz ya da boş kalabildiği üç son yer. **Kimlikler** kendi türü içinde tekil olmalı ve doğru öneki taşımalıdır (`INV-089`): iki test de `TEST-002` ise, bir atıf, karşılıklı bağ, kanıt listesi ve karttaki sayı aynı anda iki farklı kontrolü gösterebilir — geçen tek bir test iki iddiayı kapsıyor gibi görünür, koşmayan testin ise yakalanacak bir adı kalmaz. Bu bir kayıt kusurudur (`VF-06`) ve üzerine dayanan `PASS` geçersizdir (`VF-07`).
+
+Kritik bir testin **gözlemi** (observation) ne olduğunun kaydıdır, bir durum sözcüğü değil (`INV-090`). "Doğrulandı", "iyi görünüyor" ya da yanındaki teste kopyalanmış aynı cümle, neyin koştuğunu ve ne döndüğünü anlatmaz; aynı iddia üzerindeki iki kritik test tek bir gözlemi paylaşıyorsa tek sonuç iki kez sayılıyordur. Gözlem, kontrolü (girdi, komut, kaynak) ve sonucunu adlandırmalıdır. Bu, eski bir kuralın üzerine kurulur: `INV-018` zaten gözlemsiz kritik `PASS`'i yasaklar; bu kural gözlemin bir şey söyleyip söylemediğini sorar.
+
+Son olarak, **varsayımın kritikliği iddiaya bağlıdır** (`INV-091`). Kritik bir iddia bir varsayımı bağımlılık olarak listeliyorsa, o varsayım da kritik işaretlenmelidir — aksi hâlde sonucun dayandığı koşul, yalnızca "kritik değil" etiketiyle durum sınırından (`INV-040`), kanıt şartından (`INV-071`) ve açıklama şartından (`INV-072`) kaçar. Yük taşıyan bir varsayım, yeniden sınıflandırılabilecek bir ayrıntı değildir.
+
 ### İzde asla görünmemesi gerekenler
 
 API anahtarı, parola, token, oturum kimliği veya kişisel veri yok — bunun yerine `EV-*` kimliği ya da dosya yolu kullanılır (`INV-062`). Her güncelleme 280 karakterin altındadır ve güncelleme sayısı derinliğe göre sınırlıdır; böylece şeffaflık log duvarına dönüşmez.
@@ -444,5 +452,6 @@ Kart ayrıca kaynağını bildirir: yürütülen derinlik ve izin `LIVE` mi `RET
 * `INV-080`–`INV-082` — deneme sayacı yazılmaz, türetilir (`VF-06`/`VF-07`); iddia edilen derinliğin her adımı kanıtıyla kaydedilir (`VF-06`); gerekçeler yer tutucu değil, gerçek olmalıdır (`VF-06`/`VF-04`).
 * `INV-083`–`INV-085` — kapsamlar kaydedilmelidir ki eşleşme boşa düşmesin (`EF-04`); beyan çiftleri aynı eseri anlatmalıdır (`VF-06`); ve adım kaydı gerçekten sahip olduğu iz kapsamını göstermelidir (`VF-06`/`VF-09`).
 * `INV-086`–`INV-088` — şiddet yalnızca kayıtlı ve kanıtlı bir revizyon farkıyla değişir, ciddi açık bulgu kararı sınırlar (`VF-06`/`VF-07`); kritik test somut bir yanlış girdi adlandırmalıdır (`VF-02`); ve her iz özeti anlattığı birimi adlandırmalıdır (`VF-09`).
+* `INV-089`–`INV-091` — her bildirilen kimlik tekil ve doğru önekli olmalı, böylece bir atıf tek birimi gösterir (`VF-06`/`VF-07`); kritik testin gözlemi durum sözcüğü değil, kontrolü ve sonucunu kaydetmelidir (`VF-06`/`VF-07`); ve kritik bir iddianın dayandığı varsayımın kendisi de kritik olmalıdır (`VF-04`).
 
 Tam şartname: [`references/progress-protocol.md`](references/progress-protocol.md).

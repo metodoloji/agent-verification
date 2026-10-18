@@ -415,6 +415,14 @@ Two more ways to look precise without being it. First, scopes: if a claim's or a
 
 Three more places where a value can look meaningful and carry nothing. A failure's severity is now a *history*, not a field you can edit: it can only move through the revision that changed it, recording the old and new value, the reason, and — for a downgrade — a fresh observation showing the finding really is narrower (`INV-086`). An unresolved `MAJOR` or `CRITICAL` finding also caps the verdict (`MAJOR` at `PASS_WITH_LIMITATIONS`, `CRITICAL` at `FAIL`/`BLOCKED`), so turning the dial down is not a route to a clean pass. A critical test must name the wrong input it would catch, not "a wrong answer" and not the same sentence as the test next to it (`INV-087`); a test whose only wrong answer is "something wrong" has not set a bar. And the progress lines you watch must say what they are working on (`INV-088`): twelve entries of "Checking." can resolve to real ids and still tell you nothing, so each summary names its unit.
 
+### One name, one unit — and an observation that records something
+
+Three last places where a record can look complete and still be ambiguous or empty. **Identifiers** must be unique within their kind and carry the right prefix (`INV-089`): if two tests are both `TEST-002`, then a citation, a reciprocal link, a decisive-evidence list, and the card's count can each point at two different checks — one passing test starts to look like coverage of two claims, and the unrun one has no name to be caught by. A duplicate is a record defect (`VF-06`), and a `PASS` that rests on it is invalid (`VF-07`).
+
+A critical test's **observation** is supposed to be the record of what happened, not a status word (`INV-090`). "Verified", "looks good", or the same sentence copied onto the test beside it tells you nothing about what was run or what came back; and two critical tests on the same claim sharing one observation means one result is being counted twice. The observation must name the check (input, command, source) and its outcome. Note that this builds on an older rule: `INV-018` already forbids a critical `PASS` with no observation at all; this one asks whether the observation says anything.
+
+Finally, **assumption criticality follows the claim** (`INV-091`). If a critical claim lists an assumption as something it depends on, that assumption must itself be marked critical — otherwise the condition that the conclusion rests on escapes the status cap (`INV-040`), the evidence requirement (`INV-071`), and the disclosure requirement (`INV-072`) purely by being labelled non-critical. A load-bearing assumption is not a detail you can reclassify.
+
 ### What never appears in the trace
 
 No API keys, passwords, tokens, session ids, or personal data — those are cited as `EV-*` ids or file paths instead (`INV-062`). Each update stays under 280 characters and the number of updates is capped per depth, so transparency never turns into a wall of logs.
@@ -442,5 +450,6 @@ The card also declares its provenance: the executed depth and whether the trace 
 * `INV-080`–`INV-082` — the attempt counter is derived, not typed (`VF-06`/`VF-07`); every step of the claimed depth is recorded with proof (`VF-06`); and reasons must be substantive, not placeholders (`VF-06`/`VF-04`).
 * `INV-083`–`INV-085` — scopes must be recorded so a scope match cannot be vacuous (`EF-04`); declaration pairs must describe the same artifact (`VF-06`); and a step record must cite trace coverage it actually has (`VF-06`/`VF-09`).
 * `INV-086`–`INV-088` — severity only moves through a recorded, evidenced revision delta and a serious open finding caps the verdict (`VF-06`/`VF-07`); a critical test must name a concrete wrong input (`VF-02`); and every trace summary must name the unit it narrates (`VF-09`).
+* `INV-089`–`INV-091` — every declared id is unique and correctly prefixed, so a citation names one unit (`VF-06`/`VF-07`); a critical test's observation records the check and its result rather than a status word (`VF-06`/`VF-07`); and an assumption a critical claim depends on must itself be critical (`VF-04`).
 
 Full specification: [`references/progress-protocol.md`](references/progress-protocol.md).
