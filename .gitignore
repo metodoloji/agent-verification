@@ -25,3 +25,13 @@ scratch/
 tmp/
 *.tmp
 *.log
+
+# Skill optimization pipeline (generated locally, never committed)
+optimization/dataset/data/
+optimization/fixtures/good_contract.json
+optimization/fixtures/bad_contract.json
+optimization/runs/
+optimization/skillopt/runs/
+optimization/hermit/runs/
+.venv/
+.demo/

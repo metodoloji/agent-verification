@@ -198,6 +198,22 @@ and cannot be reconstructed after the fact.
 | `refs` | Resolvable ids, stage-specific per §4.1: FAILURE → `F-*`, REVISION → `REV-*`, RETEST → `TEST-*`, ESCALATION → `TEST-*` (an `UP` entry's `added_checks`) or `ESC-*` (a `DOWN` downgrade), EXTERNAL/MUTATION → typed test (or a blocked ref when `BLOCKED`). Empty only for `DEPTH`; `DECISION` cites `EV-*` for PASS/PSS. |
 | `emitted` | `LIVE` when delivered before the next stage began; `RETRO` only under P6 with a disclosed `TRACE_DEFERRED` limitation. |
 
+**2.0 records the trace must reference (`INV-092`–`INV-100`):** the machine record keeps the trace itself, so the newer decision records are mirrored *by reference* rather than duplicated — the entry that announces the work names the contract field that holds the result:
+
+| Record | Lives in (contract) | Announced by |
+|---|---|---|
+| Depth-scoped checklist | `final_verdict.checklist_results[]` (grouped `boxes[]` allowed) | `DECISION` (`INV-092`) |
+| Coverage + sampling | `final_verdict.coverage`, `sampling[]` | `DECISION` (`INV-093`) |
+| Budget + deferrals | `verification_budget` (unit, limit, spent, remaining, `deferrals[]`, `floor`) | `CONTRACT` at declaration, `DECISION` for the spend (`INV-094`) |
+| Epistemic classes | `claims[].epistemic`, `coverage.epistemic_*` | `CLAIMS`, `DECISION` (`INV-095`) |
+| Validity window | `final_verdict.validity` | `DECISION` (`INV-096`) |
+| Review mode / candidate | `review_mode`, `candidate` | `CONTRACT` (`INV-097`) |
+| Peer review + disagreement | `peer_review`, `deciding_test_id` | `ESCALATION`/`TEST`/`DECISION` (`INV-098`) |
+| Catalogued NOT CHECKED refs | `disclosed_limitations[].ref` | `DECISION` (`INV-099`) |
+| Failover carryover | `final_verdict.blocked_resolution` | `RETEST`, `DECISION` (`INV-100`) |
+
+A record that lives only in the trace is narration; one that lives only in the contract was never narrated and is `VF-09`.
+
 `TRACE_DEFERRED` is a `kind` value for `final_verdict.disclosed_limitations[]`:
 it names the runtime constraint that prevented live delivery and keeps the run
 honest instead of faking a stream.
@@ -260,10 +276,12 @@ separate summary:
 
 ```text
 ⚠️ PASS_WITH_LIMITATIONS · STANDARD · LIVE
-Critical claims: 3/3 verified · Tests: 6/6 passed · Revisions: 1
+Critical claims: 4/5 verified · Tests: 6/6 passed · Revisions: 1 · Coverage: 9/9 claims, 6/6 AC, 4/4 sources
+Epistemic: 1 scoped (NORMATIVE)
+Valid until: 30 min after decision
 Decisive evidence: EV-001, EV-004
 Limitation: CL-002 applies to v2 only
-[claims=3/3, tests=6/6, rev=1]
+[claims=4/5, tests=6/6, rev=1]
 ```
 
 Markers: `✅ PASS`, `⚠️ PASS_WITH_LIMITATIONS`, `⛔ BLOCKED`, `❌ FAIL`.
@@ -273,8 +291,16 @@ derived field-by-field (`INV-059`): `critical_claims_verified/total` from `claim
 `tests_passed/total` from terminal `tests[]`, `revisions` from `revisions[]`,
 `decisive_evidence_ids` from the verdict field, `limitation_refs` from
 `disclosed_limitations[].ref`, `blocked_refs` from `blocked_reasons[].ref`,
-`failure_refs` from unresolved `failures[].id`, and `rendered_counts` from the
-formatted pairs (INV-070 must hold for the label as a whole).
+`failure_refs` from unresolved `failures[].id`, `rendered_counts` from the
+formatted pairs (INV-070 must hold for the label as a whole), and — since 2.0 —
+the `Coverage:` line from `final_verdict.coverage` (`INV-093`), `Epistemic:` from
+claims whose `epistemic != FALSIFIABLE` (`INV-095`), `Valid until:` from
+`final_verdict.validity.decided_at`/`expires_after_minutes` (`INV-096`), and the
+deferral count from `verification_budget.deferrals[]` (`INV-094`). Those lines
+are not decoration: they tell the reader how much of the output was actually
+checked, which part of the answer is judgment rather than verified fact, and how
+long the verdict holds. A card that omits one of them when its source field is
+non-empty is `VF-10`.
 
 The card has a fixed shape, not a free-form layout (`INV-069`):
 
@@ -283,8 +309,12 @@ The card has a fixed shape, not a free-form layout (`INV-069`):
   depth, and trace tokens must equal the card fields; exactly one whole verdict
   token may appear on this line. `PASS` is matched as a token, so it never
   matches inside `PASS_WITH_LIMITATIONS`.
-- **Middle — body:** the two verified/total pairs, the revision count, and
-  every `limitation_ref`/`blocked_ref`/`failure_ref`. No second header line.
+- **Middle — body:** the two verified/total pairs, the revision count, the
+  `Coverage:` line, and — when they apply — the `Epistemic:`, `Valid until:` and
+  `Budget: <n> deferred` lines (the last drawn from
+  `verification_budget.deferrals[]`, printed only when the array is non-empty,
+  `INV-094`), plus every `limitation_ref`/`blocked_ref`/`failure_ref`. No second
+  header line.
 - **Last line — footer:** `[claims=<v>/<t>, tests=<p>/<t>, rev=<n>]`, exactly
   once (`INV-067`), recomputed from the fields.
 
@@ -293,10 +323,18 @@ it is a label; a `PASS_WITH_LIMITATIONS` with nothing limited, a `PASS` with an
 open failure, or a `FAIL` with no open failure id is mislabeled (`INV-070`).
 The suite itself must be closed before the card is drawn (`INV-068`): no
 `tests[]` entry may remain `PENDING`/`RUNNING`, because `tests_total` only counts
-terminal tests and an unrun test would silently shrink the denominator. A
-hand-typed count, a hidden limitation, a malformed header, or a missing card is
+terminal tests and an unrun test would silently shrink the denominator.A hand-typed count, a hidden limitation, a malformed header, or a missing card is
 `VF-10`; a card that contradicts `final_verdict` is also `VF-06`
 (`INV-030`/`INV-058`).
+
+When the run reviews someone else's artifact, the trace also narrates the
+review: the declared `review_mode` and what authority the reviewer had
+(`OBSERVE` never edits; `REVISE` edits only as recorded revisions), and — if a
+peer review disagreed — the fresh independent test that decided it, with its
+result (`INV-097`/`INV-098`). Those are trace entries and contract fields, not
+extra card lines: the card's counts and label always come from `final_verdict`,
+so a review that was decided is visible where it happened and summarised where
+the verdict is reported.
 
 ---
 

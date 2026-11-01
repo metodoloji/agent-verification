@@ -361,6 +361,7 @@ ultrabook'ta başarısız oldu — sınır gizlenmedi, doğrulandı.
 ⚠️ PASS_WITH_LIMITATIONS · ADVERSARIAL · LIVE
 Kritik iddialar: 3/3 doğrulandı · Testler: 7/8 geçti (TEST-007 başarısız, açıklandı) · Revizyon: 1
 Sınırlar: CL-002 yalnızca hafif yük için geçerli; TEST-007 (soğutma) ultrabook'ta başarısız oldu.
+Kapsam (Coverage): 3/3 iddia, 2/2 kabul koşulu, 4/4 kaynak
 [claims=3/3, tests=7/8, rev=1]
 ```
 
@@ -437,6 +438,38 @@ API anahtarı, parola, token, oturum kimliği veya kişisel veri yok — bunun y
 
 Kart ayrıca kaynağını bildirir: yürütülen derinlik ve izin `LIVE` mi `RETRO` mu olduğu (`INV-066`). İz de o derinlik için eksiksiz olmalıdır — açılış `DEPTH`, gereken aşamalar ve her başarısızlık/revizyon/yükseltme için bir kayıt (`INV-065`); kısa ve cilalı bir iz `VF-09`'dur, düzenli bir özet değil. Kartın metni ayrıca `[claims=..., tests=..., rev=...]` biçiminde kanonik bir altbilgi taşır ve bu değerler alanlarla eşleşmelidir (`INV-067`) — okuduğunuz sayılar sözleşmeden kopamaz.
 
+### Çıktının ne kadarı gerçekten kontrol edildi
+
+2.0 ile kart bir `Coverage:` satırı taşır ve bu satır test kaydından türetilir, elle yazılmaz (`INV-093`): test edilen iddia / toplam iddia, test edilen kritik iddia / toplam kritik iddia, karşılanan kabul koşulu, kaynak sayısı. `PASS`/`PASS_WITH_LIMITATIONS` kritik kapsamın tamamını göstermek zorundadır; arkasında koşulmuş bir test olmayan iddiayı "test edildi" sayan ya da kısmi kontrolü gizleyen bir sayı `VF-06`/`VF-10`'dur ve yayını engeller. Çıktı tümüyle kontrol edilemeyecek kadar büyükse koşu bilinçli örnekleme yapar (`sampling[]`: yöntem ve seçilen kimlikler) ve kısmi kapsam sınırlarda görünür — sessiz bir örneklemenin üzerine "doğrulandı" yazmak, bu satırın önlemek için var olduğu hatanın ta kendisidir.
+
+### Bazı iddialar olgu değil, yargıdır
+
+Her iddia testler koşmadan önce epistemik sınıfını bildirir (`INV-095`): `FALSIFIABLE` (bir kontrol yanlışlayabilir), `NORMATIVE` (ne yapılması gerektiği) veya `PREDICTIVE` (ne olacağı). Normatif ya da öngörüsel bir iddia *desteklenebilir*, ama asla `VERIFIED` olamaz — "geçmelisin" ifadesini hiçbir test yanlışlayamaz — bu yüzden `SUPPORTED`'ta sınırlanır, kartın `Epistemic:` satırında ve `coverage.epistemic_*` içinde görünür ve onun için beşinci bir karar durumu icat edilmez. Merkezi sonuç yanlışlanabilir olmak zorundadır; test sonuçlarını gördükten sonra sınıfı değiştirmek bir revizyon sayılır, kartta sınıfın eksik olması `VF-04`'tür.
+
+### Kararın bir son kullanma tarihi vardır
+
+Belirleyici kanıt çalışma zamanı çıktısıysa — canlı bir API, çalışan bir servis, üretim sorgusu — karar ne kadar geçerli olduğunu kaydeder (`INV-096`): `final_verdict.validity.decided_at`, `expires_after_minutes` ve yeniden koşulacak test kimlikleri. Bu süre geçtiğinde koşu ya yeniden doğrulayıp kararı yeniden kapıdan geçirir ya da kararı dürüstçe eski olarak teslim eder (`STALE_VERDICT`, `VF-12`) — süresi dolmuş cevabı taze gibi sunmaz. Kartın `Valid until ...` satırı tam olarak bunun içindir: güncel bir cevap mı okuyorsunuz, yoksa dünkü mü?
+
+### Başkasının işini denetlemek
+
+Eser ajanın kendi ürünü değilse — başka bir ajanın cevabı, bir insanın taslağı, yayımlanmış bir kaynak — sözleşme `review_mode: CANDIDATE` bildirir: eseri kim üretti, denetçinin yetkisi ne, denetçi gerçekten ne kadar bağımsız (`INV-097`). `OBSERVE` altında denetçi eseri hiç düzenleyemez; her değişiklik `REVISE` yetkisi gerektirir ve geçersiz kılınan testleriyle birlikte kayıtlı bir revizyon olarak görünmelidir. Yer tutucu bir bağımsızlık beyanı denetimin hiçbir yetkisi olmadığı anlamına gelir; bu `VF-13`'tür. Meslektaş denetimi aday kararla çelişirse, anlaşmazlığı `deciding_test_id` olarak adlandırılan taze ve bağımsız tek bir test karara bağlar (`INV-098`) — ortalaması alınmaz, sessizce daha dostane karar seçilerek kapatılmaz.
+
+### Gördüğünüz kontrol listesi, koşan kontrol listesidir
+
+§4 kontrol listesi derinliğe göre kapsamlanır (`INV-092`): MINIMAL bir koşu yalnızca kendi `[M]` kutularını kaydeder — genellikle tek bir gruplanmış `CHECKED` kaydı ve gerçek istisnaları — ve kaydı daha derin kümelerin `N/A` satırlarıyla şişirmez. Küme içindeki her kutu tam bir kez görünür; ister tek tek ister aynı durumda gruplanarak yazılsın. Eksik kutu, yinelenen anahtar ya da küme dışı doldurulmuş satır `VF-06`'dır; kaydı küçültmek için daha sığ bir derinlik iddia edip daha derin kontroller koşmak ise derinlik uyuşmazlığıdır.
+
+### Bütçe ilk testten önce bildirilir
+
+`verification_budget` bir ruh hâli değil, sözleşme alanıdır (`INV-094`): birim, limit, `declared_at` ve gerçekten koşan kontrollerden türetilen `spent`/`remaining`. İki taban satın alınamaz — her kritik iddia en az bir koşulmuş testi korur ve CRITICAL'da external/mutation kontrolleri her zaman koşar — ve sonucu değiştirebilecek bir erteleme sessizce kaybolmak yerine sınırlarda `BUDGET_DEFERRED:<slug>` olarak görünmelidir. Bildirilmemiş bütçe, çelişen harcama ya da kesilen zorunlu kontrol `VF-11`'dir.
+
+### Kontrol edilmeyen öğelerin adı olmalı
+
+Her `NOT_CHECKED`/`BUDGET_DEFERRED` açıklaması kapalı katalogdan bir slug adlandırır (`sources`, `versions`, `runtime`, `edge-inputs`, `cross-references`, `numeric-recomputation`, `counterexample-search`, `external-tool`, `assumptions`, `scope-boundary`, `time-sensitivity`, `security-safety`) ya da gerekçesiyle `OTHER:<name>` kullanır (`INV-099`). "Bazı sınırlar var" gibi serbest metin hiçbir şeyle eşleşmez; öğe ne denetlenebilir ne kapatılabilir — çözülemeyen atıf `VF-04`'tür.
+
+### Engel kalktığında
+
+Bir test daha sonra ortadan kalkan bir nedenle `BLOCKED` idiyse — kimlik bilgileri geldi, ağ geri döndü — bağımlı testler gerçekten yeniden koşulmalı ve `blocked_resolution.retested_test_ids[]` içinde adlandırılmalıdır (`INV-100`). Önceki koşudan taşınan bir sonuç `carried_test_ids[]` içinde ve gerçek bir `carryover_why` ile adlandırılmalıdır; geri kalan her şey `INVALIDATED`'dır. Listelenmemiş ya da bağımlı bir taşımaya dayanan `PASS` `VF-06`, izde görünmeyen bir devralma ise `VF-09`'dur — yeniden koşmanın amacı kanıtın güncel olmasıdır.
+
 ### Makinece denetlenen taraf
 
 * `INV-057` — iz, derinliğin gerektirdiği sıklıkta canlı akmalıdır; sonradan tek seferde yazılan iz `VF-09`'dur ve `PASS`'i engeller.
@@ -453,5 +486,14 @@ Kart ayrıca kaynağını bildirir: yürütülen derinlik ve izin `LIVE` mi `RET
 * `INV-083`–`INV-085` — kapsamlar kaydedilmelidir ki eşleşme boşa düşmesin (`EF-04`); beyan çiftleri aynı eseri anlatmalıdır (`VF-06`); ve adım kaydı gerçekten sahip olduğu iz kapsamını göstermelidir (`VF-06`/`VF-09`).
 * `INV-086`–`INV-088` — şiddet yalnızca kayıtlı ve kanıtlı bir revizyon farkıyla değişir, ciddi açık bulgu kararı sınırlar (`VF-06`/`VF-07`); kritik test somut bir yanlış girdi adlandırmalıdır (`VF-02`); ve her iz özeti anlattığı birimi adlandırmalıdır (`VF-09`).
 * `INV-089`–`INV-091` — her bildirilen kimlik tekil ve doğru önekli olmalı, böylece bir atıf tek birimi gösterir (`VF-06`/`VF-07`); kritik testin gözlemi durum sözcüğü değil, kontrolü ve sonucunu kaydetmelidir (`VF-06`/`VF-07`); ve kritik bir iddianın dayandığı varsayımın kendisi de kritik olmalıdır (`VF-04`).
+* `INV-092` — kontrol listesi kaydı tam olarak yürütülen derinliğin kutu kümesini kapsar; her kutu bir kez, daha derin kümelerden `N/A` doldurması yok (`VF-06`).
+* `INV-093` — `final_verdict.coverage` test kaydından türetilir; PASS/PSS kritik iddia ve kabul koşulu kapsamının tamamını gösterir ya da örneklemesini açıklar (`VF-06`/`VF-10`).
+* `INV-094` — bütçe ilk testten önce bildirilir, harcaması türetilir, iki tabanı korunur ve sonucu değiştiren her erteleme açıklanır (`VF-11`).
+* `INV-095` — iddialar testlerden önce `epistemic` bildirir; `NORMATIVE`/`PREDICTIVE` `SUPPORTED`'ta sınırlanır ve beşinci karar olarak değil kartta görünür (`VF-04`).
+* `INV-096` — karar geçerlilik penceresini kaydeder; süresi dolmuş çalışma zamanı kanıtı yeniden doğrulama ya da dürüst bir `STALE_VERDICT` gerektirir (`VF-12`).
+* `INV-097` — aday denetim modunu, yetkisini ve bağımsızlığını bildirir; `OBSERVE` eseri asla düzenlemez (`VF-13`/`VF-07`).
+* `INV-098` — meslektaş anlaşmazlığı adlandırılmış, taze ve bağımsız bir testle karara bağlanır; ortalamayla ya da daha dostane kararla kapatılmaz (`VF-13`).
+* `INV-099` — her `NOT_CHECKED`/`BUDGET_DEFERRED` atfı kapalı katalogdan ya da gerekçeli `OTHER:<name>` ile çözülür (`VF-04`).
+* `INV-100` — kalkan engel bağımlı testleri yeniden koşar; taşınan her önceki sonuç gerekçesiyle adlandırılır (`VF-06`/`VF-09`).
 
 Tam şartname: [`references/progress-protocol.md`](references/progress-protocol.md).

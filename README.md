@@ -4,9 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f?style=flat-square)](LICENSE)
 [![User Guide (EN)](https://img.shields.io/badge/manual-User%20Guide%20(EN)-blue?style=flat-square)](USER-GUIDE.md)
 [![Kullanım Kılavuzu (TR)](https://img.shields.io/badge/kılavuz-Kullanım%20Kılavuzu%20(TR)-red?style=flat-square)](KULLANIM-KILAVUZU.md)
-[![Contract Version](https://img.shields.io/badge/contract-v1.28-blueviolet?style=flat-square)](references/verification-contract.md)
-[![Invariants](https://img.shields.io/badge/invariants-INV--001..INV--091-orange?style=flat-square)](references/state-machine.md)
-[![Failure Taxonomy](https://img.shields.io/badge/failures-31%20codes-crimson?style=flat-square)](references/failure-taxonomy.md)
+[![Contract Version](https://img.shields.io/badge/contract-v2.0-blueviolet?style=flat-square)](references/verification-contract.md)
+[![Invariants](https://img.shields.io/badge/invariants-INV--001..INV--100-orange?style=flat-square)](references/state-machine.md)
+[![Failure Taxonomy](https://img.shields.io/badge/failures-34%20codes-crimson?style=flat-square)](references/failure-taxonomy.md)
 [![Verification Patterns](https://img.shields.io/badge/patterns-18%20strategies-indigo?style=flat-square)](references/verification-patterns.md)
 [![Verification Depth](https://img.shields.io/badge/depth-4%20levels-informational?style=flat-square)](references/verification-depth.md)
 [![Runtime Compatibility](https://img.shields.io/badge/runtimes-Claude%20Code%20%7C%20OpenHands%20%7C%20Antigravity-555?style=flat-square)](SKILL.md)
@@ -18,7 +18,7 @@
 * 🇬🇧 [**English User Guide (`USER-GUIDE.md`)**](USER-GUIDE.md) — Exhaustive scenarios, 18 pattern recipes, 4 depths, and prompt blueprints.
 * 🇹🇷 [**Türkçe Kullanım Kılavuzu (`KULLANIM-KILAVUZU.md`)**](KULLANIM-KILAVUZU.md) — Tüm senaryolar, pratik kullanım örnekleri, rol bazlı prompt şablonları.
 
-`agent-verification` is a contract-driven, adversarial self-audit protocol and agent skill for AI coding and reasoning systems. It replaces complacent model self-approval with a rigorous, machine-checkable audit pipeline: decomposing candidate outputs into atomic claims, attacking hypotheses with concrete counterexamples, auditing verification suites against mutations, enforcing mechanical invariants (`INV-001` .. `INV-091`), and narrating the work live — before issuing a final verdict.
+`agent-verification` is a contract-driven, adversarial self-audit protocol and agent skill for AI coding and reasoning systems. It replaces complacent model self-approval with a rigorous, machine-checkable audit pipeline: decomposing candidate outputs into atomic claims, attacking hypotheses with concrete counterexamples, auditing verification suites against mutations, enforcing mechanical invariants (`INV-001` .. `INV-100`), and narrating the work live — before issuing a final verdict.
 
 ---
 
@@ -32,8 +32,8 @@
   - [3. 18 Verification Patterns](#3-18-verification-patterns)
   - [4. Adversarial Pass (The Attack)](#4-adversarial-pass-the-attack)
   - [5. Test-the-Tests (Audit & Mutation)](#5-test-the-tests-audit--mutation)
-  - [6. Standardized Failure Taxonomy (31 Codes)](#6-standardized-failure-taxonomy-31-codes)
-  - [7. Strict Lifecycle Invariants (`INV-001` .. `INV-091`)](#7-strict-lifecycle-invariants-inv-001--inv-091)
+  - [6. Standardized Failure Taxonomy (34 Codes)](#6-standardized-failure-taxonomy-34-codes)
+  - [7. Strict Lifecycle Invariants (`INV-001` .. `INV-100`)](#7-strict-lifecycle-invariants-inv-001--inv-100)
   - [8. Pre-Decision Gate & Checklist Closure](#8-pre-decision-gate--checklist-closure)
   - [9. Live Verification Trace (Visible Progress)](#9-live-verification-trace-visible-progress)
 - [Decision Verdicts](#-decision-verdicts)
@@ -92,12 +92,12 @@ To prevent endless hallucinated repair loops, consecutive failed re-tests on the
 ## 🧱 Key Architectural Pillars
 
 ### 1. The Verification Contract
-Defined in [`references/verification-contract.md`](references/verification-contract.md), the **Verification Contract (v1.28)** is a formal, machine-readable data model that binds an unverified candidate output to its task requirements, decomposed claims, test suite, and outcome.
+Defined in [`references/verification-contract.md`](references/verification-contract.md), the **Verification Contract (v2.0)** is a formal, machine-readable data model that binds an unverified candidate output to its task requirements, decomposed claims, test suite, and outcome.
 
 ```json
 {
   "contract_id": "vc_20261017_001",
-  "contract_version": "1.28",
+  "contract_version": "2.0",
   "task": "Task restatement with explicit constraints",
   "risk_level": "STANDARD",
   "depth_executed": "STANDARD",
@@ -155,8 +155,8 @@ Defined in [`references/verification-contract.md`](references/verification-contr
       "limitation_refs": [],
       "blocked_refs": [],
       "failure_refs": [],
-      "rendered_counts": {"claims": "1/1", "tests": "1/1", "revisions": "0"},
-      "rendered": "✅ PASS · STANDARD · LIVE\nCritical claims 1/1 · Tests 1/1 · Revisions 0\n[claims=1/1, tests=1/1, rev=0]"
+      "rendered_counts": {"claims": "1/1", "tests": "1/1", "revisions": "0", "coverage": "1/1 claims, 1/1 AC, 1/1 source"},
+      "rendered": "✅ PASS · STANDARD · LIVE\nCritical claims 1/1 · Tests 1/1 · Revisions 0 · Coverage 1/1 claims, 1/1 AC, 1/1 source\n[claims=1/1, tests=1/1, rev=0]"
     },
     "decisive_evidence_ids": ["EV-001"],
     "checklist_closure": true
@@ -221,7 +221,7 @@ Before emitting a verdict, the agent audits its verification suite:
 - **Circularity Detection (`VF-03`):** Does the test verify against independent ground truth, or does it merely test whether the answer agrees with its own premises?
 - **Mutation Sanity Check (`VF-02`):** If the claim is inverted or corrupted, does the test suite fail? If it still passes, the test is weak and cannot support the verdict.
 
-### 6. Standardized Failure Taxonomy (31 Codes)
+### 6. Standardized Failure Taxonomy (34 Codes)
 Detailed in [`references/failure-taxonomy.md`](references/failure-taxonomy.md), any detected defect is mapped to a standardized failure code:
 
 * **Output Failures (`OUTPUT_FAILURE`):**
@@ -233,8 +233,8 @@ Detailed in [`references/failure-taxonomy.md`](references/failure-taxonomy.md), 
 * **Execution Failures (`EXECUTION_FAILURE`):**
   `XF-01` (`UNAVAILABLE_TOOL`), `XF-02` (`UNAVAILABLE_DATA`), `XF-03` (`TIMEOUT`), `XF-04` (`PERMISSION_BLOCKED`), `XF-05` (`ENVIRONMENT_MISMATCH`).
 
-### 7. Strict Lifecycle Invariants (`INV-001` .. `INV-091`)
-Detailed in [`references/state-machine.md`](references/state-machine.md), 91 invariants govern the state machine:
+### 7. Strict Lifecycle Invariants (`INV-001` .. `INV-100`)
+Detailed in [`references/state-machine.md`](references/state-machine.md), 100 invariants (`INV-001` .. `INV-100`, contiguous) govern the state machine — the 91-invariant contract-1.28 baseline plus the nine records added by contract 2.0:
 - **`INV-001` / `INV-002`:** `UNVERIFIED ≠ PASS` and `INCONCLUSIVE ≠ PASS`.
 - **`INV-003` / `INV-048`:** Any claim mutation invalidates all dependent tests; stale test passes cannot support a revised verdict.
 - **`INV-010`:** Never invent evidence or simulate checks; missing access strictly forces `BLOCKED`.
@@ -273,9 +273,18 @@ Detailed in [`references/state-machine.md`](references/state-machine.md), 91 inv
 - **`INV-089`:** Every declared id is unique within its array and carries that array's prefix (`AC-`/`CL-`/`AS-`/`TEST-`/`EV-`/`F-`/`REV-`/`ESC-`); a duplicate makes refs, reciprocal links, decisive evidence, and the card's derived counts name two units at once (`VF-06`), and a `PASS` resting on the duplicated unit is `VF-07`.
 - **`INV-090`:** A critical test's `observation` states what was run or read (input, command, source) and what it returned; a placeholder (`PASS`, `verified`, `looks good`) or a sentence copied from another critical test on the same claim records no result (`VF-06`, `VF-07` when it carries the `PASS`) — `INV-018` forbids a bare `PASS`, this makes the recorded observation say something.
 - **`INV-091`:** An assumption named in a `critical: true` claim's `assumption_ids[]` must itself be `critical: true`, so its status flows through the `INV-040` cap, the `INV-071` evidence floor, and the `INV-072` disclosure; demoting a load-bearing assumption to non-critical is `VF-04` — criticality follows the claim.
+- **`INV-092`** *(2.0)*: `checklist_results[]` covers exactly the §4 boxes of the executed depth's set — each in-set box recorded once (individually or grouped by identical status), out-of-set boxes absent rather than `N/A`-padded; padding or a depth mismatch is `VF-06` — a constraint-only MINIMAL run writes one grouped entry plus its real exceptions, not dozens of rows.
+- **`INV-093`** *(2.0)*: Every verdict carries a derived `final_verdict.coverage` (claims, critical claims, ACs, sources as tested/total), PASS/PSS require critical claims and ACs fully covered, and partial checking is declared in `sampling[]` or disclosed — a typed or non-derivable figure is `VF-06` (`VF-10` on the card); coverage is how an answer says "I checked 40%" instead of implying 100%.
+- **`INV-094`** *(2.0)*: `verification_budget` is declared before the first test runs, `spent`/`remaining` are derived, the floors stay intact (`critical_claims_covered` always, `mandatory_checks_run` at CRITICAL), and every conclusion-changing deferral lands in `disclosed_limitations[]` as `BUDGET_DEFERRED:<slug>`; an undeclared or silently breached budget is `VF-11` and blocks PASS/PSS.
+- **`INV-095`** *(2.0)*: Every claim declares `epistemic: FALSIFIABLE | NORMATIVE | PREDICTIVE` before tests run; `NORMATIVE`/`PREDICTIVE` claims cap at `SUPPORTED` and show on the card's `Epistemic:` line and `coverage.epistemic_*`, never as `VERIFIED` and never as a fifth verdict; the central claim must be `FALSIFIABLE`, a post-test reclass is a revision, and a missing card entry is `VF-04`.
+- **`INV-096`** *(2.0)*: Every verdict records `validity.decided_at`, runtime-sourced decisive evidence carries `expires_after_minutes` + `revalidate_test_ids`, and a stale verdict delivered as fresh is `VF-12` — it must be re-gated or disclosed as `STALE_VERDICT`; the card shows `Valid until ...` whenever validity is present.
+- **`INV-097`** *(2.0)*: `review_mode` (`SELF`/`CANDIDATE`) is declared; a `CANDIDATE` review carries `reviewer_authority` + `independence_declared`; `OBSERVE` forbids editing the artifact and `REVISE` records edits as revisions; an undeclared mode, placeholder independence, or an edit under `OBSERVE` is `VF-07`/`VF-06`.
+- **`INV-098`** *(2.0)*: A recorded peer disagreement (`agreement: false`) is decided by one fresh, independent test or closed `BLOCKED`; averaging, blending, or majority-voting two verdicts is `VF-06`, and taking the friendlier one without a deciding check is `VF-07`.
+- **`INV-099`** *(2.0)*: Every `NOT_CHECKED`/`BUDGET_DEFERRED` limitation ref uses a slug from the verification-patterns §17 closed catalog (or `OTHER:<name>` with a stated reason); an unknown bare slug or free-text item is an unresolvable ref (`VF-04`), so `INV-049` checks against a closed list instead of an open-ended phrase.
+- **`INV-100`** *(2.0)*: When a `BLOCKED` reason clears, dependent tests are re-executed and named in `blocked_resolution.retested_test_ids[]`; a prior result survives only as a named carryover with a substantive `carryover_why`, and everything unlisted is implicitly `INVALIDATED` — a PASS resting on an unlisted carryover is `VF-06`, a failover that never reaches the trace is `VF-09`.
 
 ### 8. Pre-Decision Gate & Checklist Closure
-Before issuing any `PASS` or `PASS_WITH_LIMITATIONS`, the machine-checkable Pre-Decision Checklist ([`references/verification-contract.md §4`](references/verification-contract.md#4-pre-decision-checklist-machine-checkable)) must evaluate all 73 gate checks. Any unchecked box leaves `checklist_closure: false` and mechanically blocks approval (`INV-028`). Non-applicable items must state explicit `N/A` reasons (`INV-032`).
+Before issuing any `PASS` or `PASS_WITH_LIMITATIONS`, the machine-checkable Pre-Decision Checklist ([`references/verification-contract.md §4`](references/verification-contract.md#4-pre-decision-checklist-machine-checkable)) must evaluate every gate check required by the executed depth. Any unchecked box leaves `checklist_closure: false` and mechanically blocks approval (`INV-028`). Non-applicable items must state explicit `N/A` reasons (`INV-032`).
 
 ### 9. Live Verification Trace (Visible Progress)
 Specified in [`references/progress-protocol.md`](references/progress-protocol.md), the trace makes the verification lifecycle observable **while it runs**. The agent emits one short update per transition — before starting the work it describes — and records each update in `progress_trace[]`.
@@ -338,9 +347,9 @@ agent-verification/
 ├── KULLANIM-KILAVUZU.md                # Kapsamlı Kullanıcı Kılavuzu (Türkçe)
 ├── SKILL.md                            # Agent Skill definition (prompts & operational lifecycle)
 ├── references/                         # Detailed formal specifications
-│   ├── failure-taxonomy.md             # Standardized failure taxonomy (31 codes: OF, VF, EF, XF)
-│   ├── state-machine.md                # Formal state transitions & 91 invariants (INV-001..INV-091)
-│   ├── verification-contract.md        # Machine-readable Verification Contract schema (v1.28)
+│   ├── failure-taxonomy.md             # Standardized failure taxonomy (34 codes: OF, VF, EF, XF)
+│   ├── state-machine.md                # Formal state transitions & 100 invariants (INV-001..INV-100)
+│   ├── verification-contract.md        # Machine-readable Verification Contract schema (v2.0)
 │   ├── progress-protocol.md            # Live Verification Trace: visible progress while verification runs
 │   ├── verification-depth.md           # 4-tier risk classification & depth triggers
 │   └── verification-patterns.md        # 18 concrete verification & adversarial patterns
@@ -348,6 +357,23 @@ agent-verification/
     ├── activation-cases.md             # Benchmark cases for skill activation vs. bypass
     ├── cases.md                        # Concrete test vectors for adversarial verification
     └── scoring.md                      # Objective scoring rubrics & compliance criteria
+└── optimization/                       # Skill optimization pipeline (SkillOpt × Hermit)
+    ├── README.md                       # Architecture, commands, and what is / is not measured
+    ├── Makefile                        # dataset / fixtures / check / score / plumbing / smoke
+    ├── dataset/build_dataset.py        # evals/*.md → train/val/test/activation JSONL
+    ├── harness/contract_check.py       # Mechanical gate: INV-092..INV-100 + card/suite rules
+    ├── harness/score.py                # Deterministic judge (§2 metrics, no model in the loop)
+    ├── harness/assert_bad.py           # Proves the gate is not vacuous on the broken fixture
+    ├── fixtures/make_fixtures.py       # Derives good/bad contracts from the live spec
+    ├── scripts/plumbing.py             # adapter → runner → judge, end to end
+    ├── skillopt/verification_env/      # SkillOpt benchmark adapter + seed skill
+    └── hermit/
+        ├── agent.py                    # pipeline: run(task, adapter) → RunOutput
+        ├── judge.py                    # judge: score(task, output) → 0..1
+        ├── build_hermit_data.py        # dataset → tasks.jsonl + split lists
+        ├── task_info/README.md         # task shape and scoring, required by `hermit check`
+        ├── configs/run.yaml            # pipeline, judge, template, skillopt evolver, budget
+        └── adapter/                    # learnable ADAPTER.md + EVOLVER.md + README.md
 ```
 
 ---
@@ -381,16 +407,43 @@ The skill automatically activates when generating:
 ## 🧪 Evaluation Suite
 
 The [`evals/`](evals/) directory provides a comprehensive test suite to measure agent compliance against the protocol:
-- **[`evals/activation-cases.md`](evals/activation-cases.md):** 20+ scenarios evaluating correct activation vs. appropriate bypass.
+- **[`evals/activation-cases.md`](evals/activation-cases.md):** 77 scenarios (`ACT-01`..`ACT-77`) evaluating correct activation vs. appropriate bypass.
 - **[`evals/cases.md`](evals/cases.md):** Full-lifecycle benchmark cases covering code correctness, factual claims, edge-case attacks, circularity traps, and revision caps.
 - **[`evals/scoring.md`](evals/scoring.md):** Quantitative scoring rubrics measuring contract schema compliance, invariant enforcement, and classification precision.
+
+---
+
+## 🔁 Skill Optimization Pipeline (SkillOpt × Hermit)
+
+The [`optimization/`](optimization/) directory turns this skill into a **trainable artifact** without touching model weights, by composing two published frameworks instead of reinventing them:
+
+- **SkillOpt** ([microsoft/SkillOpt](https://github.com/microsoft/skillopt)) — treats the skill document as the trainable state of a frozen agent: scored rollouts produce bounded `add`/`delete`/`replace` edits, and an edit lands only if a **held-out validation score strictly improves**. The deployable artifact is a compact `best_skill.md`.
+- **Hermit** ([Infini-AI-Lab/hermit](https://github.com/Infini-AI-Lab/hermit), `pip install hermit-harness`) — trains a *harness adapter* directory through its own Trainer, judge and evolver (`check / train / eval / deploy / convert / serve / backends`). Hermit ships a **`skillopt` evolver**, so the two compose without glue code; both are scored by the same deterministic judge here.
+
+What this repository adds is the part neither framework can know: **the task adapter and the judge**.
+
+| Component | What it does |
+|---|---|
+| [`optimization/dataset/build_dataset.py`](optimization/dataset/build_dataset.py) | Splits `evals/cases.md` into train (`CASE-001..070`), val (`071..081`), test (`082..090`) and extracts `ACT-01..ACT-77`; splits are numbered, not random, so every run is reproducible |
+| [`optimization/harness/contract_check.py`](optimization/harness/contract_check.py) | Executable gate for `INV-092`..`INV-100` plus `INV-067/068/070/074/089`; it parses the §4 box set and §17 catalog **out of `references/` at run time**, so the gate cannot drift from the spec |
+| [`optimization/harness/score.py`](optimization/harness/score.py) | Deterministic judge: verdict agreement + contract compliance graded by violation class — no model grades a model |
+| [`optimization/skillopt/verification_env/`](optimization/skillopt/verification_env/) | SkillOpt benchmark package (adapter, loader, reward, configs, seed skill) |
+| [`optimization/hermit/`](optimization/hermit/) | Hermit run: `agent.py` pipeline, `judge.py`, dataset builder, `configs/run.yaml`, learnable `adapter/ADAPTER.md` |
+
+```bash
+make -C optimization smoke           # dataset → fixtures → gate → judge → plumbing (no model, no network)
+make -C optimization hermit-check    # validate the adapter with `hermit check`
+make -C optimization train-smoke     # requires a working model endpoint (AV_AGENT_CMD or --backend qwen_chat)
+```
+
+Three properties keep the loop from gaming the protocol: the judge is deterministic, the gate is *derived from* the specification (editing the spec updates the gate), and the contract-2.0 cases are **test-only**, so passing them means generalisation rather than tuning. The pipeline ships **no trained numbers**: a rollout that produces no contract aborts the run instead of recording a zero, so an unreachable model can never look like a weak skill.
 
 ---
 
 ## 🤝 Contributing
 
 Contributions are welcome! To maintain protocol integrity:
-1. All changes must preserve backward compatibility with invariants `INV-001` .. `INV-091`.
+1. All changes must preserve backward compatibility with invariants `INV-001` .. `INV-100`.
 2. Schema updates must bump `contract_version` in [`references/verification-contract.md`](references/verification-contract.md) following semver rules.
 3. Every new invariant or pattern must be accompanied by benchmark cases in [`evals/cases.md`](evals/cases.md).
 

@@ -1,6 +1,6 @@
 # Evaluation Cases: Agent Verification
 
-A test suite of 81 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop.
+A test suite of 90 evaluation cases designed to test whether an agent running `agent-verification` detects subtle flaws, applies appropriate verification rigor, and correctly follows the revision and re-test loop. `CASE-001`–`CASE-081` cover the contract-1.28 baseline; `CASE-082`–`CASE-090` pin the nine records added by contract 2.0 (`INV-092`–`INV-100`).
 
 ---
 
@@ -562,3 +562,66 @@ A test suite of 81 evaluation cases designed to test whether an agent running `a
 - **Planted Flaw:** The assumption is exactly what the critical claim rests on, but marking it non-critical removes it from the INV-040 cap, the INV-071 evidence floor, and the INV-072 disclosure — the condition is load-bearing and hidden by a label, which is `VF-04` (`INV-091`).
 - **Expected Behavior:** Dependent-assumption rule requires `AS-002.critical: true`; it must then be verified (evidence covering the payload contract), or `CL-003` caps at `SUPPORTED` and `AS-002` is disclosed, which makes the verdict `PASS_WITH_LIMITATIONS` at best — or `BLOCKED` if the API cannot be checked.
 - **Expected Status:** `PASS_WITH_LIMITATIONS` (after marking the dependency critical and disclosing the condition).
+
+### CASE-082 - The Checklist Is Padded With "N/A"
+- **Task:** Verify a MINIMAL-depth change under constraint; the depth's checklist box set is small.
+- **Candidate Output:** `checklist_closure: true` with a row for every §4 box from every depth, out-of-set boxes marked `N/A`, `checklist_results_total: 18`; card `checks` unaffected, verdict `PASS`.
+- **Planted Flaw:** The N/A rows inflate the record past the executed depth's set instead of describing it — padding the checklist with un-run boxes is `VF-06` (`INV-092`), and the totals no longer describe the set that was actually covered.
+- **Expected Behavior:** Depth-scoped checklist rule requires exactly the executed depth's box set — each in-set box once (individually or grouped by identical status, with exceptions named individually), out-of-set boxes absent; drop the N/A padding and re-gate so the record matches the depth claimed.
+- **Expected Status:** `FAIL` (as submitted); `PASS` after the record matches `depth_executed`.
+
+### CASE-083 - "Verified" Covers Forty Percent
+- **Task:** Verify at STANDARD depth; 5 of 12 critical claims have tests.
+- **Candidate Output:** `final_verdict.status: PASS`, `reasoning: "critical claims verified"`; `final_verdict.coverage: {"claims_tested": 12, "claims_total": 12, "critical_claims_tested": 5, "critical_claims_total": 5}` typed by hand; `sampling[]: []`; card `claims 12/12`.
+- **Planted Flaw:** The figure counts five tests as twelve claims and twelve as twelve, so the typed number contradicts the test list and the untested seven critical claims are invisible — `VF-06` (typed coverage, `INV-093`) with `VF-10` on the card, and a PASS whose critical coverage is not 100%.
+- **Expected Behavior:** Coverage-disclosure rule derives coverage from the record (`critical_claims_tested: 5, total: 12`) and requires PASS/PSS to show full critical-claim and AC coverage, with any partial check in `sampling[]` or `disclosed_limitations[]`; either test the seven claims or downgrade the verdict and disclose the sampling.
+- **Expected Status:** `FAIL` (as submitted); `PASS` only with full critical coverage or a disclosed partial-check verdict.
+
+### CASE-084 - The Budget That Was Never Declared
+- **Task:** Verify at CRITICAL depth; three mandatory checks remain when the run ends.
+- **Candidate Output:** `verification_budget: null`; `disclosed_limitations[]` has no `BUDGET_DEFERRED` entries; `final_verdict.status: PASS`, `reasoning: "within budget"`.
+- **Planted Flaw:** No budget was declared before the first test, so `spent`/`remaining` cannot be derived, the mandatory-check floor was crossed without a record, and the deferrals are indistinguishable from checks that were never planned — `VF-11` (`INV-094`), and the PASS cannot stand on an undeclared budget.
+- **Expected Behavior:** Budget-declaration rule requires `verification_budget` declared before the first test with derived `spent`/`remaining`, floors intact (`critical_claims_covered` always, `mandatory_checks_run` at CRITICAL), and every conclusion-changing deferral in `disclosed_limitations[]` as `BUDGET_DEFERRED:<slug>`; declare the budget, run or defer the three checks with disclosure, then re-gate.
+- **Expected Status:** `FAIL` (as submitted); `PASS_WITH_LIMITATIONS` only with a declared, disclosed budget whose floors hold.
+
+### CASE-085 - A Preference Verified as a Fact
+- **Task:** Verify a recommendation whose central claim is `CL-001: "the team should migrate to the new framework"`.
+- **Candidate Output:** `CL-001.epistemic: NORMATIVE` (or absent); the test suite runs and passes; `final_verdict.status: VERIFIED`, card `claims VERIFIED`, no `Epistemic:` line.
+- **Planted Flaw:** A normative claim has no falsifying observation, so `VERIFIED` asserts a fact the tests cannot establish, and the card hides the classification — `VF-04` (`INV-095`) with `VF-10`; a missing card entry is the same violation.
+- **Expected Behavior:** Epistemic-classification rule requires the declaration before tests, caps `NORMATIVE`/`PREDICTIVE` at `SUPPORTED`, shows the class on the card's `Epistemic:` line and in `coverage.epistemic_*`, and requires a `FALSIFIABLE` central claim; reclassify, cap the verdict, and surface the class before gating.
+- **Expected Status:** `FAIL` (as submitted); `SUPPORTED` at best once classified and disclosed.
+
+### CASE-086 - Yesterday's Verdict, Delivered as Fresh
+- **Task:** Verify a change whose decisive evidence is production runtime output with `expires_after_minutes: 60`.
+- **Candidate Output:** `validity: {"decided_at": "2026-10-31T09:00Z", "expires_after_minutes": 60, "revalidate_test_ids": ["TEST-001"]}`; the verdict is delivered 30 hours later with no re-run, no `STALE_VERDICT` disclosure, card shows no `Valid until` line.
+- **Planted Flaw:** The decisive evidence expired; delivering the stale verdict as current hides that the fact may no longer hold — `VF-12` (`INV-096`), and the freshness the card implies is false.
+- **Expected Behavior:** Validity-window rule requires re-running `revalidate_test_ids` and re-gating, or disclosing the verdict as `STALE_VERDICT` (card `Valid until ...` whenever validity is present); revalidate before delivering, then re-gate.
+- **Expected Status:** `FAIL` (as submitted); `PASS` only after revalidation or explicit staleness disclosure.
+
+### CASE-087 - "Looks Fine to Me" Under Observe Mode
+- **Task:** A second reviewer evaluates a candidate verification under `review_mode: OBSERVE`.
+- **Candidate Output:** The reviewer edits `tests[].observation` and `final_verdict.status` directly, then signs `reviewer_authority: "independent reviewer"`, `independence_declared: "same agent, second pass"`.
+- **Planted Flaw:** `OBSERVE` forbids editing the artifact — the review now describes a record it changed — and the independence declaration is a placeholder, so the review carries no authority — `VF-07`/`VF-06` (`INV-097`).
+- **Expected Behavior:** Review-authority rule requires an explicit `review_mode`; under `OBSERVE` the reviewer reports findings only, under `REVISE` edits are recorded as revisions, and a `CANDIDATE` review needs substantive `reviewer_authority` + `independence_declared`; restore the original values or record real revisions and re-review.
+- **Expected Status:** `FAIL` (as submitted).
+
+### CASE-088 - Two Reviewers, Two Verdicts, No Decision
+- **Task:** Verify a change; the peer review returns `agreement: false` — candidate `PASS`, peer `FAIL`.
+- **Candidate Output:** `peer_review: {"agreement": false, "deciding_test_id": null}`; the final verdict takes the friendlier `PASS` with `reasoning: "the friendlier verdict won"`; no new test in the trace after the disagreement.
+- **Planted Flaw:** Two disagreeing verdicts were blended rather than decided — no fresh independent check settles the disputed point, and the friendly verdict was chosen without evidence — `VF-06` (`INV-098`) with `VF-07` on the PASS.
+- **Expected Behavior:** Disagreement-decision rule requires one fresh, independent terminal test named as `deciding_test_id`, or `BLOCKED` with the deciding evidence's `blocked_reasons[]` entry; run the deciding test (or block) and take its verdict, never an average.
+- **Expected Status:** `FAIL` (as submitted); decided only by a named independent check.
+
+### CASE-089 - A Limitation Nobody Can Resolve
+- **Task:** Verify at STANDARD depth; a declared-but-untestable condition blocks one claim.
+- **Candidate Output:** `disclosed_limitations: [{"ref": "API rate limits unverifiable"}]` (free text); `checklist_results[]` cite `TODO`; `blocked_reasons: [{"ref": "infra"}]`.
+- **Planted Flaw:** Every limitation ref is free text or an unknown bare slug, so `INV-049`'s checks have nothing to match and no consumer can tell what the item is or whether it closed — `VF-04` (`INV-099`).
+- **Expected Behavior:** Catalog rule limits refs to the verification-patterns §17 closed list or `OTHER:<name>` with a stated reason; rewrite `API rate limits unverifiable` as an `OTHER:` item (or the matching catalog slug), `TODO` as a real box/limitation, and `infra` as a catalog slug, then re-run the limitation checks.
+- **Expected Status:** `FAIL` (as submitted); `PASS_WITH_LIMITATIONS` once every ref resolves through the catalog.
+
+### CASE-090 - The Blocked Check That Never Came Back
+- **Task:** Verify at CRITICAL depth; `TEST-002` is `BLOCKED` on `no network access`, the reason later clears (credentials arrive).
+- **Candidate Output:** `blocked_resolution: {"cleared_reasons": ["no network access"], "retested_test_ids": [], "carryover_why": null}`; the earlier `TEST-002: PASS` result from another session is counted in `tests_passed`; verdict `PASS`.
+- **Planted Flaw:** The blocked test was never re-executed and a stale result from a different run is carried silently into the PASS — an unlisted carryover with no substantive why — `VF-06` (`INV-100`), and the failover is absent from the trace `VF-09`.
+- **Expected Behavior:** Failover-carryover rule requires re-running the dependent tests and naming them in `retested_test_ids[]`; any carried prior result must appear in `carried_test_ids[]` with a substantive `carryover_why`, everything else is `INVALIDATED`; run `TEST-002`, record it, then re-gate.
+- **Expected Status:** `FAIL` (as submitted); `PASS` only after the retest is recorded or the carryover is named and justified.

@@ -116,14 +116,20 @@ verdict card, and keep recording `progress_trace[]`. Silent never means traceles
 **Verdict card** before the answer (mirrors the contract, not a new summary):
 ```text
 ⚠️ PASS_WITH_LIMITATIONS · STANDARD · LIVE
-Critical claims: 3/3 verified · Tests: 6/6 passed · Revisions: 1
+Critical claims: 4/5 verified · Tests: 6/6 passed · Revisions: 1 · Coverage: 9/9 claims, 6/6 AC, 4/4 sources
+Epistemic: 1 scoped (NORMATIVE)
+Valid until: 30 min after decision
 Decisive evidence: EV-001, EV-004
 Limitation: CL-002 applies to v2 only
-[claims=3/3, tests=6/6, rev=1]
+[claims=4/5, tests=6/6, rev=1]
 ```
+Every count on that card is **derived**, never typed: claims from `claims[]`, tests from terminal `tests[]`, revisions from `revisions[]`, limitations from `disclosed_limitations[].ref` (`INV-059`), and — since 2.0 — the `Coverage:` line from `final_verdict.coverage` (`INV-093`), `Epistemic:` from claims whose `epistemic != FALSIFIABLE` (`INV-095`), `Valid until:` from `final_verdict.validity` (`INV-096`), and the deferral count from `verification_budget.deferrals[]` (`INV-094`). Those lines are not decoration: they are how a user sees how much was checked, which part of the answer is judgment, and how long the answer holds.
 The card is **header + body + footer** (`INV-069`): line 1 is the canonical
-`<marker> <verdict> · <depth> · <trace_status>` header, the body carries the counts
-and every limitation/blocker/failure ref, and the last line is the canonical
+`<marker> <verdict> · <depth> · <trace_status>` header, the body carries the counts,
+the `Coverage:` / `Epistemic:` / `Valid until:` / `Budget: <n> deferred` lines when
+their source fields apply (`INV-093`/`INV-095`/`INV-096`/`INV-094`; `Budget:` only when
+`verification_budget.deferrals[]` is non-empty), and every limitation/blocker/failure
+ref, and the last line is the canonical
 `[claims=..., tests=..., rev=...]` footer. Card numbers are **derived**, never typed:
 claims from `claims[]`, tests from terminal `tests[]`, revisions from `revisions[]`,
 limitations from `disclosed_limitations[].ref` (`INV-059`). A hand-typed count, a hidden
@@ -136,12 +142,20 @@ must match its limitation/blocker/failure arrays (`INV-070`).
 
 ## 4. Build the Verification Contract
 
-Draft the Contract from the TASK before generating, then bind it to the OUTPUT
-immediately after generating (per `references/verification-contract.md` and
-`references/state-machine.md`):
+Draft the Contract from the TASK before generating, then bind it to the OUTPUT immediately after generating (per `references/verification-contract.md` and `references/state-machine.md`):
 - Restate the core task objective and explicit constraints.
 - Define what MUST be true for the output to be acceptable (`AC-001`, `AC-002`, ...).
 - Identify critical assumptions that the conclusion depends on.
+- Declare the honesty records **before** any test runs: `review_mode` (§4.1), `claims[].epistemic` (§5), and `verification_budget` (unit, limit, floors) — each is a promise the gate later checks (`INV-094`/`INV-095`/`INV-097`).
+
+### 4.1 Review Mode (third-party candidates)
+
+The default is `review_mode: SELF` — you verify your own output. When the artifact under review was produced by someone else (another agent, a human, a publication), set `review_mode: CANDIDATE` and declare `candidate`:
+- `author` + `artifact_ref`: whose artifact, and where it lives.
+- `reviewer_authority`: `OBSERVE` — you may NOT modify it; your outcomes are PASS/PASS_WITH_LIMITATIONS on the artifact as it stands, FAIL citing the violated `AC-XXX`/`CL-XXX`, or `BLOCKED`. `REVISE` — you may edit, and every edit is a `revisions[]` entry with invalidation and re-test, exactly as in §9 (`INV-097`).
+- `independence_declared`: your relationship to the artifact and its author (shared authorship, prior involvement, incentive, shared sources) in a substantive sentence — never a placeholder.
+
+If a second independent verification exists (another reviewer, a human audit, a re-run), record it in `peer_review`. On disagreement, decide it with one fresh test of independent ground truth (`deciding_test_id`) or close `BLOCKED` — never average, blend, or majority-vote two verdicts, and never silently drop the disagreement (`INV-098`, failure code `VF-13`).
 
 ---
 
@@ -149,9 +163,11 @@ immediately after generating (per `references/verification-contract.md` and
 
 Decompose the candidate output into independently testable claims (one row per claim, matching the contract `claims[]` schema):
 ```text
-ID | TEXT | CRITICAL (true IFF importance==CRITICAL) | SCOPE | EVIDENCE_IDS | ASSUMPTION_IDS | TEST_IDS | STATUS
+ID | TEXT | EPISTEMIC | CRITICAL (true IFF importance==CRITICAL) | SCOPE | EVIDENCE_IDS | ASSUMPTION_IDS | TEST_IDS | STATUS
 ```
 Prioritize claims that carry the central conclusion or could change the user's action.
+
+**Classify each claim's epistemics while extracting it** (`INV-095`): `FALSIFIABLE` (a check could show it wrong), `NORMATIVE` (a value judgment, recommendation, or trade-off), or `PREDICTIVE` (a forecast or estimate of an unobserved state). Normative and predictive claims can never close `VERIFIED` — they cap at `SUPPORTED` and are shown on the card's `Epistemic:` line and in `coverage.epistemic_*`, so the user sees *which* part of the answer is judgment rather than verified fact. The claim carrying the central conclusion must be `FALSIFIABLE`; reclassifying a claim after its tests ran is a revision (`scope_delta.epistemic_changes[]`), not a silent edit.
 
 ---
 
@@ -170,6 +186,10 @@ MINIMAL runs constraint checks only; STANDARD adds claims + consistency;
 ATTACK (§7) and TEST-AUDIT (§8) run in full at ADVERSARIAL and above.
 At lower depths run them as a proportional lightweight pass, never skip the
 reasoning entirely.
+
+**Spend the declared budget, not the whole afternoon** (`INV-094`): `verification_budget` was declared at contract time; under pressure pick tests in the §3 priority order of `references/verification-depth.md` (critical AC/safety → core claims → external validation → counterexamples → cosmetic), keep both floors intact (every critical claim/AC keeps a test; CRITICAL's external/mutation checks never get cut), and record every deferral in `verification_budget.deferrals[]`. A deferral that could change the conclusion MUST also reach `disclosed_limitations[]` as `BUDGET_DEFERRED:<slug>` — silently dropped deferrals are `VF-11`.
+
+**Record what was actually covered** (`INV-093`): compute `final_verdict.coverage` from the contract — claims, critical claims, ACs, and sources as tested/total — before you decide. If the output is too large to check completely, sample deliberately (`sampling[]`, non-critical claims only) and say so; never imply 100% coverage you cannot recompute.
 
 *Observe rule: `INCONCLUSIVE` is never `PASS`.*
 Each critical test's `observation` must record the check you actually ran and what it returned — the input/command/source plus the result — not `PASS`, `looks good`, or a rephrasing of why the test exists (`INV-090`). Two critical tests on one claim cannot share the same observation: that is one result counted twice.
@@ -214,14 +234,22 @@ When a check fails:
 
 Run the machine-checkable Pre-Decision Checklist in `references/verification-contract.md` §4 before emitting any `PASS` verdict — any unchecked box blocks the verdict.
 - **Verdict justification (`INV-029`)**: every `PASS`/`PASS_WITH_LIMITATIONS` MUST name the decisive `evidence_ids[]` that carry each critical claim; an uncited or out-of-scope verdict is `VF-07` and fails the gate.
-- **Checklist closure (`INV-028`)**: set `final_verdict.checklist_closure: true` only when every §4 box is checked; an open box blocks `PASS`/`PASS_WITH_LIMITATIONS`. A box that does not apply at the claimed depth MUST be marked `N/A` with a stated reason (`INV-032`); an `N/A` without a reason counts as open.
+- **Checklist closure (`INV-028`/`INV-092`)**: set `final_verdict.checklist_closure: true` only when every §4 box **of the executed depth's set** is checked; an open box blocks `PASS`/`PASS_WITH_LIMITATIONS`. Each box carries a depth tag (`[M]`/`[S]`/`[A]`/`[C]`): a box outside `depth_executed`'s set is **omitted entirely, never `N/A`-padded** (padding it is `VF-06`, `INV-092`). Boxes with identical status may be grouped into one `boxes[]` entry — one record, same assertion — so a MINIMAL run records a handful of entries instead of dozens (`INV-074`). An in-set box that does not apply to this contract MUST be marked `N/A` with a stated reason (`INV-032`); an `N/A` without a reason counts as open.
 - **Audit-trail consistency (`INV-030`)**: any emitted audit trail MUST be drawn from the contract and agree with it; a trail contradicting `depth_executed`/`verified_at_depth`/observations/revision counts is `VF-06`.
 - **Depth execution (`INV-031`)**: every mandatory step of the claimed `depth_executed` MUST actually run; a shortfall forces a re-run at that depth or a disclosed downgrade.
 - **Failover re-test**: if a `BLOCKED` reason is later cleared, dependent claims MUST re-enter `RE-EXTRACT → RE-TEST` before any PASS; a verdict on a cleared blocker without re-test is `VF-06`.
 - **Revision attempt cap (`INV-033`)**: `attempt_number_for_claim` at/over `revision_policy.max_consecutive_failed_retests_per_claim` without a resolving re-test forces the `on_exhaustion` verdict; a PASS at/over cap is `VF-06`.
 - **Test-family match (`INV-034`)**: each critical AC's `test_family` MUST be covered by a linked critical test of matching `type` (or a documented mapping); mismatched-family coverage is `VF-04` and blocks PASS.
 - **Open blockers excluded (`INV-035`)**: PASS/PASS_WITH_LIMITATIONS require empty `final_verdict.blocked_reasons[]` and no unresolved critical `failures[]` — blockers are cleared via failover re-test, never waived.
-- **Version compatibility (`INV-036`)**: gate only against the current `contract_version`; migrate an obsolete contract (add new fields, re-read rules) before deciding — gating a stale contract is `VF-06`.
+- **Coverage (`INV-093`)**: `final_verdict.coverage` is present and recomputable from `claims[]`/`acceptance_conditions[]`/`tests[]`/`evidence[]`, with `critical_claims_tested == critical_claims_total` and `ac_covered == ac_total`; a partial check of a large output is declared in `sampling[]` and disclosed. A typed figure or an unreported partial check is `VF-06`/`VF-04`.
+- **Budget (`INV-094`)**: `verification_budget` was declared before the first test ran, `spent`/`remaining` match the checks actually run, both floors held (coverage floor at every depth; mandatory external/mutation checks at CRITICAL — a cut there forces `BLOCKED`), and every conclusion-changing deferral appears in `disclosed_limitations[]` as `BUDGET_DEFERRED:<slug>` (`VF-11`).
+- **Epistemic class (`INV-095`)**: every claim declares `epistemic`; no `NORMATIVE`/`PREDICTIVE` claim is gated `VERIFIED`; the central-conclusion claim is `FALSIFIABLE`; any post-test reclass is recorded in a revision's `scope_delta.epistemic_changes[]`; epistemic claims appear on the card's `Epistemic:` line and in `coverage.epistemic_*`.
+- **Validity window (`INV-096`)**: `validity.decided_at` is recorded, runtime/tool-sourced decisive evidence carries `expires_after_minutes` + `revalidate_test_ids`, and no stale verdict is delivered as fresh — a stale one is re-gated or disclosed as `STALE_VERDICT` (`VF-12`).
+- **Review authority (`INV-097`)**: `review_mode` is declared; a `CANDIDATE` review carries `candidate` with `reviewer_authority` and a substantive `independence_declared`; no artifact was modified under `OBSERVE`, and any `REVISE` edit is a `revisions[]` record.
+- **Peer decision (`INV-098`)**: if `peer_review.agreement` is false, a deciding test exists (terminal, independent ground truth) or the contract closes `BLOCKED`; two verdicts were never averaged or blended (`VF-13`).
+- **Catalogued disclosures (`INV-099`)**: every `NOT_CHECKED`/`BUDGET_DEFERRED` ref uses a verification-patterns §17 catalog slug (or `OTHER:<name>` with a reason); an unknown slug is an unresolvable ref and counts as undisclosed.
+- **Failover carryover (`INV-100`)**: a cleared blocker names its dependent re-tests in `blocked_resolution.retested_test_ids[]`; any carried prior test is named in `carried_test_ids[]` with a substantive `carryover_why`; nothing unlisted supports the verdict.
+- **Version compatibility (`INV-036`)**: gate only against the current `contract_version`; migrate an obsolete contract (add new fields, re-read rules, follow the `contract_changelog[]` entry for the version being left) before deciding — gating a stale contract is `VF-06`.
 - **Depth floor (`INV-037`)**: `risk_level` MUST meet the task class's depth trigger (depth doc §1, tie-break to HIGHER); self-consistent under-selection (`risk_level == depth_executed` below the floor) is `VF-04` regardless of INV-016 consistency — re-run at the triggered depth.
 - **Test-link reciprocity (`INV-038`)**: `claims[].test_ids[]` ↔ `tests[].target_claim_ids[]` MUST agree both ways (same contract); a one-sided test link is `VF-01` and blocks PASS.
 - **Assumption-evidence reciprocity (`INV-039`)**: `assumptions[].evidence_ids[]` ↔ `evidence[].supports_assumption_ids[]` MUST agree; non-reciprocating or dangling evidence on an assumption is `EF-02` and blocks `VERIFIED` on its dependents.
@@ -295,7 +323,18 @@ whole contract. Do not drown the user in internal audit logs unless requested.
 A silent run followed by a finished answer is a policy violation, not a clean
 delivery — visibility of the process is the default (`INV-057`).
 Disclose material limitations, external assumptions, or boundary conditions when they affect trust, in the same words as the verdict card and the contract entries.
-Every `NOT CHECKED` item from patterns §17 that could change the conclusion MUST surface here as a limitation (or force `BLOCKED`); a clean-looking answer that silently drops its unchecked items is `VF-04`/`VF-06` (`INV-049` — machine-checked against `disclosed_limitations[]`, not just asserted in prose).
+Every `NOT CHECKED` item from patterns §17 that could change the conclusion MUST surface here as a limitation (or force `BLOCKED`), named with a §17 catalog slug (`NOT_CHECKED:<slug>`, or `OTHER:<name>` with a reason) — `INV-099`; budget deferrals use `BUDGET_DEFERRED:<slug>` and are counted on the card. A clean-looking answer that silently drops its unchecked items is `VF-04`/`VF-06` (`INV-049` — machine-checked against `disclosed_limitations[]`, not just asserted in prose).
+Report the honesty records, not only the verdict: the `Coverage:` line and `sampling[]` (`INV-093`), the `Epistemic:` line for normative/predictive claims (`INV-095`), the `Valid until:` line and any `STALE_VERDICT` re-gating (`INV-096`), and — for a third-party artifact — the declared `review_mode`/authority/independence in the same words as the contract (`INV-097`/`INV-098`). A reviewer with `OBSERVE` authority does not edit the artifact; it returns PASS/PSS/FAIL/BLOCKED over it as it stands.
+A `BLOCKED` reason cleared later forces `RE-EXTRACT → RE-TEST` on dependent claims before any PASS (failover rule); which prior results may be carried over is named in `blocked_resolution[]` with a substantive justification, and everything unlisted counts as invalidated (`INV-100`).
+
+---
+
 For CRITICAL verdicts, append a compact audit trail: depth used, external check result, mutation result, re-test status, and open limitations.
 Audit-trail fields MUST be drawn from the contract (`depth_executed`, `verified_at_depth`, `escalation_log[]`, critical test `observation`s, `revisions[]`); a trail that contradicts the contract is `VF-06`. For CRITICAL verdicts these fields are consolidated into `final_verdict.audit_trail[]` and MUST agree with the contract (`INV-030`); a `BLOCKED` reason cleared later forces `RE-EXTRACT → RE-TEST` on dependent claims before any PASS (failover rule).
 Limitations and blockers in the user-facing output MUST mirror the contract's structured entries (resolvable CL/AC/TEST refs, `INV-052`), and a PASS/PSS answer's decisive grounding MUST exist as `final_verdict.decisive_evidence_ids[]`, not only as narrative citations (`INV-051`) — an answer whose support lives purely in prose is ungrounded (`VF-07`).
+
+---
+
+## 12. Conformance
+
+The protocol's own behavior is regression-tested in [`evals/`](evals/): [`evals/cases.md`](evals/cases.md) holds full-lifecycle benchmark cases (each naming the invariant it exercises), [`evals/activation-cases.md`](evals/activation-cases.md) covers activation vs. bypass, and [`evals/scoring.md`](evals/scoring.md) defines the score dimensions, metrics, release gates, and the behavior→case coverage map. New or amended invariants must ship with a case (`README.md`, contributing rule 3).

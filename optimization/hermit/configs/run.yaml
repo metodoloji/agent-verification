@@ -1,0 +1,70 @@
+# Hermit run: evolve the verification adapter over the repository's own benchmark.
+#
+# Every key below matches `hermit/defaults.yaml`; paths are relative to this file.
+# The pipeline and judge are the repository's own (agent.py / judge.py), so `hermit eval`
+# and the SkillOpt environment score a run the same way.
+#
+#   hermit check --config optimization/hermit/configs/run.yaml
+#   hermit train --config optimization/hermit/configs/run.yaml
+
+task_info: ../task_info
+
+data:
+  tasks: ../data/tasks.jsonl
+  train: ../data/train.txt
+  val: ../data/val.txt
+  test: ../data/test.txt
+  step_size: 2
+  shuffle: true
+
+agent:
+  name: ../agent.py:run
+  concurrency: 2
+  timeout_min: 20
+  params:
+    timeout: 600
+
+judge:
+  path: ../judge.py
+  name: score
+
+template: prompt-only
+
+start_from: ../adapter
+
+evolver:
+  name: skillopt
+  params:
+    file: ADAPTER.md
+    minibatch_size: 2
+    merge_batch_size: 2
+    analyst_workers: 2
+    learning_rate: 2
+    min_learning_rate: 2
+    total_steps: 2
+    use_gate: true
+    gate_metric: hard
+    use_slow_update: false
+    use_meta_skill: false
+    promote_final: true
+    seed: 42
+
+trainer:
+  run_name: verification-hermit
+  output_dir: ../runs
+  epochs: 1
+  budget:
+    usd: 5
+    hours: 2
+  save_freq:
+    steps: null
+    epochs: 1
+
+eval:
+  repeats: 1
+
+# macOS has no bubblewrap; Hermit refuses to run otherwise.
+sandbox:
+  enabled: false
+  enforce: best_effort
+  network: open

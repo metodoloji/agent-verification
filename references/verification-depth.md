@@ -21,6 +21,7 @@ TASK → ACTIVATION → SELECT DEPTH → EXECUTE VERIFICATION LIFECYCLE
   4. Final Decision (`PASS` / `FAIL`; `BLOCKED` if a required check cannot run, `PASS_WITH_LIMITATIONS` if a non-critical gap must be disclosed — per `INV-010`, never downgrade an unrunnable check to `PASS`).
 - **Depth floor:** a task selected (or escalated) to a higher depth MUST execute all of that depth's required steps; running fewer steps while keeping the higher `risk_level` label violates `INV-016`. Conversely, executing higher-depth checks without logging the escalation violates `INV-016`.
 - **MINIMAL floor:** even at MINIMAL, a `PASS` on a critical test requires a one-line `observation` (per `INV-018`) and a concrete `falsifiability` input (per `INV-087`); constraint-only never means evidence-free on criticals.
+- **MINIMAL checklist set:** MINIMAL records only the §4 boxes tagged `[M]`; the `[S]`/`[A]`/`[C]` boxes are omitted entirely, not marked `N/A` (`INV-092`). The contract is constraint-scoped: `acceptance_conditions[]` + constraint `tests[]` carry the verdict, the central constraint AC plays the non-vacuity role, and AC↔evidence links (`acceptance_conditions[].evidence_ids` ↔ `evidence[].supports_ac_ids`) provide the decisive evidence (`INV-017`/`INV-051`).
 
 ### STANDARD
 - **Trigger:** Default for correctness-sensitive factual, analytical, or structural tasks.
@@ -81,16 +82,53 @@ Depth MUST escalate when:
 
 ## 3. Verification Budget Allocation
 
-When constrained by execution time, token limits, or tool calls:
-1. Prioritize critical acceptance conditions and safety constraints.
-2. Prioritize core claims carrying the final conclusion.
-3. Prioritize external validation over model self-reflection.
-4. Prioritize counterexamples for central assertions.
-5. Defer cosmetic, stylistic, or secondary checks.
+The budget is a contract field (`verification_budget`, `INV-094`), not a mood: it is declared before the first test runs and recorded with a unit, a limit, the derived spend, and the deferral receipt.
+
+```json
+{
+  "unit": "CHECKS | TOKENS | MINUTES | TOOL_CALLS",
+  "limit": 40,
+  "spent": 26,
+  "remaining": 14,
+  "declared_at": "progress_trace seq of the CONTRACT entry",
+  "deferrals": [{"ref": "BUDGET_DEFERRED:edge-inputs", "why": "...", "would_change_conclusion": false}],
+  "floor": {"critical_claims_covered": true, "mandatory_checks_run": true}
+}
+```
+
+When constrained by execution time, token limits, or tool calls, select tests in this order:
+1. Critical acceptance conditions and safety constraints.
+2. Core claims carrying the final conclusion.
+3. External validation over model self-reflection.
+4. Counterexamples for central assertions.
+5. Cosmetic, stylistic, or secondary checks — the only deferrable class.
 
 *Never exhaust the verification budget checking trivial formatting while critical claims remain unverified.*
 
-Budget cuts never waive external validation for CRITICAL tasks: if the mandatory independent check cannot run, verdict is `BLOCKED`, never a downgraded `PASS`.
-Conflict rule: when budget pressure collides with a mandatory check, the mandatory check wins; record the deferred cosmetic items in `final_verdict.disclosed_limitations[]` instead of silently dropping them.
+**Two floors no budget may cut (`INV-094`):**
+- **Coverage floor:** every critical claim/AC keeps at least one executed test (`floor.critical_claims_covered: true`) at every depth — this is what makes `final_verdict.coverage` report `critical_claims_tested == critical_claims_total`.
+- **Mandatory-check floor:** at CRITICAL depth the external and mutation checks (`INV-056`) always run (`floor.mandatory_checks_run: true`); if the mandatory independent check cannot run, the verdict is `BLOCKED`, never a downgraded `PASS`.
+
+Conflict rule: when budget pressure collides with a mandatory check, the mandatory check wins; record the deferred items in `verification_budget.deferrals[]` and — when `would_change_conclusion: true` — mirror them into `final_verdict.disclosed_limitations[]` as `BUDGET_DEFERRED:<slug>` instead of silently dropping them (INV-049/INV-099). An undeclared budget, a `spend` that contradicts the executed checks, or a conclusion-changing deferral that never reached the card is `VF-11`.
+
+**Checklist proportionality (`INV-092`):** the §4 checklist is depth-scoped. A MINIMAL run records only its `[M]` boxes — typically one grouped `CHECKED` entry plus the exceptions it really has — instead of the whole 83-box list; `[S]`/`[A]`/`[C]` boxes are not written at all, and padding them in as `N/A` is `VF-06`. Overhead must stay below the verification it guards.
+
+**Coverage over volume (`INV-093`):** when the output is too large to check completely, sample deliberately (`sampling[]`: method + ids, non-critical claims only) and report what was and was not covered — never imply full coverage. `INV-047` still enumerates every untested non-critical AC/test.
+
 Trace budget rule (`INV-057`): progress updates are not discretionary spend. Never drop a failure, revision, re-test, escalation, or verdict update to save budget — if the runtime truly cannot stream, disclose `TRACE_DEFERRED`, do not go silent.
 Trace caps (`INV-062`): MINIMAL 3 base entries, STANDARD 12, ADVERSARIAL 14, CRITICAL 16 (one entry per recorded failure/revision/re-test/escalation is exempt); each summary <= 280 characters and free of credentials/PII. Trace order/refs (`INV-063`/`INV-064`): stages follow the lifecycle and each cites its own artifact; a stage running longer than about a minute emits one heartbeat per minute instead of going silent. Completeness (`INV-065`) requires the opening `DEPTH` entry, the depth's required stage set, and one trace entry per failure/revision/escalation; provenance (`INV-066`) requires the card to show the executed depth and `LIVE`/`RETRO` status; verbatim counts (`INV-067`) require `rendered_counts` and the canonical `[claims=..., tests=..., rev=...]` footer to match the card fields. Suite closure (`INV-068`) requires every defined test to be terminal before the card, so `tests_total` never hides an unrun check; the card then opens with the canonical header (`INV-069`) and its label must match its own limitation/blocker/failure arrays (`INV-070`). Assumption hygiene (`INV-071`/`INV-072`) requires `VERIFIED` assumptions to rest on reciprocated, scope-matching evidence and every critical `CONDITIONAL`/`UNVERIFIED` assumption to carry an `AS-XXX` ref in `disclosed_limitations[]` or `blocked_reasons[]`; escalation entries are directional (`INV-073`), so a downgrade is a `DOWN` entry with dropped checks and a matching `DOWNGRADE` ref, never a silent `UP`. Record hygiene (`INV-074`/`INV-075`/`INV-076`) closes the same loop one level down: the §4 checklist is recorded per box rather than asserted by a flag, a test-family mismatch must be declared as an exception with a reason instead of assumed as a "documented mapping", and `VERIFIED` claims must rest on this run's `observed_in_run` evidence — prior-run evidence caps them at `SUPPORTED`. The same records expose the three classic self-deception paths: a critical test must declare its ground truth so a self-agreement check cannot pass as verification (`INV-077`), each revision must record its scope delta so scope cannot be quietly narrowed to reach `PASS` (`INV-078`), and each evidence item must declare its origin so an answer cannot be verified against itself (`INV-079`). Every depth closes with the derived verdict card (`INV-059`), and the trace must be closed (`INV-060`) and honestly deferred if at all (`INV-061`). Deferred-check rule (`INV-049` enforcement): any budget-deferred item that could change the conclusion MUST appear in `disclosed_limitations[]` or force conditional/`BLOCKED` — silently dropped deferrals are `VF-04` and block `PASS`/`PASS_WITH_LIMITATIONS`.
+
+---
+
+## 4. Records Every Depth Keeps (2.0)
+
+These records are depth-agnostic — they apply at MINIMAL as much as at CRITICAL, only their content shrinks:
+
+- **Depth-scoped checklist (`INV-092`):** record exactly the executed depth's §4 box set, each box once (individually or grouped by identical status), never padded with out-of-set `N/A` rows. A MINIMAL run therefore writes one grouped `CHECKED` entry plus its real exceptions instead of the full list.
+- **Derived coverage (`INV-093`):** `final_verdict.coverage` is computed from `claims[]`/`tests[]`/`acceptance_conditions[]`, never typed. PASS/PSS require `critical_claims_tested == critical_claims_total` and `ac_covered == ac_total`; a MINIMAL run still reports these counts over its (small) claim set, and any deliberate sampling appears in `sampling[]`.
+- **Epistemic class (`INV-095`):** declared when the contract is bound, before the first test — at every depth. MINIMAL claims are usually `FALSIFIABLE` (a constraint can be checked); a `NORMATIVE` constraint still caps at `SUPPORTED`.
+- **Validity window (`INV-096`):** recorded on every verdict. MINIMAL checks against runtime output — a live formatter, a running service — still carry `expires_after_minutes` and their revalidation test ids.
+- **Review mode (`INV-097`/`INV-098`):** when the artifact is not the agent's own, `review_mode: CANDIDATE` with authority and independence; a peer disagreement at any depth is decided by one fresh independent `deciding_test_id`, or the run is `BLOCKED`.
+- **Failover carryover (`INV-100`):** a cleared `BLOCKED` reason forces the dependent tests to be re-run and named in `blocked_resolution.retested_test_ids[]`, at every depth — the depth of the re-run may be lower than the original only if the original checks are still executed.
+
+Depth does not exempt a record; it only changes how much it contains. Skipping one because the run was "only" MINIMAL is `VF-06`.

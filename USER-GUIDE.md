@@ -359,6 +359,7 @@ it failed on the ultrabook, confirming the limitation instead of hiding it.
 ⚠️ PASS_WITH_LIMITATIONS · ADVERSARIAL · LIVE
 Critical claims: 3/3 verified · Tests: 7/8 passed (TEST-007 failed, disclosed) · Revisions: 1
 Limitations: CL-002 applies to light load only; TEST-007 (cooling) failed on the ultrabook.
+Coverage: 3/3 claims, 2/2 AC, 4/4 sources
 [claims=3/3, tests=7/8, rev=1]
 ```
 
@@ -435,6 +436,38 @@ A trace can be grounded and still mislead by sequencing: saying ATTACK before an
 
 The card also declares its provenance: the executed depth and whether the trace was `LIVE` or `RETRO` (`INV-066`). And the trace must be complete for that depth — opening `DEPTH`, the required stages, and one entry per failure, revision, and escalation (`INV-065`); a short, polished trace is `VF-09`, not a tidy summary. The card's prose also carries a canonical `[claims=..., tests=..., rev=...]` footer that must match its fields (`INV-067`) — the numbers you read cannot drift from the contract.
 
+### How much of the output was actually checked
+
+Since 2.0 the card carries a `Coverage:` line, and it is derived from the test record rather than typed (`INV-093`): claims tested over claims total, critical claims tested over critical total, acceptance conditions covered, sources. A `PASS`/`PASS_WITH_LIMITATIONS` must show full critical coverage; a figure that counts a claim as tested with no terminal test behind it, or that hides a partial check, is `VF-06`/`VF-10` and blocks the release. When the output is too large to check completely, the run samples deliberately (`sampling[]`: method plus the ids chosen) and the partial coverage shows in the limitations — "verified" over a silent sample is exactly the failure this line exists to prevent.
+
+### Some claims are judgments, not facts
+
+Every claim declares an epistemic class before the tests run (`INV-095`): `FALSIFIABLE` (a check could prove it wrong), `NORMATIVE` (what should be done), or `PREDICTIVE` (what will happen). A normative or predictive claim can be *supported*, never `VERIFIED` — no test falsifies "you should migrate" — so it caps at `SUPPORTED`, appears on the card's `Epistemic:` line and in `coverage.epistemic_*`, and no fifth verdict is invented for it. The central conclusion must be falsifiable; reclassifying a claim after seeing test results counts as a revision, and a class missing from the card is `VF-04`.
+
+### A verdict has an expiry date
+
+When the decisive evidence is runtime output — a live API, a running service, a production query — the verdict records how long it holds (`INV-096`): `final_verdict.validity.decided_at`, `expires_after_minutes`, and the test ids to re-run. Past that window the run must revalidate and re-gate, or deliver the verdict honestly as stale (`STALE_VERDICT`, `VF-12`) instead of presenting an expired answer as fresh. That is what the card's `Valid until ...` line is for: you can tell whether you are reading a current answer or yesterday's.
+
+### Reviewing someone else's work
+
+When the artifact is not the agent's own — another agent's answer, a human's draft, a published source — the contract declares `review_mode: CANDIDATE` with who produced it, the reviewer's authority, and how independent the reviewer really is (`INV-097`). Under `OBSERVE` the reviewer may not edit the artifact at all; any change requires `REVISE` authority and must appear as a recorded revision with its invalidated tests. A placeholder independence statement means the review carries no authority, which is `VF-13`. If a peer review disagrees with the candidate verdict, the disagreement is decided by one fresh, independent test named as `deciding_test_id` (`INV-098`) — not averaged, not settled by silently taking the friendlier verdict.
+
+### The checklist you see is the one that ran
+
+The §4 checklist is depth-scoped (`INV-092`): a MINIMAL run records only its `[M]` boxes — usually one grouped `CHECKED` entry plus its real exceptions — and does not pad the record with `N/A` rows from deeper sets. Each in-set box appears exactly once, whether recorded individually or grouped by identical status; a missing box, a duplicate key, or a padded out-of-set row is `VF-06`, and claiming a shallower depth to shrink the record while running deeper checks is a depth mismatch.
+
+### The budget is declared before the first test
+
+`verification_budget` is a contract field, not a mood (`INV-094`): unit, limit, `declared_at`, and a `spent`/`remaining` derived from checks that actually ran. Two floors cannot be bought down — every critical claim keeps at least one executed test, and at CRITICAL the external and mutation checks always run — and a conclusion-changing deferral must surface as `BUDGET_DEFERRED:<slug>` in the limitations rather than quietly vanishing. An undeclared budget, a contradictory spend, or a cut mandatory check is `VF-11`.
+
+### Unchecked items must be nameable
+
+Every `NOT_CHECKED`/`BUDGET_DEFERRED` disclosure names a slug from the closed catalog (`sources`, `versions`, `runtime`, `edge-inputs`, `cross-references`, `numeric-recomputation`, `counterexample-search`, `external-tool`, `assumptions`, `scope-boundary`, `time-sensitivity`, `security-safety`) or `OTHER:<name>` with a stated reason (`INV-099`). Free text like "some limits apply" matches nothing, so the item can be neither audited nor closed — an unresolvable ref is `VF-04`.
+
+### When a blocker clears
+
+If a test was `BLOCKED` on a reason that later clears — credentials arrive, the network comes back — the dependent tests must actually be re-run and named in `blocked_resolution.retested_test_ids[]` (`INV-100`). A result carried over from an earlier run has to be named in `carried_test_ids[]` with a substantive `carryover_why`; everything else is `INVALIDATED`. A `PASS` that rests on an unlisted or dependent carryover is `VF-06`, and a failover missing from the trace is `VF-09` — the point of re-running is that the evidence is current.
+
 ### The machine-checkable side
 
 * `INV-057` — the trace must be streamed at the depth's cadence; an end-of-run dump is `VF-09` and blocks `PASS`.
@@ -451,5 +484,14 @@ The card also declares its provenance: the executed depth and whether the trace 
 * `INV-083`–`INV-085` — scopes must be recorded so a scope match cannot be vacuous (`EF-04`); declaration pairs must describe the same artifact (`VF-06`); and a step record must cite trace coverage it actually has (`VF-06`/`VF-09`).
 * `INV-086`–`INV-088` — severity only moves through a recorded, evidenced revision delta and a serious open finding caps the verdict (`VF-06`/`VF-07`); a critical test must name a concrete wrong input (`VF-02`); and every trace summary must name the unit it narrates (`VF-09`).
 * `INV-089`–`INV-091` — every declared id is unique and correctly prefixed, so a citation names one unit (`VF-06`/`VF-07`); a critical test's observation records the check and its result rather than a status word (`VF-06`/`VF-07`); and an assumption a critical claim depends on must itself be critical (`VF-04`).
+* `INV-092` — the checklist record covers exactly the executed depth's box set, each box once, with no `N/A` padding from deeper sets (`VF-06`).
+* `INV-093` — `final_verdict.coverage` is derived from the test record, and a PASS/PSS shows full critical-claim and AC coverage or discloses its sampling (`VF-06`/`VF-10`).
+* `INV-094` — the budget is declared before the first test, its spend is derived, its two floors hold, and every conclusion-changing deferral is disclosed (`VF-11`).
+* `INV-095` — claims declare `epistemic` before tests; `NORMATIVE`/`PREDICTIVE` cap at `SUPPORTED` and appear on the card rather than as a fifth verdict (`VF-04`).
+* `INV-096` — a verdict records its validity window, and expired runtime evidence forces revalidation or an honest `STALE_VERDICT` (`VF-12`).
+* `INV-097` — a candidate review declares its mode, authority, and independence; `OBSERVE` never edits the artifact (`VF-13`/`VF-07`).
+* `INV-098` — a peer disagreement is decided by a named, fresh, independent test rather than averaged or resolved in favour of the friendlier verdict (`VF-13`).
+* `INV-099` — every `NOT_CHECKED`/`BUDGET_DEFERRED` ref resolves through the closed catalog or `OTHER:<name>` with a reason (`VF-04`).
+* `INV-100` — a cleared blocker re-runs its dependent tests, and any carried prior result is named with a substantive why (`VF-06`/`VF-09`).
 
 Full specification: [`references/progress-protocol.md`](references/progress-protocol.md).
