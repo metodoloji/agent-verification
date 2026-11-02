@@ -15,28 +15,20 @@ import json
 import os
 import shlex
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 from hermit.task import RunOutput
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "harness"))
+
+from contract_prompt import SYSTEM_PROMPT, build_user_prompt  # noqa: E402
+
 AGENT_ENV = "AV_AGENT_CMD"
 DEFAULT_CMD = "claude -p --output-format json"
 ADAPTER_FILE = "ADAPTER.md"
-
-PROMPT = """{skill}
-
-# Case {case_id}
-
-Task:
-{task}
-
-Candidate output to verify:
-{candidate}
-
-Emit the Verification Contract v2.0 JSON for this candidate, exactly as the rules above require,
-and nothing else."""
-
 
 def _skill(adapter: Path | None) -> str:
     if adapter is None:
@@ -46,12 +38,18 @@ def _skill(adapter: Path | None) -> str:
 
 
 def _prompt(task: dict, skill: str) -> str:
-    return PROMPT.format(
-        skill=skill.strip(),
-        case_id=task.get("id", "?"),
-        task=str(task.get("task") or "").strip(),
-        candidate=str(task.get("candidate_output") or "").strip(),
-    )
+    """Same fixed rules + shape as SkillOpt, plus the trainable adapter text.
+
+    The no-adapter baseline is measured on the same prompt minus ADAPTER.md, not on an
+    empty prompt: otherwise "trained" would win by being the only run told the contract
+    shape, and the comparison would measure the harness, not the skill.
+    """
+    case = {
+        "case_id": task.get("id", "?"),
+        "task": str(task.get("task") or "").strip(),
+        "candidate_output": str(task.get("candidate_output") or "").strip(),
+    }
+    return f"{SYSTEM_PROMPT}\n\n{build_user_prompt(case, skill)}"
 
 
 def _extract_text(stdout: str) -> str:

@@ -32,66 +32,12 @@ from .reward import reward  # noqa: E402
 AGENT_ENV = "AV_AGENT_CMD"
 DEFAULT_AGENT_CMD = "claude -p --output-format json"
 
-SYSTEM_PROMPT = """You produce Verification Contracts. A contract is the machine-readable record of how a
-candidate output was verified. You are graded only on the JSON you emit, so follow the rules in the
-skill document exactly and emit nothing else.
-
-Rules that the judge enforces mechanically:
-- The verdict must follow from the record: no PASS while a blocking finding is open, and no
-  PASS_WITH_LIMITATIONS while a MAJOR finding is unresolved.
-- `final_verdict.coverage` must be *derived* from the record: counts of claims/AC/sources actually
-  closed, never an aspiration.
-- `checklist_results[].boxes` must cover exactly the checklist set of `depth_executed`, each box
-  once, `NA` only with a substantive reason.
-- `claims[].epistemic` is one of FALSIFIABLE, NORMATIVE, PREDICTIVE. A NORMATIVE or PREDICTIVE
-  claim can be SUPPORTED, never VERIFIED.
-- `verification_budget` must be declared before the first test: limit = spent + remaining.
-- `final_verdict.validity` needs `decided_at` (ISO-8601), `expires_after_minutes`, and the tests to
-  re-run when it lapses.
-- `trace[]` entries are sequential (`seq` 0,1,2,...) and every check you claim must appear there.
-"""
-
-CONTRACT_SHAPE = """{
-  "schema_version": "2.0",
-  "review_mode": "SELF",
-  "candidate": {"author": "...", "artifact_ref": "...", "origin": "user", "reviewer_authority": "OBSERVE", "independence_declared": "..."},
-  "depth_executed": "MINIMAL|STANDARD|ADVERSARIAL|CRITICAL",
-  "verification_budget": {"unit": "tests", "limit": 8, "spent": 0, "remaining": 8, "declared_at": "trace:0", "deferrals": [], "floor": {"critical_checks": 2, "mandatory_checks": 1}},
-  "claims": [{"id": "CL-001", "text": "...", "epistemic": "FALSIFIABLE", "critical": true}],
-  "acceptance_conditions": [{"id": "AC-001", "text": "...", "evidence_ids": ["EV-001"]}],
-  "tests": [{"id": "TEST-001", "claim_id": "CL-001", "status": "PASSED|FAILED", "purpose": "...", "falsifier": "wrong input X would produce Y", "observation": "...", "ground_truth": {"kind": "EXTERNAL_TOOL|PRIMARY_DOC|DERIVATION", "ref": "..."}}],
-  "evidence": [{"id": "EV-001", "kind": "EXTERNAL_TOOL|PRIMARY_DOC|OBSERVATION", "source": "...", "observation": "...", "supports_ac_ids": ["AC-001"]}],
-  "failures": [],
-  "disclosed_limitations": [],
-  "checklist_results": [{"boxes": [{"box": "INV-001", "status": "CHECKED|NA", "invariant": "INV-001", "reason": "..."}]}],
-  "trace": [{"seq": 0, "kind": "DECISION|CHECK|REVISION|RETEST", "summary": "..."}],
-  "final_verdict": {"status": "PASS|PASS_WITH_LIMITATIONS|FAIL|BLOCKED|INCONCLUSIVE", "coverage": {"claims_checked": 1, "claims_total": 1, "ac_checked": 1, "ac_total": 1, "sources_checked": 1, "sources_total": 1}, "validity": {"decided_at": "2026-01-01T00:00:00Z", "expires_after_minutes": 1440, "revalidate_test_ids": ["TEST-001"]}, "rendered": "...", "rendered_counts": {}}
-}"""
+# The prompt lives in the harness so Hermit and SkillOpt cannot drift apart, and so the
+# shape cannot silently disagree with the gate (E-001). Re-exported for callers that
+# still import it from this module.
+from contract_prompt import CONTRACT_SHAPE, SYSTEM_PROMPT, build_prompts  # noqa: E402,F401
 
 FENCE = re.compile(r"```(?:json)?\s*(.*?)```", re.S)
-
-
-def build_prompts(item: dict, skill_content: str) -> tuple[str, str]:
-    """System/user prompts for one case."""
-    user = f"""# Skill document (follow it exactly)
-
-{skill_content.strip()}
-
-# Case {item.get('case_id', '?')}
-
-Task:
-{item.get('task', '')}
-
-Candidate output to verify:
-{item.get('candidate_output', '')}
-
-# Output
-
-Emit one JSON object shaped like this (keys are required; values are yours):
-
-{CONTRACT_SHAPE}
-"""
-    return SYSTEM_PROMPT, user
 
 
 def _extract_text(stdout: str) -> str:
@@ -208,7 +154,7 @@ def process_one(item: dict, skill_content: str, out_root: Path, cmd: str, timeou
         json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     violations = check(contract)
-    contract_score = score_contract(contract)
+    contract_score = score_contract(contract, violations)
     case = score_case(str(item.get("expected_status") or ""),
                       (contract.get("final_verdict") or {}).get("status"))
     row.update({
@@ -225,7 +171,12 @@ def process_one(item: dict, skill_content: str, out_root: Path, cmd: str, timeou
 
 def run_batch(items: list[dict], out_root: str | Path, skill_content: str, workers: int = 2,
               cmd: str | None = None, timeout: int = 900) -> list[dict]:
-    """Run all cases of a batch, resuming from contracts already on disk."""
+    """Run all cases of a batch from scratch.
+
+    A batch is never resumed from contracts already on disk: the skill document changes
+    between steps, so a cached contract would measure the previous skill and the training
+    signal would silently stop moving.
+    """
     out_root = Path(out_root)
     out_root.mkdir(parents=True, exist_ok=True)
     command = cmd or os.environ.get(AGENT_ENV) or DEFAULT_AGENT_CMD

@@ -1,0 +1,5 @@
+{"probe": "exception-missing-test-type", "ok": true}
+{"probe": "exception-wrong-test-type", "ok": true}
+{"probe": "exception-why-without-unit", "ok": true}
+{"probe": "exception-boundary-unnamed", "ok": true}
+{"probe": "prompt-missing-family-boundary-rule", "ok": true}

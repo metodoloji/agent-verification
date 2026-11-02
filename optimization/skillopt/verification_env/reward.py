@@ -5,7 +5,8 @@ reward must be (a) deterministic, (b) monotone in what we actually care about, a
 to reward a lucky verdict over a well-recorded one.
 
     0.60  verdict agreement with the case's expected status
-    0.40  contract compliance (score/4), weighted so a gated verdict over a violation is 0
+    0.40  contract compliance (score/4), capped at 0.50 total when a gated verdict ships
+          over a blocking violation (the contract part is not zero: the record still exists)
 
 A run that reaches the right verdict by breaking the gate scores 0.60; a run that reaches the
 right verdict and records it correctly scores 1.00. Neither can be beaten by a run that

@@ -1,0 +1,5 @@
+{"probe": "flawed-case-labelled-pass", "ok": true}
+{"probe": "after-revision-collapsed-to-pass", "ok": true}
+{"probe": "builder-has-no-first-pass-derivation", "ok": true}
+{"probe": "hermit-data-mirrors-final-label", "ok": true}
+{"probe": "derived-label-unmarked", "ok": true}

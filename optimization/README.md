@@ -39,9 +39,10 @@ about what "better" means.
 | Piece | Status |
 |---|---|
 | Dataset extraction (`dataset/build_dataset.py`) | **runs** — 90 cases: train 70 / val 11 / test 9 |
-| Mechanical gate `INV-092`–`INV-100` | **runs** — `harness/contract_check.py`, parsed from `references/` at run time |
+| Mechanical gate | **runs** — `harness/contract_check.py`, parsed from `references/` at run time; verdict integrity (`INV-035/050/051/055/070/086`), derived coverage (`INV-093`), evidence concreteness (`INV-052/087/090`), provenance (`INV-063/064/065/077/078/079/084`), attestation (`INV-060/076/081/085/088`), card integrity (`INV-066/069`), derived trace status (`INV-061`), boundaries (`INV-075/082/083`), redaction (`INV-062`) and `INV-092`–`INV-100` |
 | Deterministic judge (§2 metrics, reward) | **runs** — `harness/score.py`, `verification_env/reward.py` |
-| Fixtures + non-vacuity proof | **runs** — `make check` (41 violations on the broken fixture) |
+| Fixtures + non-vacuity proof | **runs** — `make check` (52 violations on the broken fixture) |
+| Harness self-audit (E-001–E-018) | **runs** — `make bench` (`SUITE=core\|hardening\|evidence\|provenance\|attestation\|card\|emission\|boundary\|redaction`): 8/8, 15/15, 10/10, 13/13, 11/11, 10/10, 8/8, 10/10 and 8/8 known-vacuous probes admitted before the repair, all 0 after, with the pre-fix harness as the negative control |
 | SkillOpt adapter | **runs** — `VerificationAdapter` registered via `bootstrap.py`; splits load 70/11/9 |
 | SkillOpt training loop | **wired and started**; aborts loudly when the agent produces no contract |
 | Hermit adapter + config | **validated** — `hermit check`: template, evolver, budgets `[ok]` |
@@ -56,7 +57,8 @@ make -C optimization smoke                        # dataset + fixtures + gate + 
 ```
 
 `make smoke` exits 0 and prints `SMOKE OK`; it asserts the gate fires for each of
-`INV-092..INV-100`, so it cannot pass vacuously.
+`INV-092..INV-100`, so it cannot pass vacuously. `make bench` adds the closed probe
+suites that measure the gate and the prompt against their own known defects:
 
 ## SkillOpt run (real, needs a working model)
 
@@ -128,9 +130,11 @@ optimization/
 ├── dataset/build_dataset.py     # evals/*.md → data/{train,val,test,activation}.jsonl
 ├── harness/
 │   ├── contract_check.py        # mechanical gate (INV-092..100 + 089/068/067/070)
+│   ├── contract_prompt.py       # the one prompt both optimizers give the agent (rules + shape)
 │   ├── score.py                 # deterministic judge + §2 metric aggregation
 │   ├── assert_bad.py            # proves the gate is not vacuous
 │   └── paths.py
+├── ../scripts/bench/bench_optimization.py  # E-001..E-018 non-vacuity bench (make bench)
 ├── fixtures/make_fixtures.py    # good/bad contracts derived from the live spec
 ├── scripts/{plumbing,runner_template}.py
 ├── skillopt/

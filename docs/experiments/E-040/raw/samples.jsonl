@@ -1,0 +1,5 @@
+{"probe": "evidence-scope-narrower", "ok": false}
+{"probe": "evidence-scope-other-dataset", "ok": false}
+{"probe": "claim-scope-broadened", "ok": false}
+{"probe": "assumption-scope-narrower", "ok": false}
+{"probe": "prompt-missing-scope-coverage", "ok": false}

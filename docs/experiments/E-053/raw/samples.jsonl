@@ -1,0 +1,5 @@
+{"probe": "bench-exits-zero-with-defects", "ok": true}
+{"probe": "no-fail-on-defect-flag", "ok": true}
+{"probe": "smoke-skips-bench", "ok": true}
+{"probe": "bench-defaults-to-core", "ok": true}
+{"probe": "no-all-suites-mode", "ok": true}

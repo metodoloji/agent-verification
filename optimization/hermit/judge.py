@@ -59,7 +59,8 @@ def score(task: dict, output) -> dict:
         return {"score": 0.0,
                 "feedback": f"no parsable contract; expected {expected}"}
 
-    contract_result = score_contract(contract)
+    violations = check(contract)
+    contract_result = score_contract(contract, violations)
     case = score_case(expected, (contract.get("final_verdict") or {}).get("status"))
     value = reward(case, contract_result)
     return {
@@ -68,5 +69,5 @@ def score(task: dict, output) -> dict:
                      f"contract {contract_result['score']}/4; "
                      f"violations {contract_result['violation_codes']}"),
         "extra": {"contract_score": contract_result["score"],
-                  "violations": len(check(contract))},
+                  "violations": len(violations)},
     }

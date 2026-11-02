@@ -1,0 +1,5 @@
+{"probe": "resolved-without-revision", "ok": false}
+{"probe": "resolved-with-unfinished-retest", "ok": false}
+{"probe": "resolved-on-unrelated-retest", "ok": false}
+{"probe": "resolved-on-failing-retest", "ok": false}
+{"probe": "prompt-missing-resolution-rule", "ok": false}

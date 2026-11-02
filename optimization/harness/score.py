@@ -6,9 +6,9 @@ Score is computed from the contract alone — no model grades a model. The rubri
 records it produced. Contract violations are graded by class, because a broken record and a
 stale verdict are not equally bad:
 
-    0  the verdict contradicts the record (a gated verdict over a blocking violation, or
-       FAIL/INCONCLUSIVE reported as PASS)
-    1  gate-class breach: VF-10 (card), VF-11 (budget), VF-12 (stale), VF-13 (authority)
+    0  no contract at all (the aggregate path only; a present contract always scores 1-4)
+    1  gate-class breach: VF-10 (card), VF-11 (budget), VF-12 (stale), VF-13 (authority) —
+       and any violation under a gated verdict, because the run shipped the defect
     2  record-class breach: VF-06 (checklist / suite / carryover / ids)
     3  disclosure-class only: VF-04 (epistemic class, catalog ref)
     4  clean: no violation
@@ -35,8 +35,9 @@ RECORD_CLASS = {"VF-06", "VF-09"}
 DISCLOSURE_CLASS = {"VF-04", "VF-02", "VF-03"}
 
 
-def score_contract(contract: dict) -> dict:
-    violations = check(contract)
+def score_contract(contract: dict, violations: list | None = None) -> dict:
+    if violations is None:
+        violations = check(contract)
     codes = {v.code for v in violations}
     verdict = (contract.get("final_verdict") or {}).get("status")
 

@@ -1,0 +1,5 @@
+{"probe": "check-writes-instead-of-verifying", "ok": true}
+{"probe": "check-counts-only", "ok": true}
+{"probe": "hermit-builder-has-no-check", "ok": true}
+{"probe": "make-hermit-data-has-no-guard", "ok": true}
+{"probe": "smoke-skips-hermit-data-check", "ok": true}

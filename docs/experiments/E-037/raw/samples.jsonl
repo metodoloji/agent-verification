@@ -1,0 +1,6 @@
+{"probe": "down-without-downgrade-limitation", "ok": true}
+{"probe": "down-with-added-checks", "ok": true}
+{"probe": "up-without-checks", "ok": true}
+{"probe": "up-with-unknown-check", "ok": true}
+{"probe": "decision-verdict-mismatch", "ok": true}
+{"probe": "prompt-missing-escalation-rules", "ok": true}

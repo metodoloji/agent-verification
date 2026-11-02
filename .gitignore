@@ -34,5 +34,6 @@ optimization/fixtures/bad_contract.json
 optimization/runs/
 optimization/skillopt/runs/
 optimization/hermit/runs/
-.venv/
+docs/experiments/.bench/
+.venv-opt/
 .demo/

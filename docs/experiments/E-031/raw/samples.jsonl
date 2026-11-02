@@ -1,0 +1,6 @@
+{"probe": "pass-over-failing-critical-test", "ok": true}
+{"probe": "pass-over-inconclusive-critical-test", "ok": true}
+{"probe": "pwl-over-inconclusive-critical-test", "ok": true}
+{"probe": "fail-on-ac-only-critical-test", "ok": true}
+{"probe": "invalidated-without-revision", "ok": true}
+{"probe": "prompt-missing-transition-rule", "ok": true}

@@ -1,0 +1,4 @@
+{"probe": "ac-only-minimal-grounded", "ok": false}
+{"probe": "ac-only-missing-claims-key", "ok": false}
+{"probe": "ac-only-with-noncritical-claim", "ok": false}
+{"probe": "prompt-missing-ac-decisive-rule", "ok": false}

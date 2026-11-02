@@ -1,0 +1,4 @@
+{"probe": "checked-box-without-evidence", "ok": false}
+{"probe": "checked-box-with-unknown-status", "ok": false}
+{"probe": "critical-verified-without-passing-test", "ok": false}
+{"probe": "prompt-missing-box-rules", "ok": false}

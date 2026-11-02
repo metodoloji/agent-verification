@@ -49,6 +49,22 @@ def split_for(case_number: int) -> str:
     return "test"
 
 
+def first_pass_status(label: str, raw: str, flaw: str) -> tuple[str, str]:
+    """The verdict a first-pass verifier owes this candidate.
+
+    `Expected Status` in `evals/cases.md` names the verdict after the defect is reported
+    and the candidate revised — ten rows say `(after revision)` outright. Comparing it
+    with a first-pass verdict while the candidate still carries the flaw scores a correct
+    `FAIL` as wrong (CASE-001). Derive the first-pass label from the planted flaw instead.
+    """
+    planted = (flaw or "").strip()
+    if label != "PASS" or not planted or planted.lower().startswith("none"):
+        return label, "source"
+    if "after revision" in (raw or "").lower():
+        return "PASS_WITH_LIMITATIONS", "derived:after-revision"
+    return "FAIL", "derived:flaw"
+
+
 def parse_verification_cases(text: str) -> list[dict]:
     records: list[dict] = []
     headers = list(CASE_HEADER.finditer(text))
@@ -59,7 +75,10 @@ def parse_verification_cases(text: str) -> list[dict]:
         fields = {name.strip().lower().replace(" ", "_"): value.strip()
                   for name, value in FIELD.findall(body)}
         number = int(match.group(1))
-        expected = VERDICT.findall(fields.get("expected_status", ""))
+        raw_status = fields.get("expected_status", "")
+        expected = VERDICT.findall(raw_status)
+        status, source = first_pass_status(expected[0] if expected else "",
+                                           raw_status, fields.get("planted_flaw", ""))
         records.append(
             {
                 "case_id": f"CASE-{number:03d}",
@@ -70,8 +89,9 @@ def parse_verification_cases(text: str) -> list[dict]:
                 "candidate_output": fields.get("candidate_output", ""),
                 "planted_flaw": fields.get("planted_flaw", ""),
                 "expected_behavior": fields.get("expected_behavior", ""),
-                "expected_status_raw": fields.get("expected_status", ""),
-                "expected_status": expected[0] if expected else "",
+                "expected_status_raw": raw_status,
+                "expected_status": status,
+                "expected_status_source": source,
                 "split": split_for(number),
             }
         )
@@ -96,7 +116,7 @@ def parse_activation_cases(text: str) -> list[dict]:
     return records
 
 
-def build(out_dir: Path) -> dict[str, list[dict]]:
+def build(out_dir: Path | None) -> dict[str, list[dict]]:
     cases = parse_verification_cases(CASES_MD.read_text(encoding="utf-8"))
     activation = parse_activation_cases(ACTIVATION_MD.read_text(encoding="utf-8"))
     if not cases:
@@ -110,12 +130,13 @@ def build(out_dir: Path) -> dict[str, list[dict]]:
     for rec in activation:
         groups["activation"].append(rec)
 
-    ensure_dir(out_dir)
-    for split, records in groups.items():
-        target = out_dir / f"{split}.jsonl"
-        with target.open("w", encoding="utf-8") as handle:
-            for record in records:
-                handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+    if out_dir is not None:
+        ensure_dir(out_dir)
+        for split, records in groups.items():
+            target = out_dir / f"{split}.jsonl"
+            with target.open("w", encoding="utf-8") as handle:
+                for record in records:
+                    handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
     return groups
 
 
@@ -126,7 +147,7 @@ def main() -> int:
                         help="verify the produced splits instead of writing them")
     args = parser.parse_args()
 
-    groups = build(args.out)
+    groups = build(None if args.check else args.out)
     total = sum(len(v) for k, v in groups.items() if k != "activation")
     print(f"verification cases: {total}  "
           f"(train={len(groups['train'])}, val={len(groups['val'])}, test={len(groups['test'])})")
@@ -139,6 +160,14 @@ def main() -> int:
         return 1
 
     if args.check:
+        stale = [split for split, records in groups.items()
+                 if not (args.out / f"{split}.jsonl").exists()
+                 or (args.out / f"{split}.jsonl").read_text(encoding="utf-8")
+                 != "".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in records)]
+        if stale:
+            print(f"ERROR: {', '.join(stale)} is stale; run build_dataset.py to regenerate",
+                  file=sys.stderr)
+            return 1
         expected = {"train": 70, "val": 11, "test": 9}
         for split, count in expected.items():
             if len(groups[split]) != count:

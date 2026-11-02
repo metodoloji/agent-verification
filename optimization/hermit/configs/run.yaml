@@ -28,7 +28,7 @@ judge:
   path: ../judge.py
   name: score
 
-template: prompt-only
+template: ../adapter
 
 start_from: ../adapter
 

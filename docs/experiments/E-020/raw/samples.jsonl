@@ -1,0 +1,7 @@
+{"probe": "depended-assumption-not-critical", "ok": false}
+{"probe": "verified-assumption-no-evidence", "ok": false}
+{"probe": "verified-assumption-one-sided", "ok": false}
+{"probe": "critical-assumption-without-external", "ok": false}
+{"probe": "conditional-assumption-undisclosed", "ok": false}
+{"probe": "disclosure-wrong-ref", "ok": false}
+{"probe": "prompt-missing-assumption", "ok": false}

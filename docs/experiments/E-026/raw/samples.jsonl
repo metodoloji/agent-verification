@@ -1,0 +1,7 @@
+{"probe": "policy-missing", "ok": false}
+{"probe": "attempt-reset", "ok": false}
+{"probe": "attempt-decreasing", "ok": false}
+{"probe": "attempt-too-high", "ok": false}
+{"probe": "attempt-at-cap", "ok": false}
+{"probe": "attempt-not-int", "ok": false}
+{"probe": "prompt-missing-attempt-rule", "ok": false}

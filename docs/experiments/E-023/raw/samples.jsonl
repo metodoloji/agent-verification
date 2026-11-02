@@ -1,0 +1,5 @@
+{"probe": "verified-over-conditional-assumption", "ok": true}
+{"probe": "verified-over-unverified-assumption", "ok": true}
+{"probe": "summary-over-280", "ok": true}
+{"probe": "prompt-missing-assumption-cap", "ok": true}
+{"probe": "prompt-missing-length-cap", "ok": true}

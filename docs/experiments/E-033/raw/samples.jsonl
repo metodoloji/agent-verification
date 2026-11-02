@@ -1,0 +1,5 @@
+{"probe": "minimal-one-over-cap", "ok": true}
+{"probe": "minimal-two-over-cap", "ok": true}
+{"probe": "bogus-failure-stage-over-cap", "ok": true}
+{"probe": "standard-over-cap", "ok": true}
+{"probe": "prompt-missing-trace-cap", "ok": true}

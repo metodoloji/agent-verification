@@ -1,0 +1,4 @@
+{"probe": "obsolete-contract-version", "ok": false}
+{"probe": "unknown-contract-version", "ok": false}
+{"probe": "changelog-missing-own-version", "ok": false}
+{"probe": "prompt-missing-version-rule", "ok": false}

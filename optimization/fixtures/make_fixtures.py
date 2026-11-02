@@ -31,9 +31,16 @@ def good_contract() -> dict:
     return {
         "contract_id": "vc_fixture_good",
         "contract_version": "2.0",
+        "contract_changelog": [{"version": "2.0", "invariants": "INV-001..INV-100",
+                                "fields_added": "full v2.0 contract shape"}],
         "task": "Select only companies founded after 2020 from a provided list.",
         "risk_level": "MINIMAL",
         "depth_executed": "MINIMAL",
+        "audit_trail": {
+            "depth_executed": "MINIMAL",
+            "verified_at_depth": "MINIMAL",
+            "trace_status": "LIVE",
+        },
         "scope": "The two-item input list supplied with the task; no external data.",
         "review_mode": "SELF",
         "acceptance_conditions": [
@@ -71,13 +78,13 @@ def good_contract() -> dict:
                 "purpose": "Reject any company whose founding year is not after 2020.",
                 "falsifiability": "If B's founding year were 2019, the test must return FAIL.",
                 "observation": "Parsed both rows; B->2022 > 2020 evaluated True, A->2018 rejected.",
-                "ground_truth": {"kind": "EXTERNAL_SOURCE", "ref": "input list"},
+                "ground_truth": {"kind": "EXTERNAL_TOOL", "ref": "fixture input rows (A: 2018, B: 2022)"},
             }
         ],
         "evidence": [
             {
                 "id": "EV-001",
-                "source_type": "EXTERNAL_SOURCE",
+                "source_type": "EXTERNAL_TOOL",
                 "origin": "EXTERNAL_SOURCE",
                 "observed_in_run": "vc_fixture_good",
                 "scope": "The founding years stated in the supplied input rows.",
@@ -88,6 +95,10 @@ def good_contract() -> dict:
         ],
         "failures": [],
         "revisions": [],
+        "revision_policy": {
+            "max_consecutive_failed_retests_per_claim": 2,
+            "on_exhaustion": "Return FAIL, or BLOCKED when the blocker is missing evidence/access.",
+        },
         "escalation_log": [],
         "verification_budget": {
             "unit": "CHECKS",
@@ -99,10 +110,10 @@ def good_contract() -> dict:
             "floor": {"critical_claims_covered": True, "mandatory_checks_run": True},
         },
         "progress_trace": [
-            {"seq": 1, "stage": "DEPTH", "status": "DONE", "summary": "MINIMAL selected: single constraint check.", "refs": []},
-            {"seq": 2, "stage": "CONTRACT", "status": "DONE", "summary": "AC-001 bound; budget 10 CHECKS declared before any test.", "refs": ["AC-001"]},
-            {"seq": 3, "stage": "TEST", "status": "DONE", "summary": "TEST-001 passed on the constraint.", "refs": ["TEST-001"]},
-            {"seq": 4, "stage": "DECISION", "status": "DONE", "summary": "PASS: AC-001 covered, B retained.", "refs": ["EV-001"]},
+            {"seq": 1, "stage": "DEPTH", "status": "DONE", "emitted": "LIVE", "summary": "MINIMAL selected: single constraint check.", "refs": []},
+            {"seq": 2, "stage": "CONTRACT", "status": "DONE", "emitted": "LIVE", "summary": "AC-001 bound; budget 10 CHECKS declared before any test.", "refs": ["AC-001"]},
+            {"seq": 3, "stage": "TEST", "status": "DONE", "emitted": "LIVE", "summary": "TEST-001 passed on the constraint.", "refs": ["TEST-001"]},
+            {"seq": 4, "stage": "DECISION", "status": "DONE", "emitted": "LIVE", "summary": "PASS: AC-001 covered, B retained.", "refs": ["EV-001"]},
         ],
         "final_verdict": {
             "status": "PASS",
@@ -116,13 +127,25 @@ def good_contract() -> dict:
                 "sources_consulted": 1,
                 "sources_total": 1,
             },
-            "validity": {"decided_at": "2026-11-01T10:00:00Z"},
+            "validity": {"decided_at": "2026-11-01T10:00:00Z", "expires_after_minutes": 1440,
+                         "revalidate_test_ids": ["TEST-001"]},
             "decisive_evidence_ids": ["EV-001"],
             "disclosed_limitations": [],
             "blocked_reasons": [],
             "blocked_resolution": {"cleared_reasons": [], "retested_test_ids": [], "carried_test_ids": []},
-            "checklist_results": [{"boxes": minimal, "status": "CHECKED"}],
+            "checklist_results": [{"boxes": minimal, "status": "CHECKED",
+                                   "evidence_refs": ["TEST-001"]}],
             "checklist_closure": True,
+            "depth_steps": [
+                {"step": "MINIMAL-1", "status": "DONE", "trace_refs": [2],
+                 "artifact_refs": ["AC-001"]},
+                {"step": "MINIMAL-2", "status": "DONE", "trace_refs": [3],
+                 "artifact_refs": ["TEST-001"]},
+                {"step": "MINIMAL-3", "status": "DONE", "trace_refs": [1],
+                 "artifact_refs": []},
+                {"step": "MINIMAL-4", "status": "DONE", "trace_refs": [4],
+                 "artifact_refs": ["EV-001"]},
+            ],
             "verdict_card": {
                 "verdict": "PASS",
                 "depth_executed": "MINIMAL",

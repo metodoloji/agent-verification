@@ -1,0 +1,5 @@
+{"probe": "adapter-manifest-missing", "ok": true}
+{"probe": "start-from-manifest-less", "ok": true}
+{"probe": "check-without-adapter-preflight", "ok": true}
+{"probe": "adapter-not-learnable", "ok": true}
+{"probe": "adapter-context-not-exported", "ok": true}
