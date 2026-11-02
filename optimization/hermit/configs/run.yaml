@@ -9,6 +9,16 @@
 
 task_info: ../task_info
 
+# The run's `llm` tool, used by the SkillOpt evolver for its own analyst calls.
+# The endpoint and key come from optimization/.env (QWEN_CHAT_*), the same one SkillOpt uses.
+backends:
+  beam:
+    base_url: https://api.reflection.ai/openai/v1
+    api_key_env: OPTIMIZER_QWEN_CHAT_API_KEY
+    apis: [chat]
+
+llm: beam/Beam-1.0-501B-A23B
+
 data:
   tasks: ../data/tasks.jsonl
   train: ../data/train.txt
